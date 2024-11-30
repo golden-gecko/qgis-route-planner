@@ -15,33 +15,33 @@
   </property>
   <widget class="QWidget" name="dockWidgetContents">
    <layout class="QGridLayout" name="gridLayout">
-    <item row="2" column="0">
+    <item row="4" column="0">
      <layout class="QHBoxLayout" name="horizontalLayout_2">
       <item>
-       <widget class="QToolButton" name="buttonTrackEdit">
-        <property name="enabled">
-         <bool>true</bool>
-        </property>
+       <widget class="QComboBox" name="optionRoutingProvider"/>
+      </item>
+      <item>
+       <widget class="QCheckBox" name="optionRouting">
         <property name="text">
-         <string>Edit track</string>
-        </property>
-        <property name="checkable">
-         <bool>true</bool>
+         <string>Routing</string>
         </property>
         <property name="checked">
-         <bool>false</bool>
-        </property>
-        <property name="autoRaise">
-         <bool>false</bool>
+         <bool>true</bool>
         </property>
        </widget>
       </item>
      </layout>
     </item>
-    <item row="1" column="0">
+    <item row="2" column="0">
      <layout class="QHBoxLayout" name="horizontalLayout_4">
       <item>
        <widget class="QToolButton" name="buttonPointAdd">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
         <property name="text">
          <string>Add point</string>
         </property>
@@ -55,6 +55,12 @@
       </item>
       <item>
        <widget class="QToolButton" name="buttonPointDelete">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
         <property name="text">
          <string>Delete point</string>
         </property>
@@ -68,6 +74,12 @@
       </item>
       <item>
        <widget class="QToolButton" name="buttonPointMove">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
         <property name="text">
          <string>Move point</string>
         </property>
@@ -105,6 +117,20 @@
        </widget>
       </item>
      </layout>
+    </item>
+    <item row="3" column="0">
+     <widget class="Line" name="line">
+      <property name="orientation">
+       <enum>Qt::Horizontal</enum>
+      </property>
+     </widget>
+    </item>
+    <item row="1" column="0">
+     <widget class="Line" name="line_2">
+      <property name="orientation">
+       <enum>Qt::Horizontal</enum>
+      </property>
+     </widget>
     </item>
    </layout>
   </widget>

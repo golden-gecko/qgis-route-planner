@@ -6,9 +6,9 @@ import googlemaps
 class Google:
     @staticmethod
     def get_direction(a, b):
-        gmaps = googlemaps.Client(key='AIzaSyBw1mZbt__9-Ch863hR5K6c9_SPbZqIKrE')
+        client = googlemaps.Client(key='AIzaSyBw1mZbt__9-Ch863hR5K6c9_SPbZqIKrE')
 
-        return gmaps.directions(a, b, mode='driving', departure_time=datetime.datetime.now())
+        return client.directions(a, b, mode='driving', departure_time=datetime.datetime.now())
 
     @staticmethod
     def get_direction_as_points(a, b):

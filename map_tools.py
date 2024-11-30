@@ -2,60 +2,85 @@ from qgis.core import QgsGeometry, QgsPoint, QgsVectorLayer, QgsWkbTypes
 from qgis.gui import QgsMapTool
 from qgis.PyQt.QtCore import Qt
 
+from .track import Track
 from .utils import Utils
 
 
 class PointAdd(QgsMapTool):
-    def __init__(self, canvas, layer: QgsVectorLayer):
+    def __init__(self, iface, canvas):
         QgsMapTool.__init__(self, canvas)
 
+        self.iface = iface
         self.canvas = canvas
-        self.layer = layer
 
         self.setCursor(Qt.CrossCursor)
 
     def canvasReleaseEvent(self, event):
-        point = self.toLayerCoordinates(self.layer, event.pos())
+        track = Track.get_active(self.iface)
+        layer = Utils.get_or_create_point_layer(track)
+        point = self.toLayerCoordinates(layer, event.pos())
 
-        self.layer.startEditing()
-        self.layer.addFeature(Utils.create_point(QgsPoint(point.x(), point.y())))
-        self.layer.commitChanges()
+        feature = Utils.create_point(QgsPoint(point.x(), point.y()), layer.fields())
+
+        layer.startEditing()
+        layer.addFeature(feature)
+        layer.commitChanges()
+
+        layer.startEditing()
+        Utils.refresh_position(layer)
+        layer.commitChanges()
+
+        Track.refresh(track)
 
 
 class PointDelete(QgsMapTool):
-    def __init__(self, canvas, layer: QgsVectorLayer):
+    def __init__(self, iface, canvas):
         QgsMapTool.__init__(self, canvas)
 
+        self.iface = iface
         self.canvas = canvas
-        self.layer = layer
 
         self.setCursor(Qt.CrossCursor)
 
     def canvasReleaseEvent(self, event):
-        point = self.toLayerCoordinates(self.layer, event.pos())
+        track = Track.get_active(self.iface)
+        layer = Utils.get_or_create_point_layer(track)
+        point = self.toLayerCoordinates(layer, event.pos())
         buffer = QgsGeometry.fromPoint(QgsPoint(point.x(), point.y())).buffer(0.001,5)
 
-        for feature in self.layer.getFeatures():
+        for feature in layer.getFeatures():
             if feature.geometry().type() == QgsWkbTypes.PointGeometry:
                 if feature.geometry().intersects(buffer):
-                    self.layer.startEditing()
-                    self.layer.deleteFeature(feature.id())
-                    self.layer.commitChanges()
+                    layer.startEditing()
+                    layer.deleteFeature(feature.id())
+                    layer.commitChanges()
+
+                    layer.startEditing()
+                    Utils.refresh_position(layer)
+                    layer.commitChanges()
+
+                    Track.refresh(track)
 
                     break
 
 
 class PointMove(QgsMapTool):
-    def __init__(self, canvas, layer: QgsVectorLayer):
+    def __init__(self, iface, canvas):
         QgsMapTool.__init__(self, canvas)
 
+        self.iface = iface
         self.canvas = canvas
-        self.layer = layer
+
+        self.track = None
+        self.layer = None
         self.feature = None
 
         self.setCursor(Qt.CrossCursor)
 
     def canvasPressEvent(self, event):
+        self.track = Track.get_active(self.iface)
+        self.layer = Utils.get_or_create_point_layer(self.track)
+
         point = self.toLayerCoordinates(self.layer, event.pos())
         buffer = QgsGeometry.fromPoint(QgsPoint(point.x(), point.y())).buffer(0.001,5)
 
@@ -74,41 +99,4 @@ class PointMove(QgsMapTool):
             self.layer.changeGeometry(self.feature, QgsGeometry.fromPoint(QgsPoint(point.x(), point.y())))
             self.layer.commitChanges()
 
-"""
-class TrackEditTool(QgsMapTool):
-    def __init__(self, canvas, track: QgsLayerTreeGroup):
-        QgsMapTool.__init__(self, canvas)
-
-        self.canvas = canvas
-        self.track = track
-
-        self.setCursor(Qt.CrossCursor)
-
-    def canvasReleaseEvent(self, event):
-        path_layer = Utils.get_or_create_path_layer(self.track)
-
-        if not path_layer:
-            return
-
-        point = self.toLayerCoordinates(path_layer, event.pos())
-        geometry = QgsGeometry.fromPoint(QgsPoint(point.x(), point.y())).buffer(10000,5)
-
-        feature = QgsFeature()
-        feature.setGeometry(geometry)
-
-        path_layer.startEditing()
-        path_layer.addFeature(feature)
-        path_layer.commitChanges()
-
-        areas = []
-        for line_feature in line_layer.getFeatures():
-            cands = area_layer.getFeatures(QgsFeatureRequest().setFilterRect(line_feature.geometry().boundingBox()))
-
-            for area_feature in cands:
-                if line_feature.geometry().intersects(area_feature.geometry()):
-                    areas.append(area_feature.id())
-
-        area_layer.select(areas)
-
-        print(point)
-"""
+            Track.refresh(self.track)
