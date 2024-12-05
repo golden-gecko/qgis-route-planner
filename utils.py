@@ -17,10 +17,18 @@ class Utils:
             if child.layer() and child.layer().name() == Utils.LAYER_NAME_POINT:
                 return child.layer()
 
+
         layer = QgsVectorLayer('Point', Utils.LAYER_NAME_POINT, 'memory')
         layer.startEditing()
         layer.setLabelsEnabled(True)
         layer.setLabeling(Utils.create_label_settings())
+
+        """
+        crs = layer.crs()
+        crs.createFromId(3857)
+
+        layer.setCrs(crs)
+        """
 
         provider = layer.dataProvider()
         provider.addAttributes([QgsField('position', QVariant.Int)])
@@ -45,6 +53,13 @@ class Utils:
                 return child.layer()
 
         layer = QgsVectorLayer('LineString', Utils.LAYER_NAME_PATH, 'memory')
+
+        """
+        crs = layer.crs()
+        crs.createFromId(3857)
+
+        layer.setCrs(crs)
+        """
 
         QgsProject.instance().addMapLayer(layer, False)
 

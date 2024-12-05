@@ -123,6 +123,13 @@
        </widget>
       </item>
       <item>
+       <widget class="QPushButton" name="buttonTrackEdit">
+        <property name="text">
+         <string>Edit track</string>
+        </property>
+       </widget>
+      </item>
+      <item>
        <widget class="QPushButton" name="buttonTrackRefresh">
         <property name="text">
          <string>Refresh track</string>

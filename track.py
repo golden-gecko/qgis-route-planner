@@ -1,6 +1,6 @@
 from typing import Optional
 
-from qgis.core import QgsDistanceArea, QgsFeature, QgsLayerTreeGroup, QgsPoint, QgsWkbTypes
+from qgis.core import QgsDistanceArea, QgsFeature, QgsLayerTreeGroup, QgsWkbTypes
 
 from .color import Color
 from .google import Google
@@ -47,6 +47,18 @@ class Track:
             return
 
         tracks.removeChildNode(track)
+
+    @staticmethod
+    def edit(iface):
+        tracks = Utils.get_or_create_tracks_directory()
+
+        if not tracks:
+            return
+
+        track = Track.get_active(iface)
+
+        if not track:
+            return
 
     @staticmethod
     def generate_name(tracks: QgsLayerTreeGroup) -> str:
