@@ -1,7 +1,8 @@
-from qgis.core import QgsFeature, QgsGeometry, QgsPoint, QgsWkbTypes
+from qgis.core import QgsGeometry, QgsPoint, QgsWkbTypes
 from qgis.gui import QgsMapTool
 from qgis.PyQt.QtCore import Qt
 
+from .point import Point
 from .track import Track
 from .utils import Utils
 
@@ -20,29 +21,45 @@ class PointCreateStart(QgsMapTool):
         layer = Utils.get_or_create_point_layer(track)
         point = self.toLayerCoordinates(layer, event.pos())
 
-        layer.startEditing()
-
-        geometries = [
-            Utils.create_point_geometry(QgsPoint(point.x(), point.y()))
-        ]
-
-        for feature in layer.getFeatures():
-            geometries.append(feature.geometry())
-            layer.deleteFeature(feature.id())
-
-        for geometry in geometries:
-            feature = QgsFeature(layer.fields())
-            feature.setGeometry(geometry)
-
-            layer.addFeature(feature)
-
-        layer.commitChanges()
-
-        layer.startEditing()
-        Utils.refresh_position(layer)
-        layer.commitChanges()
-
+        Point.create_start(layer, point)
         Track.refresh_point_create_start(track, 1)
+
+
+class PointCreateMiddle(QgsMapTool):
+    def __init__(self, iface, canvas):
+        QgsMapTool.__init__(self, canvas)
+
+        self.iface = iface
+        self.canvas = canvas
+
+        self.setCursor(Qt.CrossCursor)
+
+    def canvasReleaseEvent(self, event):
+        track = Track.get_active(self.iface)
+        layer = Utils.get_or_create_point_layer(track)
+        point = self.toLayerCoordinates(layer, event.pos())
+        buffer = QgsGeometry.fromPoint(QgsPoint(point.x(), point.y())).buffer(0.001,5)
+
+        position = 1
+
+        for feature in Utils.get_or_create_path_layer(track).getFeatures():
+            print(f'feature {feature}')
+
+            if feature.geometry().type() == QgsWkbTypes.LineGeometry:
+                if feature.geometry().intersects(buffer):
+                    # self.layer.getFeature(self.feature).attribute('position')
+
+                    # for vertex in feature.geometry().vertices():
+                    # print(f'  vertex {vertex}')
+
+                    print(f'position: {position}')
+
+                    Point.create_middle(layer, point, position + 1)
+                    Track.refresh_point_create_middle(track, position + 1)
+
+                    break
+
+            position += 1
 
 
 class PointCreateEnd(QgsMapTool):
@@ -59,50 +76,8 @@ class PointCreateEnd(QgsMapTool):
         layer = Utils.get_or_create_point_layer(track)
         point = self.toLayerCoordinates(layer, event.pos())
 
-        feature = Utils.create_point(QgsPoint(point.x(), point.y()), layer.fields())
-
-        layer.startEditing()
-        layer.addFeature(feature)
-        layer.commitChanges()
-
-        layer.startEditing()
-        Utils.refresh_position(layer)
-        layer.commitChanges()
-
+        Point.create_end(layer, point)
         Track.refresh_point_create_end(track, layer.featureCount())
-
-
-class PointDelete(QgsMapTool):
-    def __init__(self, iface, canvas):
-        QgsMapTool.__init__(self, canvas)
-
-        self.iface = iface
-        self.canvas = canvas
-
-        self.setCursor(Qt.CrossCursor)
-
-    def canvasReleaseEvent(self, event):
-        track = Track.get_active(self.iface)
-        layer = Utils.get_or_create_point_layer(track)
-        point = self.toLayerCoordinates(layer, event.pos())
-        buffer = QgsGeometry.fromPoint(QgsPoint(point.x(), point.y())).buffer(0.001,5)
-
-        for feature in layer.getFeatures():
-            if feature.geometry().type() == QgsWkbTypes.PointGeometry:
-                if feature.geometry().intersects(buffer):
-                    position = feature.attribute('position')
-
-                    layer.startEditing()
-                    layer.deleteFeature(feature.id())
-                    layer.commitChanges()
-
-                    layer.startEditing()
-                    Utils.refresh_position(layer)
-                    layer.commitChanges()
-
-                    Track.refresh_point_delete(track, position)
-
-                    break
 
 
 class PointMove(QgsMapTool):
@@ -136,8 +111,25 @@ class PointMove(QgsMapTool):
         point = self.toLayerCoordinates(self.layer, event.pos())
 
         if self.feature:
-            self.layer.startEditing()
-            self.layer.changeGeometry(self.feature, QgsGeometry.fromPoint(QgsPoint(point.x(), point.y())))
-            self.layer.commitChanges()
-
+            Point.move(self.layer, self.feature, point)
             Track.refresh_point_move(self.track, self.layer.getFeature(self.feature).attribute('position'))
+
+
+class PointDelete(QgsMapTool):
+    def __init__(self, iface, canvas):
+        QgsMapTool.__init__(self, canvas)
+
+        self.iface = iface
+        self.canvas = canvas
+
+        self.setCursor(Qt.CrossCursor)
+
+    def canvasReleaseEvent(self, event):
+        track = Track.get_active(self.iface)
+        layer = Utils.get_or_create_point_layer(track)
+        point = self.toLayerCoordinates(layer, event.pos())
+
+        position = Point.delete(layer, point)
+
+        if position is not None:
+            Track.refresh_point_delete(track, position)

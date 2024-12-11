@@ -4,8 +4,10 @@ from qgis.PyQt.QtCore import Qt
 from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import QAction
 
+from .context_menu import ContextMenu
+from .iface import set_iface
+from .map_tools import PointCreateEnd, PointCreateMiddle, PointCreateStart, PointDelete, PointMove
 from .options import Options
-from .point import Point
 from .route_planner_dockwidget import RoutePlannerDockWidget
 from .track import Track
 
@@ -15,6 +17,8 @@ from .resources import *
 class RoutePlanner:
     def __init__(self, iface):
         print('RoutePlanner::__init__()')
+
+        set_iface(iface)
 
         self.iface = iface
         self.plugin_dir = os.path.dirname(__file__)
@@ -26,7 +30,6 @@ class RoutePlanner:
 
         self.pluginIsActive = False
         self.dockwidget = None
-
 
     def add_action(self, icon_path, text, callback, add_to_menu=True, add_to_toolbar=True, status_tip=None, whats_this=None, parent=None):
         print('RoutePlanner::add_action()')
@@ -82,12 +85,14 @@ class RoutePlanner:
 
             self.dockwidget.buttonTrackCreate.clicked.connect(lambda : Track.create())
             self.dockwidget.buttonTrackDelete.clicked.connect(lambda: Track.delete(self.iface))
+            self.dockwidget.buttonTrackEdit.clicked.connect(lambda: Track.edit(self.iface))
             self.dockwidget.buttonTrackRefresh.clicked.connect(lambda: Track.refresh_active(self.iface))
 
-            self.dockwidget.buttonPointCreateStart.clicked.connect(lambda: Point.create_start(self.iface))
-            self.dockwidget.buttonPointCreateEnd.clicked.connect(lambda: Point.create_end(self.iface))
-            self.dockwidget.buttonPointDelete.clicked.connect(lambda: Point.delete(self.iface))
-            self.dockwidget.buttonPointMove.clicked.connect(lambda: Point.move(self.iface))
+            self.dockwidget.buttonPointCreateStart.clicked.connect(lambda: RoutePlanner.create_start_tool(self.iface))
+            self.dockwidget.buttonPointCreateMiddle.clicked.connect(lambda: RoutePlanner.create_middle_tool(self.iface))
+            self.dockwidget.buttonPointCreateEnd.clicked.connect(lambda: RoutePlanner.create_end_tool(self.iface))
+            self.dockwidget.buttonPointDelete.clicked.connect(lambda: RoutePlanner.delete_tool(self.iface))
+            self.dockwidget.buttonPointMove.clicked.connect(lambda: RoutePlanner.move_tool(self.iface))
 
             self.dockwidget.optionRouting.stateChanged.connect(lambda: Options.set_routing(self.dockwidget.optionRouting.isChecked()))
             self.dockwidget.optionRoutingProvider.addItems(['Google', 'MapQuest'])
@@ -95,3 +100,30 @@ class RoutePlanner:
 
             self.iface.addDockWidget(Qt.LeftDockWidgetArea, self.dockwidget)
             self.dockwidget.show()
+
+            ContextMenu.create(self.iface.mapCanvas())
+
+    @staticmethod
+    def create_start_tool(iface):
+        canvas = iface.mapCanvas()
+        canvas.setMapTool(PointCreateStart(iface, canvas))
+
+    @staticmethod
+    def create_middle_tool(iface):
+        canvas = iface.mapCanvas()
+        canvas.setMapTool(PointCreateMiddle(iface, canvas))
+
+    @staticmethod
+    def create_end_tool(iface):
+        canvas = iface.mapCanvas()
+        canvas.setMapTool(PointCreateEnd(iface, canvas))
+
+    @staticmethod
+    def delete_tool(iface):
+        canvas = iface.mapCanvas()
+        canvas.setMapTool(PointDelete(iface, canvas))
+
+    @staticmethod
+    def move_tool(iface):
+        canvas = iface.mapCanvas()
+        canvas.setMapTool(PointMove(iface, canvas))
