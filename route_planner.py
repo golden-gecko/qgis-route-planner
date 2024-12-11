@@ -6,9 +6,8 @@ from qgis.PyQt.QtWidgets import QAction
 
 from .context_menu import ContextMenu
 from .iface import set_iface
-from .map_tools import PointCreateEnd, PointCreateStart, PointDelete, PointMove
+from .map_tools import PointCreateEnd, PointCreateMiddle, PointCreateStart, PointDelete, PointMove
 from .options import Options
-from .point import Point
 from .route_planner_dockwidget import RoutePlannerDockWidget
 from .track import Track
 
@@ -91,6 +90,7 @@ class RoutePlanner:
             self.dockwidget.buttonTrackRefresh.clicked.connect(lambda: Track.refresh_active(self.iface))
 
             self.dockwidget.buttonPointCreateStart.clicked.connect(lambda: RoutePlanner.create_start_tool(self.iface))
+            self.dockwidget.buttonPointCreateMiddle.clicked.connect(lambda: RoutePlanner.create_middle_tool(self.iface))
             self.dockwidget.buttonPointCreateEnd.clicked.connect(lambda: RoutePlanner.create_end_tool(self.iface))
             self.dockwidget.buttonPointDelete.clicked.connect(lambda: RoutePlanner.delete_tool(self.iface))
             self.dockwidget.buttonPointMove.clicked.connect(lambda: RoutePlanner.move_tool(self.iface))
@@ -108,6 +108,11 @@ class RoutePlanner:
     def create_start_tool(iface):
         canvas = iface.mapCanvas()
         canvas.setMapTool(PointCreateStart(iface, canvas))
+
+    @staticmethod
+    def create_middle_tool(iface):
+        canvas = iface.mapCanvas()
+        canvas.setMapTool(PointCreateMiddle(iface, canvas))
 
     @staticmethod
     def create_end_tool(iface):

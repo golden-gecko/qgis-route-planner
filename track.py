@@ -201,6 +201,68 @@ class Track:
             pass
 
     @staticmethod
+    def refresh_point_create_middle(track, position):
+        print(f'Track::refresh_point_create_middle(f{track}, {position})')
+
+        point_layer = Utils.get_or_create_point_layer(track)
+
+        if not point_layer:
+            return
+
+        path_layer = Utils.get_or_create_path_layer(track)
+
+        if not path_layer:
+            return
+
+        previous_point = Track.get(point_layer, position - 1)
+        current_point = Track.get(point_layer, position)
+        next_point = Track.get(point_layer, position + 1)
+
+        # move first segment
+        if not previous_point and current_point and next_point:
+            pass
+
+        # move middle segment
+        elif previous_point and current_point and next_point:
+            path_layer.startEditing()
+
+            geometries = []
+
+            for local_position, feature in enumerate(path_layer.getFeatures(), start=1):
+                geometries.append(feature.geometry())
+
+                if local_position == position - 1:
+                    geometries.append(Utils.create_polyline_geometry([(0, 0)]))
+
+                print(f'local_position: {local_position}, position: {position}')
+
+                path_layer.deleteFeature(feature.id())
+
+            for geometry in geometries:
+                feature = QgsFeature(path_layer.fields())
+                feature.setGeometry(geometry)
+
+                path_layer.addFeature(feature)
+
+            path_layer.commitChanges()
+
+            # previous segment
+            a = previous_point.geometry().asPoint()
+            b = current_point.geometry().asPoint()
+
+            Track.refesh_segment(path_layer, position - 1, a, b)
+
+            # next segment
+            a = current_point.geometry().asPoint()
+            b = next_point.geometry().asPoint()
+
+            Track.refesh_segment(path_layer, position, a, b)
+
+        # move last segment
+        elif previous_point and current_point and not next_point:
+            pass
+
+    @staticmethod
     def refresh_point_create_end(track, position):
         print(f'Track::refresh_point(f{track}, {position})')
 

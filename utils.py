@@ -1,6 +1,6 @@
 from qgis.core import (QgsFeature, QgsField, QgsGeometry, QgsLayerTreeGroup, QgsPoint, QgsProject,
                        QgsVectorLayer, QgsWkbTypes, QgsTextBufferSettings, QgsTextFormat, QgsPalLayerSettings,
-                       QgsVectorLayerSimpleLabeling, Qgis)
+                       QgsVectorLayerSimpleLabeling, Qgis, QgsCoordinateReferenceSystem, QgsCoordinateTransform)
 from qgis.PyQt.QtCore import QVariant
 from qgis.PyQt.QtGui import QColor, QFont
 
@@ -17,18 +17,15 @@ class Utils:
             if child.layer() and child.layer().name() == Utils.LAYER_NAME_POINT:
                 return child.layer()
 
-
         layer = QgsVectorLayer('Point', Utils.LAYER_NAME_POINT, 'memory')
         layer.startEditing()
         layer.setLabelsEnabled(True)
         layer.setLabeling(Utils.create_label_settings())
 
-        """
         crs = layer.crs()
-        crs.createFromId(3857)
+        crs.createFromId(4326)
 
         layer.setCrs(crs)
-        """
 
         provider = layer.dataProvider()
         provider.addAttributes([QgsField('position', QVariant.Int)])
@@ -54,12 +51,10 @@ class Utils:
 
         layer = QgsVectorLayer('LineString', Utils.LAYER_NAME_PATH, 'memory')
 
-        """
         crs = layer.crs()
-        crs.createFromId(3857)
+        crs.createFromId(4326)
 
         layer.setCrs(crs)
-        """
 
         QgsProject.instance().addMapLayer(layer, False)
 
@@ -179,3 +174,14 @@ class Utils:
 
         for position, feature in enumerate(layer.getFeatures(), start=1):
             layer.changeAttributeValue(feature.id(), field_id, position)
+
+    @staticmethod
+    def transform_crs(geometry: QgsGeometry, src_crs_id: int, dst_crs_id: int) -> QgsGeometry:
+        src_crs = QgsCoordinateReferenceSystem(src_crs_id)
+        dst_crs = QgsCoordinateReferenceSystem(dst_crs_id)
+
+        transform = QgsCoordinateTransform(src_crs, dst_crs, QgsProject.instance())
+
+        geometry.transform(transform)
+
+        return geometry
