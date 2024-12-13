@@ -1,70 +1,12 @@
-from qgis.core import (QgsFeature, QgsField, QgsGeometry, QgsLayerTreeGroup, QgsPoint, QgsProject,
+from typing import Optional
+
+from qgis.core import (QgsFeature, QgsGeometry, QgsLayerTreeGroup, QgsPoint, QgsProject, QgsSymbol,
                        QgsVectorLayer, QgsWkbTypes, QgsTextBufferSettings, QgsTextFormat, QgsPalLayerSettings,
                        QgsVectorLayerSimpleLabeling, Qgis, QgsCoordinateReferenceSystem, QgsCoordinateTransform)
-from qgis.PyQt.QtCore import QVariant
 from qgis.PyQt.QtGui import QColor, QFont
 
 
 class Utils:
-    LAYER_NAME_POINT = 'Point'
-    LAYER_NAME_PATH = 'Path'
-
-    @staticmethod
-    def get_or_create_point_layer(track) -> QgsVectorLayer | None:
-        print('Utils::get_or_create_point_layer()')
-
-        for child in track.children(): # TODO: Root has no children.
-            if child.layer() and child.layer().name() == Utils.LAYER_NAME_POINT:
-                return child.layer()
-
-        layer = QgsVectorLayer('Point', Utils.LAYER_NAME_POINT, 'memory')
-        layer.startEditing()
-        layer.setLabelsEnabled(True)
-        layer.setLabeling(Utils.create_label_settings())
-
-        crs = layer.crs()
-        crs.createFromId(4326)
-
-        layer.setCrs(crs)
-
-        provider = layer.dataProvider()
-        provider.addAttributes([QgsField('position', QVariant.Int)])
-
-        layer.commitChanges()
-
-        QgsProject.instance().addMapLayer(layer, False)
-
-        node = track.addLayer(layer)
-
-        if node:
-            node.setCustomProperty('showFeatureCount', True)
-
-        return layer
-
-    @staticmethod
-    def get_or_create_path_layer(track) -> QgsVectorLayer|None:
-        print('Utils::get_or_create_path_layer()')
-
-        for child in track.children(): # TODO: Root has no children.
-            if child.layer() and child.layer().name() == Utils.LAYER_NAME_PATH:
-                return child.layer()
-
-        layer = QgsVectorLayer('LineString', Utils.LAYER_NAME_PATH, 'memory')
-
-        crs = layer.crs()
-        crs.createFromId(4326)
-
-        layer.setCrs(crs)
-
-        QgsProject.instance().addMapLayer(layer, False)
-
-        node = track.addLayer(layer)
-
-        if node:
-            node.setCustomProperty('showFeatureCount', True)
-
-        return layer
-
     @staticmethod
     def get_or_create_tracks_directory() -> QgsLayerTreeGroup:
         root = QgsProject.instance().layerTreeRoot()
@@ -80,25 +22,19 @@ class Utils:
         return routes
 
     @staticmethod
-    def create_directory(tracks: QgsLayerTreeGroup, name: str) -> QgsLayerTreeGroup:
+    def create_directory() -> Optional[QgsLayerTreeGroup]:
+        tracks = Utils.get_or_create_tracks_directory()
+
+        if not tracks:
+            return None
+
         root = QgsProject.instance().layerTreeRoot()
-        route = root.addGroup(name)
+        route = root.addGroup(Utils.generate_name(tracks))
         clone = route.clone()
         tracks.insertChildNode(-1, clone)
         root.removeChildNode(route)
 
         return clone
-
-    @staticmethod
-    def create_point(point: QgsPoint, fields) -> QgsFeature:
-        feature = QgsFeature(fields)
-        feature.setGeometry(QgsGeometry.fromPoint(point))
-
-        return feature
-
-    @staticmethod
-    def create_point_geometry(point: QgsPoint) -> QgsGeometry:
-        return QgsGeometry.fromPoint(point)
 
     @staticmethod
     def create_polyline(points: list) -> QgsFeature:
@@ -185,3 +121,27 @@ class Utils:
         geometry.transform(transform)
 
         return geometry
+
+    @staticmethod
+    def set_data_source(layer: QgsVectorLayer, file_name: str):
+        options = layer.dataProvider().ProviderOptions()
+        options.driverName = 'GPX'
+
+        layer.setDataSource(file_name, layer.name(), 'gpx', options)
+
+    @staticmethod
+    def set_symbol(layer: QgsVectorLayer, symbol: QgsSymbol):
+        layer.startEditing()
+        layer.renderer().setSymbol(symbol)
+        layer.commitChanges()
+
+    @staticmethod
+    def generate_name(tracks: QgsLayerTreeGroup) -> str:
+        return f'Track {len(tracks.children()) + 1}'
+
+    @staticmethod
+    def set_crs(layer: QgsVectorLayer, code: str):
+        crs = layer.crs()
+        crs.createFromString(code)
+
+        layer.setCrs(crs)
