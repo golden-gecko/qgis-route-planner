@@ -1,14 +1,17 @@
 import os
+import xml.etree.ElementTree as ET
 
 from typing import Optional
 
-from qgis.core import QgsDistanceArea, QgsFeature, QgsField, QgsLayerTreeGroup, QgsProject, QgsVectorLayer, QgsWkbTypes
+from qgis.core import QgsDistanceArea, QgsFeature, QgsField, QgsLayerTreeGroup, QgsPoint, QgsPointXY, QgsProject, QgsVectorLayer, QgsWkbTypes
 from qgis.PyQt.QtCore import QVariant
 from qgis.PyQt.QtWidgets import QFileDialog
 
 from .color import Color
 from .google import Google
+from .iface import Iface
 from .options import Options
+from .point import Point
 from .symbol import Symbol
 from .utils import Utils
 
@@ -16,6 +19,109 @@ from .utils import Utils
 class Track:
     @staticmethod
     def create() -> Optional[QgsLayerTreeGroup]:
+        track = Utils.create_directory()
+
+        if not track:
+            return None
+
+        color = Color.random()
+
+        point_layer = Track.get_or_create_point_layer(track)
+        path_layer = Track.get_or_create_path_layer(track)
+
+        Utils.set_symbol(point_layer, Symbol.create_point(color))
+        Utils.set_symbol(path_layer, Symbol.create_path(color))
+
+        # Utils.set_data_source(point_layer, file_name + '?type=waypoint')
+        # Utils.set_data_source(path_layer, file_name + '?type=track')
+
+        # TODO: Must be after setting data source. Fix.
+        # point_layer.setLabeling(Utils.create_label_settings())
+
+        return track
+
+    @staticmethod
+    def delete(track: QgsLayerTreeGroup):
+        if not track:
+            return
+
+        tracks = Utils.get_or_create_tracks_directory()
+
+        if not tracks:
+            return
+
+        tracks.removeChildNode(track)
+
+    @staticmethod
+    def open():
+        dialog = QFileDialog()
+        dialog.setFileMode(QFileDialog.AnyFile)
+        dialog.setNameFilters(['GPX files (*.gpx)'])
+
+        if not dialog.exec_():
+            return None
+
+        if len(dialog.selectedFiles()) != 1:
+            return None
+
+        file_name = dialog.selectedFiles()[0]
+
+        track = Track.create()
+
+        if not track:
+            return
+
+        point_layer = Track.get_or_create_point_layer(track)
+
+        if not point_layer:
+            return
+
+        path_layer = Track.get_or_create_path_layer(track)
+
+        if not path_layer:
+            return
+
+        gpx = ET.parse(file_name)
+
+        point_layer.startEditing()
+
+        for wpt in gpx.iter('wpt'):
+            point_layer.addFeature(Point.create_feature(QgsPoint(float(wpt.get('lon')), float(wpt.get('lat'))), point_layer.fields()))
+
+        Utils.refresh_position(point_layer)
+
+        point_layer.commitChanges()
+
+        path_layer.startEditing()
+
+        for trk in gpx.iter('trk'):
+            for trkseg in trk.iter('trkseg'):
+                points = []
+
+                for trkpt in trkseg.iter('trkpt'):
+                    points.append((float(trkpt.get('lon')), float(trkpt.get('lat'))))
+
+                path_layer.addFeature(Utils.create_polyline(points))
+
+        path_layer.commitChanges()
+
+    @staticmethod
+    def save():
+        track = Track.get_active(Iface.get())
+
+        if not track:
+            return
+
+        point_layer = Track.get_or_create_point_layer(track)
+
+        if not point_layer:
+            return
+
+        path_layer = Track.get_or_create_path_layer(track)
+
+        if not path_layer:
+            return
+
         dialog = QFileDialog()
         dialog.setFileMode(QFileDialog.AnyFile)
         dialog.setNameFilters(['GPX files (*.gpx)'])
@@ -32,52 +138,26 @@ class Track:
         if len(file_ext) == 0:
             file_name += '.gpx'
 
-        with open(file_name, 'w') as file:
-            file.write('<?xml version="1.0" encoding="utf-8"?><gpx version="1.0" creator="QGIS"></gpx>')
+        gpx = ET.Element('gpx')
 
-        track = Utils.create_directory()
+        for feature in point_layer.getFeatures():
+            point = feature.geometry().asPoint()
 
-        if not track:
-            return None
+            ET.SubElement(gpx, 'wpt', lat=str(point.y()), lon=str(point.x()))
 
-        color = Color.random()
+        trk = ET.SubElement(gpx, 'trk')
 
-        point_layer = Track.get_or_create_point_layer(track)
-        path_layer = Track.get_or_create_path_layer(track)
+        for feature in path_layer.getFeatures():
+            for part in feature.geometry().parts():
+                trkseg = ET.SubElement(trk, 'trkseg')
 
-        Utils.set_symbol(point_layer, Symbol.create_point(color))
-        Utils.set_symbol(path_layer, Symbol.create_path(color))
+                for vertex in part.vertices():
+                    ET.SubElement(trkseg, 'trkpt', lat=str(vertex.y()), lon=str(vertex.x()))
 
-        Utils.set_data_source(point_layer, file_name + '?type=waypoint')
-        Utils.set_data_source(path_layer, file_name + '?type=track')
+        ET.indent(gpx, space='  ', level=0)
 
-        return track
-
-    @staticmethod
-    def delete(iface):
-        tracks = Utils.get_or_create_tracks_directory()
-
-        if not tracks:
-            return
-
-        track = Track.get_active(iface)
-
-        if not track:
-            return
-
-        tracks.removeChildNode(track)
-
-    @staticmethod
-    def edit(iface):
-        tracks = Utils.get_or_create_tracks_directory()
-
-        if not tracks:
-            return
-
-        track = Track.get_active(iface)
-
-        if not track:
-            return
+        tree = ET.ElementTree(gpx)
+        tree.write(file_name)
 
     @staticmethod
     def get_active(iface) -> Optional[QgsLayerTreeGroup]:
@@ -97,7 +177,7 @@ class Track:
         return None
 
     @staticmethod
-    def get_length(track) -> float:
+    def get_length(track: QgsLayerTreeGroup) -> float:
         path_layer = Track.get_or_create_path_layer(track)
 
         if not path_layer:
@@ -109,7 +189,7 @@ class Track:
         return sum([d.measureLength(feature.geometry()) for feature in path_layer.getFeatures()]) / 1000.0
 
     @staticmethod
-    def refresh(track):
+    def refresh(track: QgsLayerTreeGroup):
         point_layer = Track.get_or_create_point_layer(track)
 
         if not point_layer:
@@ -148,29 +228,7 @@ class Track:
         Utils.update_layer(point_layer, path_layer, path)
 
     @staticmethod
-    def refresh_active(iface):
-        tracks = Utils.get_or_create_tracks_directory()
-
-        if not tracks:
-            return
-
-        track = Track.get_active(iface)
-
-        if not track:
-            return
-
-        Track.refresh(track)
-
-    @staticmethod
-    def open(iface):
-        pass
-
-    @staticmethod
-    def save(iface):
-        pass
-
-    @staticmethod
-    def refresh_point_create_start(track, position):
+    def refresh_point_create_start(track: QgsLayerTreeGroup, position: int):
         print(f'Track::refresh_point_create_start(f{track}, {position})')
 
         point_layer = Track.get_or_create_point_layer(track)
@@ -221,7 +279,7 @@ class Track:
             pass
 
     @staticmethod
-    def refresh_point_create_middle(track, position):
+    def refresh_point_create_middle(track: QgsLayerTreeGroup, position: int):
         print(f'Track::refresh_point_create_middle(f{track}, {position})')
 
         point_layer = Track.get_or_create_point_layer(track)
@@ -283,7 +341,7 @@ class Track:
             pass
 
     @staticmethod
-    def refresh_point_create_end(track, position):
+    def refresh_point_create_end(track: QgsLayerTreeGroup, position: int):
         print(f'Track::refresh_point(f{track}, {position})')
 
         point_layer = Track.get_or_create_point_layer(track)
@@ -329,7 +387,7 @@ class Track:
             vl.commitChanges()
 
     @staticmethod
-    def refresh_point_move(track, position):
+    def refresh_point_move(track: QgsLayerTreeGroup, position: int):
         print(f'Track::refresh_point_move(f{track}, {position})')
 
         point_layer = Track.get_or_create_point_layer(track)
@@ -375,7 +433,7 @@ class Track:
             Track.refesh_segment(path_layer, position - 1, a, b)
 
     @staticmethod
-    def refresh_point_delete(track, position):
+    def refresh_point_delete(track: QgsLayerTreeGroup, position: int):
         print(f'Track::refresh_point_delete(f{track}, {position})')
 
         point_layer = Track.get_or_create_point_layer(track)
@@ -423,7 +481,7 @@ class Track:
             path_layer.commitChanges()
 
     @staticmethod
-    def refesh_segment(layer: QgsVectorLayer, position, a, b):
+    def refesh_segment(layer: QgsVectorLayer, position: int, a: QgsPointXY, b: QgsPointXY):
         if Options.routing:
             segment_points = Google.get_direction_as_points(f'{a.y()} {a.x()}', f'{b.y()} {b.x()}')
 
@@ -445,14 +503,14 @@ class Track:
     def get(layer: QgsVectorLayer, position) -> Optional[QgsFeature]:
         print(f'Track::get(f{layer}, {position})')
 
-        for feature in layer.getFeatures():
-            if feature.attribute('position') == position:
+        for local_position, feature in enumerate(layer.getFeatures(), start=1):
+            if local_position == position:
                 return feature
 
         return None
 
     @staticmethod
-    def get_path(layer: QgsVectorLayer, position):
+    def get_path(layer: QgsVectorLayer, position: int):
         print(f'Track::get_path(f{layer}, {position})')
 
         for index, feature in enumerate(layer.getFeatures(), start=1):
@@ -462,8 +520,8 @@ class Track:
         return None
 
     @staticmethod
-    def get_or_create_point_layer(track) -> Optional[QgsVectorLayer]:
-        print('Utils::get_or_create_point_layer()')
+    def get_or_create_point_layer(track: QgsLayerTreeGroup) -> Optional[QgsVectorLayer]:
+        print(f'Utils::get_or_create_point_layer({track})')
 
         if not track:
             return None
@@ -494,8 +552,8 @@ class Track:
         return layer
 
     @staticmethod
-    def get_or_create_path_layer(track) -> Optional[QgsVectorLayer]:
-        print('Utils::get_or_create_path_layer()')
+    def get_or_create_path_layer(track: QgsLayerTreeGroup) -> Optional[QgsVectorLayer]:
+        print(f'Utils::get_or_create_path_layer({track})')
 
         if not track:
             return None
