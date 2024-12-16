@@ -1,9 +1,30 @@
-from qgis.core import QgsFeature, QgsGeometry, QgsPoint, QgsPointXY, QgsVectorLayer, QgsWkbTypes
+from qgis.core import QgsFeature, QgsGeometry,  QgsLayerTreeGroup, QgsPoint, QgsPointXY, QgsVectorLayer, QgsWkbTypes
 
+from .tree import Tree
 from .utils import Utils
 
 
 class Point:
+    @staticmethod
+    def create(segment: QgsLayerTreeGroup, lon: float, lat: float):
+        points = Tree.find_layer(segment, 'Points')
+
+        if not points:
+            return
+
+        layer = points.layer()
+
+        if not layer:
+            return
+
+        layer.startEditing()
+
+        feature = QgsFeature(layer.fields())
+        feature.setGeometry(QgsGeometry.fromPoint(QgsPoint(lon, lat)))
+
+        layer.addFeature(feature)
+        layer.commitChanges()
+
     @staticmethod
     def create_feature(point: QgsPoint, fields) -> QgsFeature:
         feature = QgsFeature(fields)

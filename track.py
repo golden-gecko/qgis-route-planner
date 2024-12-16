@@ -1,9 +1,8 @@
 import os
-import xml.etree.ElementTree as ET
 
 from typing import Optional
 
-from qgis.core import QgsDistanceArea, QgsFeature, QgsField, QgsLayerTreeGroup, QgsPoint, QgsPointXY, QgsProject, QgsVectorLayer, QgsWkbTypes
+from qgis.core import QgsDistanceArea, QgsFeature, QgsField, QgsLayerTree, QgsLayerTreeGroup, QgsPoint, QgsPointXY, QgsProject, QgsVectorLayer, QgsWkbTypes
 from qgis.PyQt.QtCore import QVariant
 from qgis.PyQt.QtWidgets import QFileDialog
 
@@ -13,12 +12,30 @@ from .iface import Iface
 from .options import Options
 from .point import Point
 from .symbol import Symbol
+from .tree import Tree
 from .utils import Utils
 
 
 class Track:
     @staticmethod
-    def create() -> Optional[QgsLayerTreeGroup]:
+    def create(file: QgsLayerTreeGroup) -> Optional[QgsLayerTreeGroup]:
+        print(f'Track::create({file})')
+
+        tracks = Tree.find_group(file, 'Tracks')
+
+        if not tracks:
+            return None
+
+        track = Tree.create_group(tracks, Utils.generate_name('Track', tracks))
+
+        if not track:
+            return None
+
+        track.setCustomProperty('type', 'track')
+
+        return track
+
+        """
         track = Utils.create_directory()
 
         if not track:
@@ -39,18 +56,13 @@ class Track:
         # point_layer.setLabeling(Utils.create_label_settings())
 
         return track
+        """
 
     @staticmethod
     def delete(track: QgsLayerTreeGroup):
-        if not track:
-            return
+        print(f'Track::delete({track})')
 
-        tracks = Utils.get_or_create_tracks_directory()
-
-        if not tracks:
-            return
-
-        tracks.removeChildNode(track)
+        Tree.delete_group(track)
 
     @staticmethod
     def open():
@@ -81,7 +93,14 @@ class Track:
         if not path_layer:
             return
 
-        gpx = ET.parse(file_name)
+        print(file_name)
+
+        with open(file_name) as f:
+            xmlstring = f.read()
+
+        xmlstring = re.sub(r'\sxmlns="[^"]+"', '', xmlstring, count=1)
+
+        gpx = ET.fromstring(xmlstring)
 
         point_layer.startEditing()
 
@@ -161,6 +180,8 @@ class Track:
 
     @staticmethod
     def get_active(iface) -> Optional[QgsLayerTreeGroup]:
+        print('Track::get_active()')
+
         nodes = iface.layerTreeView().selectedNodes()
 
         if len(nodes) != 1:
@@ -168,11 +189,13 @@ class Track:
 
         node = nodes[0]
 
-        if node.parent() and node.parent().name() == 'Tracks':
-            return node
+        while node.parent() and type(node.parent()) != QgsLayerTree:
+            node_type = node.customProperty('type')
 
-        if node.name() in ['Path', 'Point']:
-            return node.parent()
+            if node_type and node_type == 'track':
+                return node
+
+            node = node.parent()
 
         return None
 

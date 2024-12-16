@@ -3,6 +3,7 @@ from qgis.gui import QgsMapCanvas, QgsMapTool
 from qgis.PyQt.QtCore import Qt
 
 from .point import Point
+from .segment import Segment
 from .track import Track
 
 
@@ -16,12 +17,15 @@ class PointCreateStart(QgsMapTool):
         self.setCursor(Qt.CrossCursor)
 
     def canvasReleaseEvent(self, event):
-        track = Track.get_active(self.iface)
-        layer = Track.get_or_create_point_layer(track)
-        point = self.toLayerCoordinates(layer, event.pos())
+        segment = Segment.get_active(self.iface)
 
-        Point.create_start(layer, point)
-        Track.refresh_point_create_start(track, 1)
+        if not segment:
+            return
+
+        point = self.toLayerCoordinates(segment.layer(), event.pos())
+
+        Point.create_start(segment.layer(), point)
+        # Track.refresh_point_create_start(track, 1)
 
 
 class PointCreateMiddle(QgsMapTool):

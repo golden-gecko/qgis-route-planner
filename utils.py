@@ -4,38 +4,10 @@ from qgis.core import (QgsFeature, QgsGeometry, QgsLayerTreeGroup, QgsPoint, Qgs
                        QgsVectorLayer, QgsWkbTypes, QgsTextBufferSettings, QgsTextFormat, QgsPalLayerSettings,
                        QgsVectorLayerSimpleLabeling, Qgis, QgsCoordinateReferenceSystem, QgsCoordinateTransform)
 from qgis.PyQt.QtGui import QColor, QFont
+from qgis.PyQt.QtWidgets import QFileDialog
 
 
 class Utils:
-    @staticmethod
-    def get_or_create_tracks_directory() -> QgsLayerTreeGroup:
-        root = QgsProject.instance().layerTreeRoot()
-        routes = root.findGroup('Tracks')
-
-        if not routes:
-            routes = root.addGroup('Tracks')
-            clone = routes.clone()
-            root.insertChildNode(0, clone)
-            root.removeChildNode(routes)
-            routes = clone
-
-        return routes
-
-    @staticmethod
-    def create_directory() -> Optional[QgsLayerTreeGroup]:
-        tracks = Utils.get_or_create_tracks_directory()
-
-        if not tracks:
-            return None
-
-        root = QgsProject.instance().layerTreeRoot()
-        route = root.addGroup(Utils.generate_name(tracks))
-        clone = route.clone()
-        tracks.insertChildNode(-1, clone)
-        root.removeChildNode(route)
-
-        return clone
-
     @staticmethod
     def create_polyline(points: list) -> QgsFeature:
         point_list = [
@@ -136,8 +108,8 @@ class Utils:
         layer.commitChanges()
 
     @staticmethod
-    def generate_name(tracks: QgsLayerTreeGroup) -> str:
-        return f'Track {len(tracks.children()) + 1}'
+    def generate_name(prefix: str, items: QgsLayerTreeGroup) -> str:
+        return f'{prefix} {len(items.children()) + 1}'
 
     @staticmethod
     def set_crs(layer: QgsVectorLayer, code: str):
@@ -145,3 +117,17 @@ class Utils:
         crs.createFromString(code)
 
         layer.setCrs(crs)
+
+    @staticmethod
+    def get_file_name_from_dialog() -> Optional[str]:
+        dialog = QFileDialog()
+        dialog.setFileMode(QFileDialog.AnyFile)
+        dialog.setNameFilters(['GPX files (*.gpx)'])
+
+        if not dialog.exec_():
+            return None
+
+        if len(dialog.selectedFiles()) != 1:
+            return None
+
+        return dialog.selectedFiles()[0]
