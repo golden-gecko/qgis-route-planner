@@ -8,6 +8,7 @@ class Symbol:
         return QgsMarkerSymbol.createSimple({
             'color': color,
             'outline_color': color,
+            'size': 3,
         })
 
     @staticmethod
@@ -15,5 +16,13 @@ class Symbol:
         return QgsLineSymbol.createSimple({
             'color': color,
             'line_style': 'dash',
-            'width': '0.75',
+            'width': 0.75,
+        })
+
+    @staticmethod
+    def create_waypoint(color: QColor) -> QgsSymbol:
+        return QgsMarkerSymbol.createSimple({
+            'color': color,
+            'outline_color': 'black',
+            'size': 3,
         })

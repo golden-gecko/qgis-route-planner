@@ -1,26 +1,47 @@
-from qgis.core import QgsFeature, QgsGeometry, QgsLayerTreeGroup, QgsPoint
+from qgis.core import QgsFeature, QgsGeometry, QgsPoint, QgsPointXY, QgsVectorLayer
 
-from .tree import Tree
+from .utils import Utils
 
 
 class Waypoint:
     @staticmethod
-    def create(file: QgsLayerTreeGroup, lon: float, lat: float):
-        waypoints = Tree.find_group(file, 'Waypoints')
+    def create(layer: QgsVectorLayer, point: QgsPointXY):
+        print(f'Waypoint::create({layer}, {point}')
 
-        if not waypoints:
+        if not layer:
             return
 
-        for child in waypoints.children():
-            layer = child.layer()
+        feature = QgsFeature(layer.fields())
+        feature.setGeometry(QgsGeometry.fromPoint(QgsPoint(point.x(), point.y())))
 
-            if not layer:
-                continue
+        layer.startEditing()
+        layer.addFeature(feature)
+        layer.commitChanges()
 
-            layer.startEditing()
+    @staticmethod
+    def move(layer: QgsVectorLayer, feature: int, position: int, point: QgsPointXY):
+        print(f'Waypoint::move({layer}, {feature}, {position}, {point}')
 
-            feature = QgsFeature(layer.fields())
-            feature.setGeometry(QgsGeometry.fromPoint(QgsPoint(lon, lat)))
+        layer.startEditing()
+        layer.changeGeometry(feature, QgsGeometry.fromPoint(QgsPoint(point.x(), point.y())))
+        layer.commitChanges()
 
-            layer.addFeature(feature)
-            layer.commitChanges()
+    @staticmethod
+    def delete(layer: QgsVectorLayer, point: QgsPointXY):
+        print(f'Waypoint::delete({layer}, {point}')
+
+        buffer = Utils.create_buffer(point)
+
+        for position, feature in enumerate(layer.getFeatures(), start=1):
+            if feature.geometry().intersects(buffer):
+                layer.startEditing()
+                layer.deleteFeature(feature.id())
+                layer.commitChanges()
+
+                layer.startEditing()
+                Utils.refresh_position(layer)
+                layer.commitChanges()
+
+                return position
+
+        return None

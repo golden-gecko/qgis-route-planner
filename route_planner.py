@@ -7,7 +7,7 @@ from qgis.PyQt.QtWidgets import QAction
 from .context_menu import ContextMenu
 from .file import File
 from .iface import Iface
-from .map_tools import PointCreateEnd, PointCreateMiddle, PointCreateStart, PointDelete, PointMove
+from .map_tools import PointCreateEnd, PointCreateMiddle, PointCreateStart, PointDelete, PointMove, WaypointCreate, WaypointDelete, WaypointMove
 from .options import Options
 from .route_planner_dockwidget import RoutePlannerDockWidget
 from .segment import Segment
@@ -79,6 +79,11 @@ class RoutePlanner:
             self.dockwidget.buttonFileSave.clicked.connect(lambda: File.save(File.get_active(self.iface)))
             self.dockwidget.buttonFileClose.clicked.connect(lambda: File.close(File.get_active(self.iface)))
 
+            # setup waypoint buttons
+            self.dockwidget.buttonWaypointCreate.clicked.connect(lambda : RoutePlanner.set_waypoint_create(self.iface))
+            self.dockwidget.buttonWaypointMove.clicked.connect(lambda: RoutePlanner.set_waypoint_move(self.iface))
+            self.dockwidget.buttonWaypointDelete.clicked.connect(lambda: RoutePlanner.set_waypoint_delete(self.iface))
+
             # setup track buttons
             self.dockwidget.buttonTrackCreate.clicked.connect(lambda : Track.create(File.get_active(self.iface)))
             self.dockwidget.buttonTrackRefresh.clicked.connect(lambda: Track.refresh(Track.get_active(self.iface)))
@@ -105,6 +110,22 @@ class RoutePlanner:
             self.dockwidget.show()
 
             ContextMenu.create(self.iface.mapCanvas())
+
+    @staticmethod
+    def set_waypoint_create(iface):
+        canvas = iface.mapCanvas()
+        canvas.setMapTool(WaypointCreate(iface, canvas))
+
+    @staticmethod
+    def set_waypoint_move(iface):
+        canvas = iface.mapCanvas()
+        canvas.setMapTool(WaypointMove(iface, canvas))
+
+    @staticmethod
+    def set_waypoint_delete(iface):
+        canvas = iface.mapCanvas()
+        canvas.setMapTool(WaypointDelete(iface, canvas))
+
 
     @staticmethod
     def set_point_start_tool(iface):

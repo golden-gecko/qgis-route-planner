@@ -1,18 +1,12 @@
-import os
-import re
-import xml.etree.ElementTree as ET
-
 from typing import Optional
 
 from qgis.core import QgsLayerTree, QgsLayerTreeGroup
 
+from .color import Color
 from .layer import Layer
-from .path import Path
-from .segment import Segment
-from .track import Track
+from .symbol import Symbol
 from .tree import Tree
 from .utils import Utils
-from .waypoint import Waypoint
 
 
 class File:
@@ -38,10 +32,12 @@ class File:
         if not waypoints:
             return None
 
-        points = Layer.get_or_create_points(waypoints)
+        points = Layer.get_or_create_waypoints(waypoints)
 
         if not points:
             return None
+
+        Utils.set_symbol(points, Symbol.create_waypoint(Color.random()))
 
         tracks = Tree.create_group(file, 'Tracks', 'tracks')
 
@@ -148,6 +144,9 @@ class File:
     def save(file: QgsLayerTreeGroup):
         print('File::save()')
 
+        if not file:
+            return
+
         """
         track = Track.get_active(Iface.get())
 
@@ -205,6 +204,9 @@ class File:
     @staticmethod
     def close(file: QgsLayerTreeGroup):
         print('File::close()')
+
+        if not file:
+            return
 
         Tree.delete_group(file)
 

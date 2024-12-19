@@ -1,4 +1,4 @@
-from qgis.core import QgsFeature, QgsGeometry, QgsPoint, QgsPointXY, QgsVectorLayer, QgsWkbTypes
+from qgis.core import QgsFeature, QgsGeometry, QgsPoint, QgsPointXY, QgsVectorLayer
 
 from .utils import Utils
 
@@ -83,62 +83,29 @@ class Point:
         layer.commitChanges()
 
     @staticmethod
+    def move(layer: QgsVectorLayer, feature: int, position: int, point: QgsPointXY):
+        print(f'Point::move({layer}, {feature}, {position}, {point}')
+
+        layer.startEditing()
+        layer.changeGeometry(feature, QgsGeometry.fromPoint(QgsPoint(point.x(), point.y())))
+        layer.commitChanges()
+
+    @staticmethod
     def delete(layer: QgsVectorLayer, point: QgsPointXY):
         print(f'Point::delete({layer}, {point}')
 
         buffer = Utils.create_buffer(point)
 
         for position, feature in enumerate(layer.getFeatures(), start=1):
-            if feature.geometry().type() == QgsWkbTypes.PointGeometry:
-                if feature.geometry().intersects(buffer):
-                    layer.startEditing()
-                    layer.deleteFeature(feature.id())
-                    layer.commitChanges()
+            if feature.geometry().intersects(buffer):
+                layer.startEditing()
+                layer.deleteFeature(feature.id())
+                layer.commitChanges()
 
-                    layer.startEditing()
-                    Utils.refresh_position(layer)
-                    layer.commitChanges()
+                layer.startEditing()
+                Utils.refresh_position(layer)
+                layer.commitChanges()
 
-                    return position
+                return position
 
         return None
-
-    @staticmethod
-    def move(layer: QgsVectorLayer, feature: int, position: int, point: QgsPointXY):
-        print(f'Point::move({layer}, {feature}, {position}, {point}')
-
-        """
-        print('===', layer)
-        print('===', feature)
-        print('===', point)
-
-        geometries = []
-
-        layer.startEditing()
-
-        for local_position, local_feature in enumerate(layer.getFeatures(), start=1):
-            if local_position == position:
-                geometries.append(QgsGeometry.fromPoint(QgsPoint(point.x(), point.y())))
-            else:
-                geometries.append(local_feature.geometry())
-
-            layer.deleteFeature(local_feature.id())
-
-        print('===', geometries)
-
-        for geometry in geometries:
-            feature = QgsFeature(layer.fields())
-            feature.setGeometry(geometry)
-
-            layer.addFeature(feature)
-
-        layer.commitChanges()
-
-        layer.startEditing()
-        Utils.refresh_position(layer)
-        layer.commitChanges()
-        """
-
-        layer.startEditing()
-        layer.changeGeometry(feature, QgsGeometry.fromPoint(QgsPoint(point.x(), point.y())))
-        layer.commitChanges()

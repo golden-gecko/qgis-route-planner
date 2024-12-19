@@ -48,7 +48,7 @@ class Utils:
         paths.commitChanges()
 
     @staticmethod
-    def create_label_settings() -> QgsVectorLayerSimpleLabeling:
+    def create_label_settings(field: str) -> QgsVectorLayerSimpleLabeling:
         buffer_settings = QgsTextBufferSettings()
         buffer_settings.setEnabled(True)
         buffer_settings.setSize(1)
@@ -61,7 +61,7 @@ class Utils:
 
         layer_settings = QgsPalLayerSettings()
         layer_settings.setFormat(text_format)
-        layer_settings.fieldName = 'position'
+        layer_settings.fieldName = field
         layer_settings.placement = Qgis.LabelPlacement.AroundPoint
         layer_settings.enabled = True
 
