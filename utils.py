@@ -1,7 +1,7 @@
 from typing import Optional
 
 from qgis.core import (QgsFeature, QgsGeometry, QgsLayerTreeGroup, QgsPoint, QgsProject, QgsSymbol,
-                       QgsVectorLayer, QgsWkbTypes, QgsTextBufferSettings, QgsTextFormat, QgsPalLayerSettings,
+                       QgsVectorLayer,QgsTextBufferSettings, QgsTextFormat, QgsPalLayerSettings, QgsPointXY,
                        QgsVectorLayerSimpleLabeling, Qgis, QgsCoordinateReferenceSystem, QgsCoordinateTransform)
 from qgis.PyQt.QtGui import QColor, QFont
 from qgis.PyQt.QtWidgets import QFileDialog
@@ -28,33 +28,24 @@ class Utils:
         return QgsGeometry.fromPolyline(point_list)
 
     @staticmethod
-    def remove_non_point_geometries(layer: QgsVectorLayer, geometry_type):
-        layer.startEditing()
+    def update_layer(points: QgsVectorLayer, paths: QgsVectorLayer, lines: list):
+        print(f'Utils::update_layer({points}, {paths}, {lines})')
 
-        for feature in layer.getFeatures():
-            if feature.geometry().type() != geometry_type:
-                layer.deleteFeature(feature.id())
+        # Utils.remove_non_point_geometries(points_layer, QgsWkbTypes.PointGeometry)
 
-        layer.commitChanges()
+        provider = paths.dataProvider()
+        paths.startEditing()
 
-    @staticmethod
-    def update_layer(points_layer: QgsVectorLayer, path_layer: QgsVectorLayer, path: list):
-        Utils.remove_non_point_geometries(points_layer, QgsWkbTypes.PointGeometry)
-
-        vl = path_layer
-        pr = vl.dataProvider()
-        vl.startEditing()
-
-        for feature in path_layer.getFeatures():
-            path_layer.deleteFeature(feature.id())
+        for feature in paths.getFeatures():
+            paths.deleteFeature(feature.id())
 
         features = []
 
-        for points in path:
-            features.append(Utils.create_polyline(points))
+        for vertices in lines:
+            features.append(Utils.create_polyline(vertices))
 
-        pr.addFeatures(features)
-        vl.commitChanges()
+        provider.addFeatures(features)
+        paths.commitChanges()
 
     @staticmethod
     def create_label_settings() -> QgsVectorLayerSimpleLabeling:
@@ -103,6 +94,9 @@ class Utils:
 
     @staticmethod
     def set_symbol(layer: QgsVectorLayer, symbol: QgsSymbol):
+        if not layer:
+            return
+
         layer.startEditing()
         layer.renderer().setSymbol(symbol)
         layer.commitChanges()
@@ -131,3 +125,7 @@ class Utils:
             return None
 
         return dialog.selectedFiles()[0]
+
+    @staticmethod
+    def create_buffer(point: QgsPointXY, distance: float=0.001, segments: int=5):
+        return QgsGeometry.fromPoint(QgsPoint(point.x(), point.y())).buffer(distance, segments)

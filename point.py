@@ -1,30 +1,9 @@
-from qgis.core import QgsFeature, QgsGeometry,  QgsLayerTreeGroup, QgsPoint, QgsPointXY, QgsVectorLayer, QgsWkbTypes
+from qgis.core import QgsFeature, QgsGeometry, QgsPoint, QgsPointXY, QgsVectorLayer, QgsWkbTypes
 
-from .tree import Tree
 from .utils import Utils
 
 
 class Point:
-    @staticmethod
-    def create(segment: QgsLayerTreeGroup, lon: float, lat: float):
-        points = Tree.find_layer(segment, 'Points')
-
-        if not points:
-            return
-
-        layer = points.layer()
-
-        if not layer:
-            return
-
-        layer.startEditing()
-
-        feature = QgsFeature(layer.fields())
-        feature.setGeometry(QgsGeometry.fromPoint(QgsPoint(lon, lat)))
-
-        layer.addFeature(feature)
-        layer.commitChanges()
-
     @staticmethod
     def create_feature(point: QgsPoint, fields) -> QgsFeature:
         feature = QgsFeature(fields)
@@ -37,7 +16,9 @@ class Point:
         return QgsGeometry.fromPoint(point)
 
     @staticmethod
-    def create_start(layer: QgsVectorLayer, point):
+    def create_start(layer: QgsVectorLayer, point: QgsPointXY):
+        print(f'Point::create_start({layer}, {point}')
+
         layer.startEditing()
 
         geometries = [
@@ -61,7 +42,9 @@ class Point:
         layer.commitChanges()
 
     @staticmethod
-    def create_middle(layer: QgsVectorLayer, point, position: int):
+    def create_middle(layer: QgsVectorLayer, point: QgsPointXY, position: int):
+        print(f'Point::create_middle({layer}, {point}, {position}')
+
         layer.startEditing()
 
         geometries = []
@@ -86,7 +69,9 @@ class Point:
         layer.commitChanges()
 
     @staticmethod
-    def create_end(layer: QgsVectorLayer, point):
+    def create_end(layer: QgsVectorLayer, point: QgsPointXY):
+        print(f'Point::create_end({layer}, {point}')
+
         feature = Point.create_feature(QgsPoint(point.x(), point.y()), layer.fields())
 
         layer.startEditing()
@@ -98,8 +83,10 @@ class Point:
         layer.commitChanges()
 
     @staticmethod
-    def delete(layer: QgsVectorLayer, point):
-        buffer = QgsGeometry.fromPoint(QgsPoint(point.x(), point.y())).buffer(0.001,5)
+    def delete(layer: QgsVectorLayer, point: QgsPointXY):
+        print(f'Point::delete({layer}, {point}')
+
+        buffer = Utils.create_buffer(point)
 
         for position, feature in enumerate(layer.getFeatures(), start=1):
             if feature.geometry().type() == QgsWkbTypes.PointGeometry:
@@ -118,6 +105,8 @@ class Point:
 
     @staticmethod
     def move(layer: QgsVectorLayer, feature: int, position: int, point: QgsPointXY):
+        print(f'Point::move({layer}, {feature}, {position}, {point}')
+
         """
         print('===', layer)
         print('===', feature)

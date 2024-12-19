@@ -14,14 +14,17 @@ class Tree:
         if files:
             return files
 
-        return Tree.create_group(root, 'Files', 0)
+        return Tree.create_group(root, 'Files', None, 0)
 
     @staticmethod
-    def create_group(parent: QgsLayerTreeGroup, name: str, position: int = -1) -> Optional[QgsLayerTreeGroup]:
+    def create_group(parent: QgsLayerTreeGroup, name: str, custom_type: str = None, position: int = -1) -> Optional[QgsLayerTreeGroup]:
         print(f'Tree::create_group({parent}, {name})')
 
         group = parent.addGroup(name)
         group_clone = group.clone()
+
+        if custom_type:
+            group_clone.setCustomProperty('type', custom_type)
 
         parent.insertChildNode(position, group_clone)
         parent.removeChildNode(group)

@@ -7,8 +7,8 @@ from typing import Optional
 from qgis.core import QgsLayerTree, QgsLayerTreeGroup
 
 from .layer import Layer
+from .path import Path
 from .segment import Segment
-from .point import Point
 from .track import Track
 from .tree import Tree
 from .utils import Utils
@@ -28,28 +28,25 @@ class File:
         if not name:
             name = Utils.generate_name('File', files)
 
-        file = Tree.create_group(files, name)
+        file = Tree.create_group(files, name, 'file')
 
         if not file:
             return None
 
-        file.setCustomProperty('type', 'file')
-
-        waypoints = Tree.create_group(file, 'Waypoints')
+        waypoints = Tree.create_group(file, 'Waypoints', 'waypoints')
 
         if not waypoints:
             return None
 
-        waypoints.setCustomProperty('type', 'waypoints')
+        points = Layer.get_or_create_points(waypoints)
 
-        Layer.create_points(waypoints)
+        if not points:
+            return None
 
-        tracks = Tree.create_group(file, 'Tracks')
+        tracks = Tree.create_group(file, 'Tracks', 'tracks')
 
         if not tracks:
             return None
-
-        tracks.setCustomProperty('type', 'tracks')
 
         return file
 
@@ -57,6 +54,7 @@ class File:
     def open():
         print('File::open()')
 
+        """
         file_name = Utils.get_file_name_from_dialog()
 
         if not file_name:
@@ -81,12 +79,128 @@ class File:
             for trkseg in trk.iter('trkseg'):
                 segment = Segment.create(track)
 
+                points = [(float(trkpt.get('lon')), float(trkpt.get('lat'))) for trkpt in trkseg.iter('trkpt')]
+
+                Path.create(segment, points)
+        """
+
+        """
+        dialog = QFileDialog()
+        dialog.setFileMode(QFileDialog.AnyFile)
+        dialog.setNameFilters(['GPX files (*.gpx)'])
+
+        if not dialog.exec_():
+            return None
+
+        if len(dialog.selectedFiles()) != 1:
+            return None
+
+        file_name = dialog.selectedFiles()[0]
+
+        track = Track.create()
+
+        if not track:
+            return
+
+        point_layer = Track.get_or_create_point_layer(track)
+
+        if not point_layer:
+            return
+
+        path_layer = Track.get_or_create_path_layer(track)
+
+        if not path_layer:
+            return
+
+        print(file_name)
+
+        with open(file_name) as f:
+            xmlstring = f.read()
+
+        xmlstring = re.sub(r'\sxmlns="[^"]+"', '', xmlstring, count=1)
+
+        gpx = ET.fromstring(xmlstring)
+
+        point_layer.startEditing()
+
+        for wpt in gpx.iter('wpt'):
+            point_layer.addFeature(Point.create_feature(QgsPoint(float(wpt.get('lon')), float(wpt.get('lat'))), point_layer.fields()))
+
+        Utils.refresh_position(point_layer)
+
+        point_layer.commitChanges()
+
+        path_layer.startEditing()
+
+        for trk in gpx.iter('trk'):
+            for trkseg in trk.iter('trkseg'):
+                points = []
+
                 for trkpt in trkseg.iter('trkpt'):
-                    Point.create(segment, float(trkpt.get('lon')), float(trkpt.get('lat')))
+                    points.append((float(trkpt.get('lon')), float(trkpt.get('lat'))))
+
+                path_layer.addFeature(Utils.create_polyline(points))
+
+        path_layer.commitChanges()
+        """
 
     @staticmethod
     def save(file: QgsLayerTreeGroup):
         print('File::save()')
+
+        """
+        track = Track.get_active(Iface.get())
+
+        if not track:
+            return
+
+        point_layer = Track.get_or_create_point_layer(track)
+
+        if not point_layer:
+            return
+
+        path_layer = Track.get_or_create_path_layer(track)
+
+        if not path_layer:
+            return
+
+        dialog = QFileDialog()
+        dialog.setFileMode(QFileDialog.AnyFile)
+        dialog.setNameFilters(['GPX files (*.gpx)'])
+
+        if not dialog.exec_():
+            return None
+
+        if len(dialog.selectedFiles()) != 1:
+            return None
+
+        file_name = dialog.selectedFiles()[0]
+        _, file_ext = os.path.splitext(file_name)
+
+        if len(file_ext) == 0:
+            file_name += '.gpx'
+
+        gpx = ET.Element('gpx')
+
+        for feature in point_layer.getFeatures():
+            point = feature.geometry().asPoint()
+
+            ET.SubElement(gpx, 'wpt', lat=str(point.y()), lon=str(point.x()))
+
+        trk = ET.SubElement(gpx, 'trk')
+
+        for feature in path_layer.getFeatures():
+            for part in feature.geometry().parts():
+                trkseg = ET.SubElement(trk, 'trkseg')
+
+                for vertex in part.vertices():
+                    ET.SubElement(trkseg, 'trkpt', lat=str(vertex.y()), lon=str(vertex.x()))
+
+        ET.indent(gpx, space='  ', level=0)
+
+        tree = ET.ElementTree(gpx)
+        tree.write(file_name)
+        """
 
     @staticmethod
     def close(file: QgsLayerTreeGroup):

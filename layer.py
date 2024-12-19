@@ -9,8 +9,8 @@ from .utils import Utils
 
 class Layer:
     @staticmethod
-    def create_points(segment: QgsLayerTreeGroup) -> Optional[QgsVectorLayer]:
-        print(f'Layer::create_points({segment})')
+    def get_or_create_points(segment: QgsLayerTreeGroup) -> Optional[QgsVectorLayer]:
+        print(f'Layer::get_or_create_points({segment})')
 
         points = Tree.find_layer(segment, 'Points')
 
@@ -39,8 +39,8 @@ class Layer:
         return layer
 
     @staticmethod
-    def create_paths(segment: QgsLayerTreeGroup) -> Optional[QgsVectorLayer]:
-        print(f'Layer::create_paths({segment})')
+    def get_or_create_paths(segment: QgsLayerTreeGroup) -> Optional[QgsVectorLayer]:
+        print(f'Layer::get_or_create_paths({segment})')
 
         points = Tree.find_layer(segment, 'Paths')
 
