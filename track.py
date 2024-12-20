@@ -1,10 +1,9 @@
+import xml.etree.ElementTree as ET
+
 from typing import Optional
 
-from qgis.core import QgsDistanceArea, QgsFeature, QgsField, QgsLayerTree, QgsLayerTreeGroup, QgsPointXY, QgsProject, QgsVectorLayer
-from qgis.PyQt.QtCore import QVariant
+from qgis.core import QgsDistanceArea, QgsLayerTree, QgsLayerTreeGroup
 
-from .google import Google
-from .options import Options
 from .segment import Segment
 from .tree import Tree
 from .utils import Utils
@@ -42,7 +41,11 @@ class Track:
     def delete(track: QgsLayerTreeGroup):
         print(f'Track::delete({track})')
 
-        Tree.delete_group(track)
+        if not track:
+            return
+
+        if Utils.confirm('Delete track?'):
+            Tree.delete_group(track)
 
     @staticmethod
     def get_active(iface) -> Optional[QgsLayerTreeGroup]:
@@ -82,3 +85,29 @@ class Track:
         for segment in track.children():
             if segment.customProperty('type') == 'segment':
                 Segment.refresh(segment)
+
+    @staticmethod
+    def from_xml(file: QgsLayerTreeGroup, wpt: ET.Element):
+        print(f'Track::from_xml{file}, {wpt})')
+
+    @staticmethod
+    def to_xml(track: QgsLayerTreeGroup) -> Optional[ET.Element]:
+        print(f'Track::to_xml{track})')
+
+        if not track:
+            return
+
+        trk = ET.Element('trk')
+
+        for segment in track.children():
+            if track.customProperty('type') != 'track':
+                continue
+
+            trkseg = Segment.to_xml(segment)
+
+            if not trkseg:
+                continue
+
+            trk.append(trkseg)
+
+        return trk

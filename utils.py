@@ -4,7 +4,9 @@ from qgis.core import (QgsFeature, QgsGeometry, QgsLayerTreeGroup, QgsPoint, Qgs
                        QgsVectorLayer,QgsTextBufferSettings, QgsTextFormat, QgsPalLayerSettings, QgsPointXY,
                        QgsVectorLayerSimpleLabeling, Qgis, QgsCoordinateReferenceSystem, QgsCoordinateTransform)
 from qgis.PyQt.QtGui import QColor, QFont
-from qgis.PyQt.QtWidgets import QFileDialog
+from qgis.PyQt.QtWidgets import QFileDialog, QMessageBox
+
+from .iface import Iface
 
 
 class Utils:
@@ -129,3 +131,7 @@ class Utils:
     @staticmethod
     def create_buffer(point: QgsPointXY, distance: float=0.001, segments: int=5):
         return QgsGeometry.fromPoint(QgsPoint(point.x(), point.y())).buffer(distance, segments)
+
+    @staticmethod
+    def confirm(title: str) -> bool:
+        return QMessageBox.question(Iface.get().mainWindow(), title, title, QMessageBox.Yes, QMessageBox.No) == QMessageBox.Yes

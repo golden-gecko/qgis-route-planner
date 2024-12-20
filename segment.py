@@ -1,3 +1,5 @@
+import xml.etree.ElementTree as ET
+
 from typing import Optional
 
 from qgis.core import QgsFeature, QgsLayerTree, QgsLayerTreeGroup, QgsPointXY, QgsVectorLayer
@@ -76,7 +78,11 @@ class Segment:
     def delete(segment: QgsLayerTreeGroup):
         print(f'Segment::delete({segment})')
 
-        Tree.delete_group(segment)
+        if not segment:
+            return
+
+        if Utils.confirm('Delete segment?'):
+            Tree.delete_group(segment)
 
     @staticmethod
     def get_active(iface) -> Optional[QgsLayerTreeGroup]:
@@ -317,3 +323,28 @@ class Segment:
                 return feature
 
         return None
+
+    @staticmethod
+    def from_xml(track: QgsLayerTreeGroup, wpt: ET.Element):
+        print(f'Segment::from_xml{track}, {wpt})')
+
+    @staticmethod
+    def to_xml(segment: QgsLayerTreeGroup) -> Optional[ET.Element]:
+        print(f'Segment::to_xml{segment})')
+
+        if not segment:
+            return None
+
+        paths = Layer.get_or_create_paths(segment)
+
+        if not paths:
+            return None
+
+        trkseg = ET.Element('trkseg')
+
+        for feature in paths.getFeatures():
+            for part in feature.geometry().parts():
+                for vertex in part.vertices():
+                    ET.SubElement(trkseg, 'trkpt', lat=str(vertex.y()), lon=str(vertex.x()))
+
+        return trkseg

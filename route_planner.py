@@ -85,7 +85,7 @@ class RoutePlanner:
             self.dockwidget.buttonWaypointDelete.clicked.connect(lambda: RoutePlanner.set_waypoint_delete(self.iface))
 
             # setup track buttons
-            self.dockwidget.buttonTrackCreate.clicked.connect(lambda : Track.create(File.get_active(self.iface)))
+            self.dockwidget.buttonTrackCreate.clicked.connect(lambda : Segment.create(Track.create(File.get_active(self.iface))))
             self.dockwidget.buttonTrackRefresh.clicked.connect(lambda: Track.refresh(Track.get_active(self.iface)))
             self.dockwidget.buttonTrackDelete.clicked.connect(lambda: Track.delete(Track.get_active(self.iface)))
 
