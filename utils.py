@@ -11,12 +11,12 @@ from .iface import Iface
 
 class Utils:
     @staticmethod
-    def create_polyline(points: list) -> QgsFeature:
+    def create_polyline(points: list, fields) -> QgsFeature:
         point_list = [
             QgsPoint(p[0], p[1]) for p in points
         ]
 
-        feature = QgsFeature()
+        feature = QgsFeature(fields)
         feature.setGeometry(QgsGeometry.fromPolyline(point_list))
 
         return feature
@@ -33,8 +33,6 @@ class Utils:
     def update_layer(points: QgsVectorLayer, paths: QgsVectorLayer, lines: list):
         print(f'Utils::update_layer({points}, {paths}, {lines})')
 
-        # Utils.remove_non_point_geometries(points_layer, QgsWkbTypes.PointGeometry)
-
         provider = paths.dataProvider()
         paths.startEditing()
 
@@ -44,7 +42,7 @@ class Utils:
         features = []
 
         for vertices in lines:
-            features.append(Utils.create_polyline(vertices))
+            features.append(Utils.create_polyline(vertices, paths.fields()))
 
         provider.addFeatures(features)
         paths.commitChanges()

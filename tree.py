@@ -18,7 +18,7 @@ class Tree:
 
     @staticmethod
     def create_group(parent: QgsLayerTreeGroup, name: str, custom_type: str = None, position: int = -1) -> Optional[QgsLayerTreeGroup]:
-        print(f'Tree::create_group({parent}, {name})')
+        print(f'Tree::create_group({parent}, {name}, {custom_type}, {position})')
 
         group = parent.addGroup(name)
         group_clone = group.clone()

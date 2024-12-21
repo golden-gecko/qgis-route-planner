@@ -1,13 +1,15 @@
+import math
 import xml.etree.ElementTree as ET
 
 from typing import Optional
 
-from qgis.core import QgsFeature, QgsLayerTree, QgsLayerTreeGroup, QgsPointXY, QgsVectorLayer
+from qgis.core import QgsFeature, QgsLayerTree, QgsLayerTreeGroup, QgsPoint, QgsPointXY, QgsVectorLayer
 
 from .color import Color
 from .google import Google
 from .layer import Layer
 from .options import Options
+from .point import Point
 from .symbol import Symbol
 from .tree import Tree
 from .utils import Utils
@@ -325,8 +327,51 @@ class Segment:
         return None
 
     @staticmethod
-    def from_xml(track: QgsLayerTreeGroup, wpt: ET.Element):
-        print(f'Segment::from_xml{track}, {wpt})')
+    def from_xml(track: QgsLayerTreeGroup, trkseg: ET.Element):
+        print(f'Segment::from_xml{track}, {trkseg})')
+
+        segment = Segment.create(track)
+
+        if not segment:
+            return
+
+        points = Layer.get_or_create_points(segment)
+
+        if not points:
+            return
+
+        paths = Layer.get_or_create_paths(segment)
+
+        if not paths:
+            return
+
+        results = []
+
+        for trkpt in trkseg.iter('trkpt'):
+            results.append((float(trkpt.get('lon')), float(trkpt.get('lat'))))
+
+        if len(results) < 2:
+            return
+
+        points.startEditing()
+        paths.startEditing()
+
+        chunk_size = 30
+
+        for i in range(math.ceil(len(results) / chunk_size)):
+            chunk = results[i * chunk_size:(i + 1) * chunk_size]
+
+            points.addFeature(Point.create_feature(QgsPoint(chunk[0][0], chunk[0][1]), points.fields()))
+            paths.addFeature(Utils.create_polyline(chunk, paths.fields()))
+
+        points.addFeature(Point.create_feature(QgsPoint(results[-1][0], results[-1][1]), points.fields()))
+
+        points.commitChanges()
+        paths.commitChanges()
+
+        points.startEditing()
+        Utils.refresh_position(points)
+        points.commitChanges()
 
     @staticmethod
     def to_xml(segment: QgsLayerTreeGroup) -> Optional[ET.Element]:

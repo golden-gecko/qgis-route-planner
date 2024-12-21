@@ -11,15 +11,18 @@ from .utils import Utils
 
 class Track:
     @staticmethod
-    def create(file: QgsLayerTreeGroup) -> Optional[QgsLayerTreeGroup]:
-        print(f'Track::create({file})')
+    def create(file: QgsLayerTreeGroup, name: str=None) -> Optional[QgsLayerTreeGroup]:
+        print(f'Track::create({file}, {name})')
 
         tracks = Tree.find_group(file, 'Tracks')
 
         if not tracks:
             return None
 
-        track = Tree.create_group(tracks, Utils.generate_name('Track', tracks))
+        if not name:
+            name = Utils.generate_name('Track', tracks)
+
+        track = Tree.create_group(tracks, name)
 
         if not track:
             return None
@@ -87,8 +90,23 @@ class Track:
                 Segment.refresh(segment)
 
     @staticmethod
-    def from_xml(file: QgsLayerTreeGroup, wpt: ET.Element):
-        print(f'Track::from_xml{file}, {wpt})')
+    def from_xml(file: QgsLayerTreeGroup, trk: ET.Element):
+        print(f'Track::from_xml{file}, {trk})')
+
+        trk_name = trk.find('name')
+
+        if trk_name is not None:
+            name = trk_name.text
+        else:
+            name = None
+
+        track = Track.create(file, name)
+
+        if not track:
+            return
+
+        for trkseg in trk.iter('trkseg'):
+            Segment.from_xml(track, trkseg)
 
     @staticmethod
     def to_xml(track: QgsLayerTreeGroup) -> Optional[ET.Element]:
@@ -97,7 +115,11 @@ class Track:
         if not track:
             return
 
+        name = ET.Element('name')
+        name.text = track.name()
+
         trk = ET.Element('trk')
+        trk.append(name)
 
         for segment in track.children():
             if track.customProperty('type') != 'track':

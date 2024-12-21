@@ -4,7 +4,7 @@ import xml.etree.ElementTree as ET
 
 from typing import Optional
 
-from qgis.core import QgsLayerTree, QgsLayerTreeGroup, QgsPointXY
+from qgis.core import QgsLayerTree, QgsLayerTreeGroup
 
 from .color import Color
 from .layer import Layer
@@ -18,7 +18,7 @@ from .waypoint import Waypoint
 class File:
     @staticmethod
     def new(name: str=None) -> Optional[QgsLayerTreeGroup]:
-        print('File::new()')
+        print(f'File::new({name})')
 
         files = Tree.get_root()
 
@@ -75,6 +75,8 @@ class File:
         if not file:
             return
 
+        file.setCustomProperty('fileName', file_name)
+
         waypoints = Tree.find_group(file, 'Waypoints')
 
         if not waypoints:
@@ -91,20 +93,26 @@ class File:
     def save(file: QgsLayerTreeGroup):
         print(f'File::save({file})')
 
-        file_name = Utils.get_file_name_from_dialog()
-
-        if not file_name:
-            return
-
         if not file:
             return
+
+        file_name = file.customProperty('fileName')
+
+        if not file_name:
+            file_name = Utils.get_file_name_from_dialog()
+
+            if not file_name:
+                return
+
+        file.setName(os.path.basename(file_name))
+        file.setCustomProperty('fileName', file_name)
 
         waypoints = Tree.find_group(file, 'Waypoints')
 
         if not waypoints:
             return
 
-        gpx = ET.Element('gpx')
+        gpx = ET.Element('gpx', version='1.0', xmlns='http://www.topografix.com/GPX/1/0')
 
         wpts = Waypoint.to_xml(waypoints)
 
@@ -115,7 +123,6 @@ class File:
 
         if not tracks:
             return None
-
 
         for track in tracks.children():
             if track.customProperty('type') != 'track':
@@ -135,7 +142,7 @@ class File:
 
     @staticmethod
     def close(file: QgsLayerTreeGroup):
-        print('File::close()')
+        print(f'File::close({file})')
 
         if not file:
             return
