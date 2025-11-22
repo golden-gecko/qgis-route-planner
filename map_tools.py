@@ -1,4 +1,4 @@
-from qgis.core import QgsGeometry, QgsPoint, QgsVectorLayer, QgsWkbTypes
+from qgis.core import QgsGeometry, QgsPoint, QgsWkbTypes
 from qgis.gui import QgsMapTool
 from qgis.PyQt.QtCore import Qt
 
@@ -6,7 +6,7 @@ from .track import Track
 from .utils import Utils
 
 
-class PointAdd(QgsMapTool):
+class PointCreateStart(QgsMapTool):
     def __init__(self, iface, canvas):
         QgsMapTool.__init__(self, canvas)
 
@@ -30,7 +30,34 @@ class PointAdd(QgsMapTool):
         Utils.refresh_position(layer)
         layer.commitChanges()
 
-        Track.refresh(track)
+        Track.refresh_point_create_start(track, layer.featureCount())
+
+
+class PointCreateEnd(QgsMapTool):
+    def __init__(self, iface, canvas):
+        QgsMapTool.__init__(self, canvas)
+
+        self.iface = iface
+        self.canvas = canvas
+
+        self.setCursor(Qt.CrossCursor)
+
+    def canvasReleaseEvent(self, event):
+        track = Track.get_active(self.iface)
+        layer = Utils.get_or_create_point_layer(track)
+        point = self.toLayerCoordinates(layer, event.pos())
+
+        feature = Utils.create_point(QgsPoint(point.x(), point.y()), layer.fields())
+
+        layer.startEditing()
+        layer.addFeature(feature)
+        layer.commitChanges()
+
+        layer.startEditing()
+        Utils.refresh_position(layer)
+        layer.commitChanges()
+
+        Track.refresh_point_create_end(track, layer.featureCount())
 
 
 class PointDelete(QgsMapTool):
@@ -51,6 +78,8 @@ class PointDelete(QgsMapTool):
         for feature in layer.getFeatures():
             if feature.geometry().type() == QgsWkbTypes.PointGeometry:
                 if feature.geometry().intersects(buffer):
+                    position = feature.attribute('position')
+
                     layer.startEditing()
                     layer.deleteFeature(feature.id())
                     layer.commitChanges()
@@ -59,7 +88,7 @@ class PointDelete(QgsMapTool):
                     Utils.refresh_position(layer)
                     layer.commitChanges()
 
-                    Track.refresh(track)
+                    Track.refresh_point_delete(track, position)
 
                     break
 
@@ -99,4 +128,4 @@ class PointMove(QgsMapTool):
             self.layer.changeGeometry(self.feature, QgsGeometry.fromPoint(QgsPoint(point.x(), point.y())))
             self.layer.commitChanges()
 
-            Track.refresh(self.track)
+            Track.refresh_point_move(self.track, self.layer.getFeature(self.feature).attribute('position'))

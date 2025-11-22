@@ -12,6 +12,8 @@ class Google:
 
     @staticmethod
     def get_direction_as_points(a, b):
+        print(f'Google::get_direction_as_points({a}, {b})')
+
         result = Google.get_direction(a, b)
 
         if len(result) <= 0:
@@ -63,5 +65,7 @@ class Google:
             prev_x += coords[i + 1]
             prev_y += coords[i]
             points.append((round(prev_x, 6), round(prev_y, 6)))
+
+        print(f'Google::get_direction_as_points({a}, {b}) - Got {len(points)} points')
 
         return points

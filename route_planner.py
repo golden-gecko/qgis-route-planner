@@ -83,11 +83,12 @@ class RoutePlanner:
 
             self.dockwidget.closingPlugin.connect(self.onClosePlugin)
 
-            self.dockwidget.buttonTrackAdd.clicked.connect(lambda : Track.add(self.iface))
+            self.dockwidget.buttonTrackCreate.clicked.connect(lambda : Track.create(self.iface))
             self.dockwidget.buttonTrackDelete.clicked.connect(lambda: Track.delete(self.iface))
             self.dockwidget.buttonTrackRefresh.clicked.connect(lambda: Track.refresh_active(self.iface))
 
-            self.dockwidget.buttonPointAdd.clicked.connect(lambda: Point.add(self.iface))
+            self.dockwidget.buttonPointCreateStart.clicked.connect(lambda: Point.create_start(self.iface))
+            self.dockwidget.buttonPointCreateEnd.clicked.connect(lambda: Point.create_end(self.iface))
             self.dockwidget.buttonPointDelete.clicked.connect(lambda: Point.delete(self.iface))
             self.dockwidget.buttonPointMove.clicked.connect(lambda: Point.move(self.iface))
 
