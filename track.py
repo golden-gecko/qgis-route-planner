@@ -2,7 +2,7 @@ import xml.etree.ElementTree as ET
 
 from typing import Optional
 
-from qgis.core import QgsDistanceArea, QgsLayerTree, QgsLayerTreeGroup
+from qgis.core import QgsLayerTree, QgsLayerTreeGroup
 
 from .segment import Segment
 from .tree import Tree
@@ -20,7 +20,7 @@ class Track:
             return None
 
         if not name:
-            name = Utils.generate_name('Track', tracks)
+            name = Utils.generate_name('Track', len(tracks.children()))
 
         track = Tree.create_group(tracks, name)
 
@@ -71,6 +71,8 @@ class Track:
 
         return None
 
+    """
+    TODO: Fix.
     @staticmethod
     def get_length(track: QgsLayerTreeGroup) -> float:
         path_layer = Track.get_or_create_path_layer(track)
@@ -82,12 +84,23 @@ class Track:
         d.setEllipsoid('WGS84')
 
         return sum([d.measureLength(feature.geometry()) for feature in path_layer.getFeatures()]) / 1000.0
+    """
 
     @staticmethod
     def refresh(track: QgsLayerTreeGroup):
+        print(f'Track::refresh({track})')
+
         for segment in track.children():
             if segment.customProperty('type') == 'segment':
                 Segment.refresh(segment)
+
+    @staticmethod
+    def optimize(track: QgsLayerTreeGroup):
+        print(f'Track::optimize({track})')
+
+        for segment in track.children():
+            if segment.customProperty('type') == 'segment':
+                Segment.optimize(segment)
 
     @staticmethod
     def from_xml(file: QgsLayerTreeGroup, trk: ET.Element):

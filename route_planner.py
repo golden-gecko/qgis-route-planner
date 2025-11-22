@@ -7,7 +7,7 @@ from qgis.PyQt.QtWidgets import QAction
 from .context_menu import ContextMenu
 from .file import File
 from .iface import Iface
-from .map_tools import PointCreateEnd, PointCreateMiddle, PointCreateStart, PointDelete, PointMove, WaypointCreate, WaypointDelete, WaypointMove
+from .map_tools import Edit, PointCreateEnd, PointCreateMiddle, PointCreateStart, PointDelete, PointMove, WaypointCreate, WaypointDelete, WaypointMove
 from .options import Options
 from .route_planner_dockwidget import RoutePlannerDockWidget
 from .segment import Segment
@@ -73,6 +73,10 @@ class RoutePlanner:
 
             self.dockwidget.closingPlugin.connect(self.onClosePlugin)
 
+            # TODO: Does not work.
+            # self.dockwidget.buttonSelect.clicked.connect(lambda: self.iface.mapCanvas().unsetMapTool(None))
+            self.dockwidget.buttonEdit.clicked.connect(lambda: RoutePlanner.set_edit_tool(self.iface))
+
             # setup file buttons
             self.dockwidget.buttonFileNew.clicked.connect(lambda: Segment.create(Track.create(File.new())))
             self.dockwidget.buttonFileOpen.clicked.connect(lambda: File.open())
@@ -87,11 +91,13 @@ class RoutePlanner:
             # setup track buttons
             self.dockwidget.buttonTrackCreate.clicked.connect(lambda : Segment.create(Track.create(File.get_active(self.iface))))
             self.dockwidget.buttonTrackRefresh.clicked.connect(lambda: Track.refresh(Track.get_active(self.iface)))
+            self.dockwidget.buttonTrackOptimize.clicked.connect(lambda: Track.optimize(Track.get_active(self.iface)))
             self.dockwidget.buttonTrackDelete.clicked.connect(lambda: Track.delete(Track.get_active(self.iface)))
 
             # setup segment buttons
             self.dockwidget.buttonSegmentCreate.clicked.connect(lambda : Segment.create(Track.get_active(self.iface)))
             self.dockwidget.buttonSegmentRefresh.clicked.connect(lambda: Segment.refresh(Segment.get_active(self.iface)))
+            self.dockwidget.buttonSegmentOptimize.clicked.connect(lambda: Segment.optimize(Segment.get_active(self.iface)))
             self.dockwidget.buttonSegmentDelete.clicked.connect(lambda: Segment.delete(Segment.get_active(self.iface)))
 
             # setup point buttons
@@ -112,6 +118,11 @@ class RoutePlanner:
             self.dockwidget.show()
 
             ContextMenu.create(self.iface.mapCanvas())
+
+    @staticmethod
+    def set_edit_tool(iface):
+        canvas = iface.mapCanvas()
+        canvas.setMapTool(Edit(iface, canvas))
 
     @staticmethod
     def set_waypoint_create(iface):

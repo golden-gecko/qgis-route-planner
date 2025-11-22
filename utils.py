@@ -102,8 +102,8 @@ class Utils:
         layer.commitChanges()
 
     @staticmethod
-    def generate_name(prefix: str, items: QgsLayerTreeGroup) -> str:
-        return f'{prefix} {len(items.children()) + 1}'
+    def generate_name(prefix: str, count: int) -> str:
+        return f'{prefix} {count + 1}'
 
     @staticmethod
     def set_crs(layer: QgsVectorLayer, code: str):
