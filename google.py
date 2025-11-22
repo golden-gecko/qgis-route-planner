@@ -6,6 +6,8 @@ import googlemaps
 class Google:
     @staticmethod
     def get_direction(a, b) -> list:
+        print(f'Google::get_direction({a}, {b})')
+
         client = googlemaps.Client(key='AIzaSyBw1mZbt__9-Ch863hR5K6c9_SPbZqIKrE')
 
         return client.directions(a, b, mode='driving', departure_time=datetime.datetime.now())

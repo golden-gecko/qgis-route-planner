@@ -1,0 +1,85 @@
+from qgis.core import QgsGeometry, QgsPoint, QgsWkbTypes
+from qgis.gui import QgsMapCanvas, QgsMapMouseEvent
+
+from qgis.PyQt.QtWidgets import QMenu
+
+from .iface import get_iface
+from .point import Point
+from .track import Track
+from .utils import Utils
+
+class ContextMenu:
+    sub_menu = None
+
+    @staticmethod
+    def create(canvas: QgsMapCanvas):
+        print('ContextMenu::create()')
+
+        canvas.contextMenuAboutToShow.connect(ContextMenu.populate)
+
+    @staticmethod
+    def populate(menu: QMenu, event: QgsMapMouseEvent):
+        print(f'ContextMenu::populate({menu}, {event})')
+
+        point = event.mapPoint()
+        point = Utils.transform_crs(QgsGeometry.fromPointXY(point), 3857, 4326).asPoint()
+
+        ContextMenu.sub_menu = menu.addMenu('My Menu')
+
+        action = ContextMenu.sub_menu.addAction('Create at start')
+        action.triggered.connect(lambda: ContextMenu.create_at_start(point))
+
+        action = ContextMenu.sub_menu.addAction('Create in the middle')
+        action.triggered.connect(lambda: ContextMenu.create_in_the_middle(point))
+
+        action = ContextMenu.sub_menu.addAction('Create at end')
+        action.triggered.connect(lambda: ContextMenu.create_at_end(point))
+
+    @staticmethod
+    def create_at_start(point):
+        print(f'ContextMenu::create_at_start({point})')
+
+        track = Track.get_active(get_iface())
+        layer = Utils.get_or_create_point_layer(track)
+
+        Point.create_start(layer, point)
+        Track.refresh_point_create_start(track, 1)
+
+    @staticmethod
+    def create_in_the_middle(point):
+        print(f'ContextMenu::create_in_the_middle({point})')
+
+        track = Track.get_active(get_iface())
+        layer = Utils.get_or_create_point_layer(track)
+        buffer = QgsGeometry.fromPoint(QgsPoint(point.x(), point.y())).buffer(0.001,5)
+
+        position = 1
+
+        for feature in Utils.get_or_create_path_layer(track).getFeatures():
+            print(f'feature {feature}')
+
+            if feature.geometry().type() == QgsWkbTypes.LineGeometry:
+                if feature.geometry().intersects(buffer):
+                    # self.layer.getFeature(self.feature).attribute('position')
+
+                    # for vertex in feature.geometry().vertices():
+                    # print(f'  vertex {vertex}')
+
+                    print(f'position: {position}')
+
+                    Point.create_middle(layer, point, position + 1)
+                    Track.refresh_point_create_middle(track, position + 1)
+
+                    break
+
+            position += 1
+
+    @staticmethod
+    def create_at_end(point):
+        print(f'ContextMenu::create_at_end({point})')
+
+        track = Track.get_active(get_iface())
+        layer = Utils.get_or_create_point_layer(track)
+
+        Point.create_end(layer, point)
+        Track.refresh_point_create_end(track, layer.featureCount())
