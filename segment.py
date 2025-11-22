@@ -77,6 +77,56 @@ class Segment:
         Utils.update_layer(points, paths, lines)
 
     @staticmethod
+    def refresh_points(segment: QgsLayerTreeGroup):
+        print(f'Segment::refresh_points({segment})')
+
+        if not segment:
+            return
+
+        points = Layer.get_or_create_points(segment)
+
+        if not points:
+            return
+
+        paths = Layer.get_or_create_paths(segment)
+
+        if not paths:
+            return
+
+        points.startEditing()
+        paths.startEditing()
+
+        results = []
+
+        for path in paths.getFeatures():
+            for part in path.geometry().parts():
+                for vertex in part.vertices():
+                    results.append((vertex.x(), vertex.y()))
+
+        for feature in points.getFeatures():
+            points.deleteFeature(feature.id())
+
+        for feature in paths.getFeatures():
+            paths.deleteFeature(feature.id())
+
+        chunk_size = math.ceil(len(results) / (Options.points_per_segment - 1))
+
+        for i in range(math.ceil(len(results) / chunk_size)):
+            chunk = results[i * chunk_size:(i + 1) * chunk_size]
+
+            points.addFeature(Point.create_feature(QgsPoint(chunk[0][0], chunk[0][1]), points.fields()))
+            paths.addFeature(Utils.create_polyline(chunk, paths.fields()))
+
+        points.addFeature(Point.create_feature(QgsPoint(results[-1][0], results[-1][1]), points.fields()))
+
+        points.commitChanges()
+        paths.commitChanges()
+
+        points.startEditing()
+        Utils.refresh_position(points)
+        points.commitChanges()
+
+    @staticmethod
     def optimize(segment: QgsLayerTreeGroup):
         print(f'Segment::optimize({segment})')
 
@@ -360,7 +410,7 @@ class Segment:
         points.startEditing()
         paths.startEditing()
 
-        chunk_size = 30
+        chunk_size = math.ceil(len(results) / (Options.points_per_segment - 1))
 
         for i in range(math.ceil(len(results) / chunk_size)):
             chunk = results[i * chunk_size:(i + 1) * chunk_size]
