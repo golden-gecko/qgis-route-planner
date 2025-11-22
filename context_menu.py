@@ -1,4 +1,4 @@
-from qgis.core import QgsGeometry, QgsPoint, QgsWkbTypes
+from qgis.core import QgsGeometry, QgsWkbTypes
 from qgis.gui import QgsMapCanvas, QgsMapMouseEvent
 
 from qgis.PyQt.QtWidgets import QMenu
@@ -51,7 +51,7 @@ class ContextMenu:
 
         track = Track.get_active(Iface.get())
         layer = Track.get_or_create_point_layer(track)
-        buffer = QgsGeometry.fromPoint(QgsPoint(point.x(), point.y())).buffer(0.001,5)
+        buffer = Utils.create_buffer(point)
 
         position = 1
 
