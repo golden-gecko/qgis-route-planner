@@ -10,7 +10,7 @@ class Google:
     def get_direction(a, b, mode: str='driving') -> list:
         print(f'Google::get_direction({a}, {b}, {mode})')
 
-        client = googlemaps.Client(key='AIzaSyCWwagxS0q0xNXEwcZTcBA-rrEBrJTfn6I')
+        client = googlemaps.Client(key='INSERT_KEY_HERE')
 
         return client.directions(a, b, mode=mode, departure_time=datetime.datetime.now())
 
