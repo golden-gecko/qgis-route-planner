@@ -2,7 +2,8 @@ from typing import Optional
 
 from qgis.core import (QgsFeature, QgsGeometry, QgsLayerTreeGroup, QgsPoint, QgsProject, QgsSymbol,
                        QgsVectorLayer,QgsTextBufferSettings, QgsTextFormat, QgsPalLayerSettings, QgsPointXY,
-                       QgsVectorLayerSimpleLabeling, Qgis, QgsCoordinateReferenceSystem, QgsCoordinateTransform)
+                       QgsVectorLayerSimpleLabeling, Qgis, QgsCoordinateReferenceSystem, QgsCoordinateTransform,
+                       QgsDistanceArea)
 from qgis.PyQt.QtGui import QColor, QFont
 from qgis.PyQt.QtWidgets import QFileDialog, QMessageBox
 
@@ -133,3 +134,10 @@ class Utils:
     @staticmethod
     def confirm(title: str) -> bool:
         return QMessageBox.question(Iface.get().mainWindow(), title, title, QMessageBox.Yes, QMessageBox.No) == QMessageBox.Yes
+
+    @staticmethod
+    def get_distance(paths) -> float:
+        d = QgsDistanceArea()
+        d.setEllipsoid('WGS84')
+
+        return sum([d.measureLength(feature.geometry()) for feature in paths.getFeatures()]) / 1000.0

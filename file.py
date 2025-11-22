@@ -8,6 +8,7 @@ from qgis.core import QgsLayerTree, QgsLayerTreeGroup
 
 from .color import Color
 from .layer import Layer
+from .segment import Segment
 from .symbol import Symbol
 from .track import Track
 from .tree import Tree
@@ -89,6 +90,8 @@ class File:
         for trk in xml_doc.iter('trk'):
             Track.from_xml(file, trk)
 
+        File.refresh_distance(file)
+
     @staticmethod
     def save(file: QgsLayerTreeGroup):
         print(f'File::save({file})')
@@ -104,8 +107,10 @@ class File:
             if not file_name:
                 return
 
-        file.setName(os.path.basename(file_name))
-        file.setCustomProperty('fileName', file_name)
+            file.setName(os.path.basename(file_name))
+            file.setCustomProperty('fileName', file_name)
+
+            File.refresh_distance(file)
 
         waypoints = Tree.find_group(file, 'Waypoints')
 
@@ -122,7 +127,7 @@ class File:
         tracks = Tree.find_group(file, 'Tracks')
 
         if not tracks:
-            return None
+            return
 
         for track in tracks.children():
             if track.customProperty('type') != 'track':
@@ -170,3 +175,67 @@ class File:
             node = node.parent()
 
         return None
+
+    @staticmethod
+    def refresh_distance(file: QgsLayerTreeGroup):
+        print(f'File::refresh_distance{file})')
+
+        if not file:
+            return
+
+        files = Tree.get_root()
+
+        if not files:
+            return
+
+        file_name = file.customProperty('fileName')
+
+        if file_name:
+            file.setName(f'{os.path.basename(file_name)} [{File.get_distance(file):.2f} km]')
+        else:
+            file.setName(f'File {len(files.children())} [{File.get_distance(file):.2f} km]')
+
+        tracks = Tree.find_group(file, 'Tracks')
+
+        if tracks:
+            for track in tracks.children():
+                if track.customProperty('type') != 'track':
+                    continue
+
+                name = track.name()
+                name = re.sub(r'[[\d.]+ km]', '', name)
+                name = name.strip()
+
+                track.setName(f'{name} [{Track.get_distance(track):.2f} km]')
+
+                for segment in track.children():
+                    if segment.customProperty('type') != 'segment':
+                        continue
+
+                    name = track.name()
+                    name = re.sub(r'[[\d.]+ km]', '', name)
+                    name = name.strip()
+
+                    segment.setName(f'{name} [{Segment.get_distance(segment):.2f} km]')
+
+    @staticmethod
+    def get_distance(file: QgsLayerTreeGroup) -> float:
+        print(f'File::get_distance{file})')
+
+        if not file:
+            return 0.0
+
+        tracks = Tree.find_group(file, 'Tracks')
+
+        if not tracks:
+            return 0.0
+
+        distance = 0.0
+
+        for track in tracks.children():
+            if track.customProperty('type') != 'track':
+                continue
+
+            distance += Track.get_distance(track)
+
+        return distance
