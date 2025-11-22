@@ -8,7 +8,6 @@ from .options import Options
 from .point import Point
 from .route_planner_dockwidget import RoutePlannerDockWidget
 from .track import Track
-from .utils import Utils
 
 from .resources import *
 
@@ -55,8 +54,6 @@ class RoutePlanner:
 
         self.add_action(':/plugins/route_planner/icon.png', text='Show', callback=self.run, parent=self.iface.mainWindow())
 
-        self.subscribe_to_layers()
-
     def onClosePlugin(self):
         print('RoutePlanner::onClosePlugin()')
 
@@ -83,7 +80,7 @@ class RoutePlanner:
 
             self.dockwidget.closingPlugin.connect(self.onClosePlugin)
 
-            self.dockwidget.buttonTrackCreate.clicked.connect(lambda : Track.create(self.iface))
+            self.dockwidget.buttonTrackCreate.clicked.connect(lambda : Track.create())
             self.dockwidget.buttonTrackDelete.clicked.connect(lambda: Track.delete(self.iface))
             self.dockwidget.buttonTrackRefresh.clicked.connect(lambda: Track.refresh_active(self.iface))
 
@@ -98,20 +95,3 @@ class RoutePlanner:
 
             self.iface.addDockWidget(Qt.LeftDockWidgetArea, self.dockwidget)
             self.dockwidget.show()
-
-    def subscribe_to_layers(self):
-        print('RoutePlanner::subscribe_to_layers()')
-
-        routes = Utils.get_or_create_tracks_directory()
-
-        if not routes:
-            return
-
-        """
-        for child in routes.children():
-            for c in child.children():
-                if c.name() == 'Points': # TODO: Refactor.
-                    c.layer().editingStopped.connect(self.route_refresh)
-                    # c.layer().geometryChanged.connect(self.route_refresh)
-                    # c.layer().featureAdded.connect(self.route_refresh)
-        """

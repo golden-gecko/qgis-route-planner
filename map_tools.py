@@ -1,4 +1,4 @@
-from qgis.core import QgsGeometry, QgsPoint, QgsWkbTypes
+from qgis.core import QgsFeature, QgsGeometry, QgsPoint, QgsWkbTypes
 from qgis.gui import QgsMapTool
 from qgis.PyQt.QtCore import Qt
 
@@ -20,17 +20,29 @@ class PointCreateStart(QgsMapTool):
         layer = Utils.get_or_create_point_layer(track)
         point = self.toLayerCoordinates(layer, event.pos())
 
-        feature = Utils.create_point(QgsPoint(point.x(), point.y()), layer.fields())
-
         layer.startEditing()
-        layer.addFeature(feature)
+
+        geometries = [
+            Utils.create_point_geometry(QgsPoint(point.x(), point.y()))
+        ]
+
+        for feature in layer.getFeatures():
+            geometries.append(feature.geometry())
+            layer.deleteFeature(feature.id())
+
+        for geometry in geometries:
+            feature = QgsFeature(layer.fields())
+            feature.setGeometry(geometry)
+
+            layer.addFeature(feature)
+
         layer.commitChanges()
 
         layer.startEditing()
         Utils.refresh_position(layer)
         layer.commitChanges()
 
-        Track.refresh_point_create_start(track, layer.featureCount())
+        Track.refresh_point_create_start(track, 1)
 
 
 class PointCreateEnd(QgsMapTool):
