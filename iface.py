@@ -1,11 +1,10 @@
-global_iface = None
+class Iface:
+    instance = None
 
+    @staticmethod
+    def get():
+        return Iface.instance
 
-def get_iface():
-    return global_iface
-
-
-def set_iface(iface):
-    global global_iface
-
-    global_iface = iface
+    @staticmethod
+    def set(iface):
+        Iface.instance = iface

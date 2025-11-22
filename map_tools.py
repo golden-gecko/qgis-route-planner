@@ -18,7 +18,7 @@ class PointCreateStart(QgsMapTool):
 
     def canvasReleaseEvent(self, event):
         track = Track.get_active(self.iface)
-        layer = Utils.get_or_create_point_layer(track)
+        layer = Track.get_or_create_point_layer(track)
         point = self.toLayerCoordinates(layer, event.pos())
 
         Point.create_start(layer, point)
@@ -36,24 +36,15 @@ class PointCreateMiddle(QgsMapTool):
 
     def canvasReleaseEvent(self, event):
         track = Track.get_active(self.iface)
-        layer = Utils.get_or_create_point_layer(track)
+        layer = Track.get_or_create_point_layer(track)
         point = self.toLayerCoordinates(layer, event.pos())
         buffer = QgsGeometry.fromPoint(QgsPoint(point.x(), point.y())).buffer(0.001,5)
 
         position = 1
 
-        for feature in Utils.get_or_create_path_layer(track).getFeatures():
-            print(f'feature {feature}')
-
+        for feature in Track.get_or_create_path_layer(track).getFeatures():
             if feature.geometry().type() == QgsWkbTypes.LineGeometry:
                 if feature.geometry().intersects(buffer):
-                    # self.layer.getFeature(self.feature).attribute('position')
-
-                    # for vertex in feature.geometry().vertices():
-                    # print(f'  vertex {vertex}')
-
-                    print(f'position: {position}')
-
                     Point.create_middle(layer, point, position + 1)
                     Track.refresh_point_create_middle(track, position + 1)
 
@@ -73,7 +64,7 @@ class PointCreateEnd(QgsMapTool):
 
     def canvasReleaseEvent(self, event):
         track = Track.get_active(self.iface)
-        layer = Utils.get_or_create_point_layer(track)
+        layer = Track.get_or_create_point_layer(track)
         point = self.toLayerCoordinates(layer, event.pos())
 
         Point.create_end(layer, point)
@@ -95,7 +86,7 @@ class PointMove(QgsMapTool):
 
     def canvasPressEvent(self, event):
         self.track = Track.get_active(self.iface)
-        self.layer = Utils.get_or_create_point_layer(self.track)
+        self.layer = Track.get_or_create_point_layer(self.track)
 
         point = self.toLayerCoordinates(self.layer, event.pos())
         buffer = QgsGeometry.fromPoint(QgsPoint(point.x(), point.y())).buffer(0.001,5)
@@ -126,7 +117,7 @@ class PointDelete(QgsMapTool):
 
     def canvasReleaseEvent(self, event):
         track = Track.get_active(self.iface)
-        layer = Utils.get_or_create_point_layer(track)
+        layer = Track.get_or_create_point_layer(track)
         point = self.toLayerCoordinates(layer, event.pos())
 
         position = Point.delete(layer, point)
