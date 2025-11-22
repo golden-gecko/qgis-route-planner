@@ -1,4 +1,4 @@
-from qgis.core import QgsFeature, QgsGeometry, QgsPoint, QgsVectorLayer, QgsWkbTypes
+from qgis.core import QgsFeature, QgsGeometry, QgsPoint, QgsPointXY, QgsVectorLayer, QgsWkbTypes
 
 from .utils import Utils
 
@@ -45,9 +45,7 @@ class Point:
 
         geometries = []
 
-        for feature in layer.getFeatures():
-            local_position = feature.attribute('position')
-
+        for local_position, feature in enumerate(layer.getFeatures(), start=1):
             if local_position == position:
                 geometries.append(Point.create_geometry(QgsPoint(point.x(), point.y())))
 
@@ -82,11 +80,9 @@ class Point:
     def delete(layer: QgsVectorLayer, point):
         buffer = QgsGeometry.fromPoint(QgsPoint(point.x(), point.y())).buffer(0.001,5)
 
-        for feature in layer.getFeatures():
+        for position, feature in enumerate(layer.getFeatures(), start=1):
             if feature.geometry().type() == QgsWkbTypes.PointGeometry:
                 if feature.geometry().intersects(buffer):
-                    position = feature.attribute('position')
-
                     layer.startEditing()
                     layer.deleteFeature(feature.id())
                     layer.commitChanges()
@@ -100,7 +96,39 @@ class Point:
         return None
 
     @staticmethod
-    def move(layer: QgsVectorLayer, feature, point):
+    def move(layer: QgsVectorLayer, feature: int, position: int, point: QgsPointXY):
+        """
+        print('===', layer)
+        print('===', feature)
+        print('===', point)
+
+        geometries = []
+
+        layer.startEditing()
+
+        for local_position, local_feature in enumerate(layer.getFeatures(), start=1):
+            if local_position == position:
+                geometries.append(QgsGeometry.fromPoint(QgsPoint(point.x(), point.y())))
+            else:
+                geometries.append(local_feature.geometry())
+
+            layer.deleteFeature(local_feature.id())
+
+        print('===', geometries)
+
+        for geometry in geometries:
+            feature = QgsFeature(layer.fields())
+            feature.setGeometry(geometry)
+
+            layer.addFeature(feature)
+
+        layer.commitChanges()
+
+        layer.startEditing()
+        Utils.refresh_position(layer)
+        layer.commitChanges()
+        """
+
         layer.startEditing()
         layer.changeGeometry(feature, QgsGeometry.fromPoint(QgsPoint(point.x(), point.y())))
         layer.commitChanges()

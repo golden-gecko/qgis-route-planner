@@ -1,14 +1,13 @@
 from qgis.core import QgsGeometry, QgsPoint, QgsWkbTypes
-from qgis.gui import QgsMapTool
+from qgis.gui import QgsMapCanvas, QgsMapTool
 from qgis.PyQt.QtCore import Qt
 
 from .point import Point
 from .track import Track
-from .utils import Utils
 
 
 class PointCreateStart(QgsMapTool):
-    def __init__(self, iface, canvas):
+    def __init__(self, iface, canvas: QgsMapCanvas):
         QgsMapTool.__init__(self, canvas)
 
         self.iface = iface
@@ -26,7 +25,7 @@ class PointCreateStart(QgsMapTool):
 
 
 class PointCreateMiddle(QgsMapTool):
-    def __init__(self, iface, canvas):
+    def __init__(self, iface, canvas: QgsMapCanvas):
         QgsMapTool.__init__(self, canvas)
 
         self.iface = iface
@@ -54,7 +53,7 @@ class PointCreateMiddle(QgsMapTool):
 
 
 class PointCreateEnd(QgsMapTool):
-    def __init__(self, iface, canvas):
+    def __init__(self, iface, canvas: QgsMapCanvas):
         QgsMapTool.__init__(self, canvas)
 
         self.iface = iface
@@ -64,7 +63,15 @@ class PointCreateEnd(QgsMapTool):
 
     def canvasReleaseEvent(self, event):
         track = Track.get_active(self.iface)
+
+        if not track:
+            return
+
         layer = Track.get_or_create_point_layer(track)
+
+        if not layer:
+            return
+
         point = self.toLayerCoordinates(layer, event.pos())
 
         Point.create_end(layer, point)
@@ -72,7 +79,7 @@ class PointCreateEnd(QgsMapTool):
 
 
 class PointMove(QgsMapTool):
-    def __init__(self, iface, canvas):
+    def __init__(self, iface, canvas: QgsMapCanvas):
         QgsMapTool.__init__(self, canvas)
 
         self.iface = iface
@@ -81,19 +88,28 @@ class PointMove(QgsMapTool):
         self.track = None
         self.layer = None
         self.feature = None
+        self.local_position = 0
 
         self.setCursor(Qt.CrossCursor)
 
     def canvasPressEvent(self, event):
         self.track = Track.get_active(self.iface)
+
+        if not self.track:
+            return
+
         self.layer = Track.get_or_create_point_layer(self.track)
+
+        if not self.layer:
+            return
 
         point = self.toLayerCoordinates(self.layer, event.pos())
         buffer = QgsGeometry.fromPoint(QgsPoint(point.x(), point.y())).buffer(0.001,5)
 
-        for feature in self.layer.getFeatures():
+        for local_position, feature in enumerate(self.layer.getFeatures(), start=1):
             if feature.geometry().type() == QgsWkbTypes.PointGeometry:
                 if feature.geometry().intersects(buffer):
+                    self.local_position = local_position
                     self.feature = feature.id()
 
                     break
@@ -102,12 +118,12 @@ class PointMove(QgsMapTool):
         point = self.toLayerCoordinates(self.layer, event.pos())
 
         if self.feature:
-            Point.move(self.layer, self.feature, point)
-            Track.refresh_point_move(self.track, self.layer.getFeature(self.feature).attribute('position'))
+            Point.move(self.layer, self.feature, self.local_position, point)
+            Track.refresh_point_move(self.track, self.local_position)
 
 
 class PointDelete(QgsMapTool):
-    def __init__(self, iface, canvas):
+    def __init__(self, iface, canvas: QgsMapCanvas):
         QgsMapTool.__init__(self, canvas)
 
         self.iface = iface
@@ -117,7 +133,15 @@ class PointDelete(QgsMapTool):
 
     def canvasReleaseEvent(self, event):
         track = Track.get_active(self.iface)
+
+        if not track:
+            return
+
         layer = Track.get_or_create_point_layer(track)
+
+        if not layer:
+            return
+
         point = self.toLayerCoordinates(layer, event.pos())
 
         position = Point.delete(layer, point)
