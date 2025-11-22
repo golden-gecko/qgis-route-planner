@@ -54,9 +54,9 @@
        </widget>
       </item>
       <item>
-       <widget class="QPushButton" name="buttonPointCreateEnd">
+       <widget class="QPushButton" name="buttonPointCreateMiddle">
         <property name="text">
-         <string>Create point (end)</string>
+         <string>Create point (middle)</string>
         </property>
         <property name="checkable">
          <bool>true</bool>
@@ -67,15 +67,9 @@
        </widget>
       </item>
       <item>
-       <widget class="QToolButton" name="buttonPointDelete">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
+       <widget class="QPushButton" name="buttonPointCreateEnd">
         <property name="text">
-         <string>Delete point</string>
+         <string>Create point (end)</string>
         </property>
         <property name="checkable">
          <bool>true</bool>
@@ -104,6 +98,25 @@
         </property>
        </widget>
       </item>
+      <item>
+       <widget class="QToolButton" name="buttonPointDelete">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="text">
+         <string>Delete point</string>
+        </property>
+        <property name="checkable">
+         <bool>true</bool>
+        </property>
+        <property name="autoExclusive">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
      </layout>
     </item>
     <item row="0" column="0">
@@ -116,9 +129,9 @@
        </widget>
       </item>
       <item>
-       <widget class="QPushButton" name="buttonTrackDelete">
+       <widget class="QPushButton" name="buttonTrackEdit">
         <property name="text">
-         <string>Delete track</string>
+         <string>Edit track</string>
         </property>
        </widget>
       </item>
@@ -126,6 +139,13 @@
        <widget class="QPushButton" name="buttonTrackRefresh">
         <property name="text">
          <string>Refresh track</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="buttonTrackDelete">
+        <property name="text">
+         <string>Delete track</string>
         </property>
        </widget>
       </item>
