@@ -15,7 +15,7 @@
   </property>
   <widget class="QWidget" name="dockWidgetContents">
    <layout class="QGridLayout" name="gridLayout">
-    <item row="2" column="0">
+    <item row="3" column="0">
      <layout class="QHBoxLayout" name="horizontalLayout_6">
       <item>
        <widget class="QPushButton" name="buttonWaypointCreate">
@@ -58,48 +58,52 @@
       </item>
      </layout>
     </item>
-    <item row="1" column="0">
+    <item row="13" column="0">
+     <layout class="QFormLayout" name="formLayout_2">
+      <item row="0" column="0">
+       <widget class="QLabel" name="label_4">
+        <property name="text">
+         <string>TextLabel</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="1">
+       <widget class="QSpinBox" name="spinBox"/>
+      </item>
+      <item row="1" column="0">
+       <widget class="QLabel" name="label_5">
+        <property name="text">
+         <string>TextLabel</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="1">
+       <widget class="QSpinBox" name="spinBox_2"/>
+      </item>
+     </layout>
+    </item>
+    <item row="2" column="0">
      <widget class="Line" name="line_3">
       <property name="orientation">
        <enum>Qt::Horizontal</enum>
       </property>
      </widget>
     </item>
-    <item row="7" column="0">
+    <item row="8" column="0">
      <widget class="Line" name="line_2">
       <property name="orientation">
        <enum>Qt::Horizontal</enum>
       </property>
      </widget>
     </item>
-    <item row="9" column="0">
+    <item row="10" column="0">
      <widget class="Line" name="line">
       <property name="orientation">
        <enum>Qt::Horizontal</enum>
       </property>
      </widget>
     </item>
-    <item row="10" column="0">
-     <layout class="QHBoxLayout" name="horizontalLayout_2">
-      <item>
-       <widget class="QComboBox" name="optionRoutingProvider"/>
-      </item>
-      <item>
-       <widget class="QComboBox" name="optionRoutingMode"/>
-      </item>
-      <item>
-       <widget class="QCheckBox" name="optionRouting">
-        <property name="text">
-         <string>Routing</string>
-        </property>
-        <property name="checked">
-         <bool>true</bool>
-        </property>
-       </widget>
-      </item>
-     </layout>
-    </item>
-    <item row="5" column="0">
+    <item row="6" column="0">
      <widget class="Line" name="line_4">
       <property name="orientation">
        <enum>Qt::Horizontal</enum>
@@ -107,6 +111,36 @@
      </widget>
     </item>
     <item row="0" column="0">
+     <layout class="QHBoxLayout" name="horizontalLayout_7">
+      <item>
+       <widget class="QPushButton" name="buttonSelect">
+        <property name="text">
+         <string>Select</string>
+        </property>
+        <property name="checkable">
+         <bool>true</bool>
+        </property>
+        <property name="autoExclusive">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="buttonEdit">
+        <property name="text">
+         <string>Edit</string>
+        </property>
+        <property name="checkable">
+         <bool>true</bool>
+        </property>
+        <property name="autoExclusive">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </item>
+    <item row="1" column="0">
      <layout class="QHBoxLayout" name="horizontalLayout_5">
       <item>
        <widget class="QPushButton" name="buttonFileNew">
@@ -138,7 +172,7 @@
       </item>
      </layout>
     </item>
-    <item row="6" column="0">
+    <item row="7" column="0">
      <layout class="QHBoxLayout" name="horizontalLayout_3">
       <item>
        <widget class="QPushButton" name="buttonSegmentCreate">
@@ -155,6 +189,13 @@
        </widget>
       </item>
       <item>
+       <widget class="QPushButton" name="buttonSegmentOptimize">
+        <property name="text">
+         <string>Optimize segment</string>
+        </property>
+       </widget>
+      </item>
+      <item>
        <widget class="QPushButton" name="buttonSegmentDelete">
         <property name="text">
          <string>Delete segment</string>
@@ -163,7 +204,7 @@
       </item>
      </layout>
     </item>
-    <item row="8" column="0">
+    <item row="9" column="0">
      <layout class="QHBoxLayout" name="horizontalLayout_4">
       <item>
        <widget class="QToolButton" name="buttonPointCreateStart">
@@ -250,7 +291,54 @@
       </item>
      </layout>
     </item>
-    <item row="4" column="0">
+    <item row="11" column="0">
+     <layout class="QFormLayout" name="formLayout">
+      <property name="labelAlignment">
+       <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+      </property>
+      <property name="formAlignment">
+       <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+      </property>
+      <item row="0" column="0">
+       <widget class="QLabel" name="label">
+        <property name="text">
+         <string>Routing provider</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="1">
+       <widget class="QComboBox" name="optionRoutingProvider"/>
+      </item>
+      <item row="1" column="0">
+       <widget class="QLabel" name="label_2">
+        <property name="text">
+         <string>Routing mode</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="1">
+       <widget class="QComboBox" name="optionRoutingMode"/>
+      </item>
+      <item row="2" column="0">
+       <widget class="QLabel" name="label_3">
+        <property name="text">
+         <string>Routing enabled</string>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="1">
+       <widget class="QCheckBox" name="optionRouting">
+        <property name="text">
+         <string/>
+        </property>
+        <property name="checked">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </item>
+    <item row="5" column="0">
      <layout class="QHBoxLayout" name="horizontalLayout">
       <item>
        <widget class="QPushButton" name="buttonTrackCreate">
@@ -279,6 +367,13 @@
        </widget>
       </item>
       <item>
+       <widget class="QPushButton" name="buttonTrackOptimize">
+        <property name="text">
+         <string>Optimize track</string>
+        </property>
+       </widget>
+      </item>
+      <item>
        <widget class="QPushButton" name="buttonTrackDelete">
         <property name="text">
          <string>Delete track</string>
@@ -293,8 +388,15 @@
       </item>
      </layout>
     </item>
-    <item row="3" column="0">
+    <item row="4" column="0">
      <widget class="Line" name="line_5">
+      <property name="orientation">
+       <enum>Qt::Horizontal</enum>
+      </property>
+     </widget>
+    </item>
+    <item row="12" column="0">
+     <widget class="Line" name="line_6">
       <property name="orientation">
        <enum>Qt::Horizontal</enum>
       </property>

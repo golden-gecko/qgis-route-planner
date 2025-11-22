@@ -26,7 +26,7 @@ class File:
             return None
 
         if not name:
-            name = Utils.generate_name('File', files)
+            name = Utils.generate_name('File', len(files.children()))
 
         file = Tree.create_group(files, name, 'file')
 
@@ -112,7 +112,7 @@ class File:
         if not waypoints:
             return
 
-        gpx = ET.Element('gpx', version='1.0', xmlns='http://www.topografix.com/GPX/1/0')
+        gpx = ET.Element('gpx', version='1.1', xmlns='http://www.topografix.com/GPX/1/1')
 
         wpts = Waypoint.to_xml(waypoints)
 

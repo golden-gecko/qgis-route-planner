@@ -21,6 +21,93 @@ class MapTool(QgsMapTool):
         self.setCursor(Qt.CrossCursor)
 
 
+class Edit(MapTool):
+    def __init__(self, iface, canvas: QgsMapCanvas):
+        MapTool.__init__(self, iface, canvas)
+
+        self.feature = None
+        self.feature_position = None
+        self.feature_type = None
+
+    def canvasPressEvent(self, event):
+        print('Edit::canvasPressEvent()')
+
+        if event.button() != Qt.LeftButton:
+            return
+
+        self.feature = None
+        self.feature_position = None
+        self.feature_type = None
+
+        segment = Segment.get_active(self.iface)
+
+        if not segment:
+            return
+
+        # check if user is selecting a point
+        points = Layer.get_or_create_points(segment)
+
+        if not points:
+            return
+
+        point = self.toLayerCoordinates(points, event.pos())
+        buffer = Utils.create_buffer(point)
+
+        for feature_position, feature in enumerate(points.getFeatures(), start=1):
+            if feature.geometry().intersects(buffer):
+                self.feature = feature.id()
+                self.feature_position = feature_position
+                self.feature_type = 'point'
+
+                return
+
+        # check if user is selecting a path
+        paths = Layer.get_or_create_paths(segment)
+
+        if not paths:
+            return
+
+        point = self.toLayerCoordinates(paths, event.pos())
+        buffer = Utils.create_buffer(point)
+
+        for feature_position, feature in enumerate(paths.getFeatures(), start=1):
+            if feature.geometry().intersects(buffer):
+                self.feature = feature.id()
+                self.feature_position = feature_position
+                self.feature_type = 'path'
+
+                return
+
+    def canvasReleaseEvent(self, event):
+        print('Edit::canvasReleaseEvent()')
+
+        segment = Segment.get_active(self.iface)
+
+        if not segment:
+            return
+
+        points = Layer.get_or_create_points(segment)
+
+        if not points:
+            return
+
+        point = self.toLayerCoordinates(points, event.pos())
+
+        if self.feature and self.feature_position:
+            if self.feature_type == 'point':
+                if event.button() == Qt.LeftButton:
+                    Point.move(points, self.feature, self.feature_position, point)
+                    Segment.refresh_point_move(segment, self.feature_position)
+                elif event.button() == Qt.RightButton:
+                    position = Point.delete(points, point)
+
+                    if position is not None:
+                        Segment.refresh_point_delete(segment, position)
+            elif self.feature_type == 'path':
+                if event.button() == Qt.LeftButton:
+                    Point.create_middle(points, point, self.feature_position + 1)
+                    Segment.refresh_point(segment, self.feature_position + 1)
+
 class WaypointCreate(MapTool):
     def __init__(self, iface, canvas: QgsMapCanvas):
         MapTool.__init__(self, iface, canvas)
@@ -43,7 +130,7 @@ class WaypointCreate(MapTool):
         if not points:
             return
 
-        Waypoint.create(points, self.toLayerCoordinates(points, event.pos()))
+        Waypoint.create(points, self.toLayerCoordinates(points, event.pos()), Utils.generate_name('Waypoint', points.featureCount()))
 
 
 class WaypointDelete(MapTool):
@@ -129,7 +216,7 @@ class WaypointMove(MapTool):
 
         point = self.toLayerCoordinates(points, event.pos())
 
-        if self.feature:
+        if self.feature and self.feature_position:
             Waypoint.move(points, self.feature, self.feature_position, point)
 
 
@@ -182,13 +269,11 @@ class PointCreateMiddle(MapTool):
         buffer = Utils.create_buffer(point)
 
         for position, feature in enumerate(paths.getFeatures(), start=1):
-            if not feature.geometry().intersects(buffer):
-                continue
+            if feature.geometry().intersects(buffer):
+                Point.create_middle(points, point, position + 1)
+                Segment.refresh_point(segment, position + 1)
 
-            Point.create_middle(points, point, position + 1)
-            Segment.refresh_point(segment, position + 1)
-
-            break
+                break
 
 
 class PointCreateEnd(MapTool):
@@ -267,7 +352,7 @@ class PointMove(MapTool):
 
         point = self.toLayerCoordinates(points, event.pos())
 
-        if self.feature:
+        if self.feature and self.feature_position:
             Point.move(points, self.feature, self.feature_position, point)
             Segment.refresh_point_move(segment, self.feature_position)
 

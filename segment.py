@@ -23,7 +23,7 @@ class Segment:
         if not track:
             return None
 
-        segment = Tree.create_group(track, Utils.generate_name('Segment', track), 'segment')
+        segment = Tree.create_group(track, Utils.generate_name('Segment', len(track.children())), 'segment')
 
         if not segment:
             return None
@@ -75,6 +75,10 @@ class Segment:
                 lines.append([vertices[i], vertices[i + 1]])
 
         Utils.update_layer(points, paths, lines)
+
+    @staticmethod
+    def optimize(segment: QgsLayerTreeGroup):
+        print(f'Segment::optimize({segment})')
 
     @staticmethod
     def delete(segment: QgsLayerTreeGroup):
