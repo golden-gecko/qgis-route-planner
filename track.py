@@ -1,14 +1,17 @@
-from qgis.core import QgsDistanceArea, QgsLayerTreeGroup, QgsLineSymbol, QgsWkbTypes
+from typing import Optional
+
+from qgis.core import QgsDistanceArea, QgsFeature, QgsLayerTreeGroup, QgsWkbTypes
 
 from .color import Color
 from .google import Google
+from .options import Options
 from .symbol import Symbol
 from .utils import Utils
 
 
 class Track:
     @staticmethod
-    def add(iface):
+    def create(iface):
         tracks = Utils.get_or_create_tracks_directory()
 
         if not tracks:
@@ -101,15 +104,19 @@ class Track:
 
         path = []
 
-        for i in range(len(points) - 1):
-            path_points = Google.get_direction_as_points(f'{points[i][1]} {points[i][0]}', f'{points[i + 1][1]} {points[i + 1][0]}')
+        if Options.routing:
+            for i in range(len(points) - 1):
+                path_points = Google.get_direction_as_points(f'{points[i][1]} {points[i][0]}', f'{points[i + 1][1]} {points[i + 1][0]}')
 
-            if not path_points:
-                continue
+                if not path_points:
+                    continue
 
-            print(f'Track::refresh() - Got {len(path_points)} points')
+                print(f'Track::refresh() - Got {len(path_points)} points')
 
-            path.append(path_points)
+                path.append(path_points)
+        else:
+            for i in range(len(points) - 1):
+                path.append([points[i], points[i + 1]])
 
         Utils.update_layer(point_layer, path_layer, path)
 
@@ -126,3 +133,289 @@ class Track:
             return
 
         Track.refresh(track)
+
+    @staticmethod
+    def refresh_point_create_start(track, position):
+        print(f'Track::refresh_point(f{track}, {position})')
+
+        point_layer = Utils.get_or_create_point_layer(track)
+
+        if not point_layer:
+            return
+
+        path_layer = Utils.get_or_create_path_layer(track)
+
+        if not path_layer:
+            return
+
+        previous_point = Track.get(point_layer, position - 1)
+        current_point = Track.get(point_layer, position)
+        next_point = Track.get(point_layer, position + 1)
+
+        # add first segment
+        if not previous_point and current_point and next_point:
+            a = previous_point.geometry().asPoint()
+            b = current_point.geometry().asPoint()
+
+            if Options.routing:
+                segment_points = Google.get_direction_as_points(f'{a.y()} {a.x()}', f'{b.y()} {b.x()}')
+
+                if not segment_points:
+                    return
+            else:
+                segment_points = [a, b]
+
+            vl = path_layer
+            pr = vl.dataProvider()
+            vl.startEditing()
+
+            pr.addFeature(Utils.create_polyline(segment_points))
+            vl.commitChanges()
+
+        # add middle segment
+        elif previous_point and current_point and next_point:
+            pass
+
+        # add last segment
+        elif previous_point and current_point and not next_point:
+            pass
+
+    @staticmethod
+    def refresh_point_create_end(track, position):
+        print(f'Track::refresh_point(f{track}, {position})')
+
+        point_layer = Utils.get_or_create_point_layer(track)
+
+        if not point_layer:
+            return
+
+        path_layer = Utils.get_or_create_path_layer(track)
+
+        if not path_layer:
+            return
+
+        previous_point = Track.get(point_layer, position - 1)
+        current_point = Track.get(point_layer, position)
+        next_point = Track.get(point_layer, position + 1)
+
+        # add first segment
+        if not previous_point and current_point and next_point:
+            pass
+
+        # add middle segment
+        elif previous_point and current_point and next_point:
+            pass
+
+        # add last segment
+        elif previous_point and current_point and not next_point:
+            a = previous_point.geometry().asPoint()
+            b = current_point.geometry().asPoint()
+
+            if Options.routing:
+                segment_points = Google.get_direction_as_points(f'{a.y()} {a.x()}', f'{b.y()} {b.x()}')
+
+                if not segment_points:
+                    return
+            else:
+                segment_points = [a, b]
+
+            vl = path_layer
+            pr = vl.dataProvider()
+            vl.startEditing()
+
+            pr.addFeature(Utils.create_polyline(segment_points))
+            vl.commitChanges()
+
+    @staticmethod
+    def refresh_point_move(track, position):
+        print(f'Track::refresh_point_move(f{track}, {position})')
+
+        point_layer = Utils.get_or_create_point_layer(track)
+
+        if not point_layer:
+            return
+
+        path_layer = Utils.get_or_create_path_layer(track)
+
+        if not path_layer:
+            return
+
+        previous_point = Track.get(point_layer, position - 1)
+        current_point = Track.get(point_layer, position)
+        next_point = Track.get(point_layer, position + 1)
+
+        # move first segment
+        if not previous_point and current_point and next_point:
+            a = current_point.geometry().asPoint()
+            b = next_point.geometry().asPoint()
+
+            if Options.routing:
+                segment_points = Google.get_direction_as_points(f'{a.y()} {a.x()}', f'{b.y()} {b.x()}')
+
+                if not segment_points:
+                    return
+            else:
+                segment_points = [a, b]
+
+            vl = path_layer
+            vl.startEditing()
+
+            feature = Track.get_path(path_layer, position)
+
+            path_layer.startEditing()
+            path_layer.changeGeometry(feature.id(), Utils.create_polyline_geometry(segment_points))
+            path_layer.commitChanges()
+
+        # move middle segment
+        elif previous_point and current_point and next_point:
+            # previous segment
+            a = previous_point.geometry().asPoint()
+            b = current_point.geometry().asPoint()
+
+            if Options.routing:
+                segment_points = Google.get_direction_as_points(f'{a.y()} {a.x()}', f'{b.y()} {b.x()}')
+
+                if not segment_points:
+                    return
+            else:
+                segment_points = [a, b]
+
+            vl = path_layer
+            vl.startEditing()
+
+            feature = Track.get_path(path_layer, position - 1)
+
+            path_layer.startEditing()
+            path_layer.changeGeometry(feature.id(), Utils.create_polyline_geometry(segment_points))
+            path_layer.commitChanges()
+
+            # next segment
+            a = current_point.geometry().asPoint()
+            b = next_point.geometry().asPoint()
+
+            if Options.routing:
+                segment_points = Google.get_direction_as_points(f'{a.y()} {a.x()}', f'{b.y()} {b.x()}')
+
+                if not segment_points:
+                    return
+            else:
+                segment_points = [a, b]
+
+            vl = path_layer
+            vl.startEditing()
+
+            feature = Track.get_path(path_layer, position)
+
+            path_layer.startEditing()
+            path_layer.changeGeometry(feature.id(), Utils.create_polyline_geometry(segment_points))
+            path_layer.commitChanges()
+
+        # move last segment
+        elif previous_point and current_point and not next_point:
+            a = previous_point.geometry().asPoint()
+            b = current_point.geometry().asPoint()
+
+            if Options.routing:
+                segment_points = Google.get_direction_as_points(f'{a.y()} {a.x()}', f'{b.y()} {b.x()}')
+
+                if not segment_points:
+                    return
+            else:
+                segment_points = [a, b]
+
+            vl = path_layer
+            vl.startEditing()
+
+            feature = Track.get_path(path_layer, position - 1)
+
+            path_layer.startEditing()
+            path_layer.changeGeometry(feature.id(), Utils.create_polyline_geometry(segment_points))
+            path_layer.commitChanges()
+
+    @staticmethod
+    def refresh_point_delete(track, position):
+        print(f'Track::refresh_point_delete(f{track}, {position})')
+
+        point_layer = Utils.get_or_create_point_layer(track)
+
+        if not point_layer:
+            return
+
+        path_layer = Utils.get_or_create_path_layer(track)
+
+        if not path_layer:
+            return
+
+        previous_point = Track.get(point_layer, position - 1)
+        current_point = Track.get(point_layer, position)
+        next_point = Track.get(point_layer, position + 1)
+
+        # delete first segment
+        if position == 1:
+            feature = Track.get_path(path_layer, position)
+
+            if feature:
+                path_layer.startEditing()
+                path_layer.deleteFeature(feature.id())
+                path_layer.commitChanges()
+
+        # delete last segment
+        elif position - 1 == point_layer.featureCount():
+            feature = Track.get_path(path_layer, position - 1)
+
+            if feature:
+                path_layer.startEditing()
+                path_layer.deleteFeature(feature.id())
+                path_layer.commitChanges()
+
+        # delete middle segment
+        elif previous_point and current_point:
+            a = previous_point.geometry().asPoint()
+            b = current_point.geometry().asPoint()
+
+            if Options.routing:
+                segment_points = Google.get_direction_as_points(f'{a.y()} {a.x()}', f'{b.y()} {b.x()}')
+
+                if not segment_points:
+                    return
+            else:
+                segment_points = [a, b]
+
+            vl = path_layer
+            vl.startEditing()
+
+            feature = Track.get_path(path_layer, position - 1)
+
+            path_layer.startEditing()
+            path_layer.changeGeometry(feature.id(), Utils.create_polyline_geometry(segment_points))
+            path_layer.commitChanges()
+
+            feature = Track.get_path(path_layer, position)
+
+            path_layer.startEditing()
+            path_layer.deleteFeature(feature.id())
+            path_layer.commitChanges()
+
+    @staticmethod
+    def refesh_segment(track):
+        pass
+
+    @staticmethod
+    def get(layer, position) -> Optional[QgsFeature]:
+        print(f'Track::get(f{layer}, {position})')
+
+        for feature in layer.getFeatures():
+            if feature.attribute('position') == position:
+                return feature
+
+        return None
+
+    @staticmethod
+    def get_path(layer, position):
+        print(f'Track::get_path(f{layer}, {position})')
+
+        for index, feature in enumerate(layer.getFeatures(), start=1):
+            if index == position:
+                return feature
+
+        return None

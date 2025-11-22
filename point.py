@@ -1,11 +1,16 @@
-from .map_tools import PointAdd, PointDelete, PointMove
+from .map_tools import PointCreateEnd, PointCreateStart, PointDelete, PointMove
 
 
 class Point:
     @staticmethod
-    def add(iface):
+    def create_start(iface):
         canvas = iface.mapCanvas()
-        canvas.setMapTool(PointAdd(iface, canvas))
+        canvas.setMapTool(PointCreateStart(iface, canvas))
+
+    @staticmethod
+    def create_end(iface):
+        canvas = iface.mapCanvas()
+        canvas.setMapTool(PointCreateEnd(iface, canvas))
 
     @staticmethod
     def delete(iface):

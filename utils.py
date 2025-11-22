@@ -121,6 +121,14 @@ class Utils:
         return feature
 
     @staticmethod
+    def create_polyline_geometry(points: list) -> QgsGeometry:
+        point_list = [
+            QgsPoint(p[0], p[1]) for p in points
+        ]
+
+        return QgsGeometry.fromPolyline(point_list)
+
+    @staticmethod
     def remove_non_point_geometries(layer: QgsVectorLayer, geometry_type):
         layer.startEditing()
 

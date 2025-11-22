@@ -35,7 +35,7 @@
     <item row="2" column="0">
      <layout class="QHBoxLayout" name="horizontalLayout_4">
       <item>
-       <widget class="QToolButton" name="buttonPointAdd">
+       <widget class="QToolButton" name="buttonPointCreateStart">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
           <horstretch>0</horstretch>
@@ -43,7 +43,20 @@
          </sizepolicy>
         </property>
         <property name="text">
-         <string>Add point</string>
+         <string>Create point (start)</string>
+        </property>
+        <property name="checkable">
+         <bool>true</bool>
+        </property>
+        <property name="autoExclusive">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="buttonPointCreateEnd">
+        <property name="text">
+         <string>Create point (end)</string>
         </property>
         <property name="checkable">
          <bool>true</bool>
@@ -96,9 +109,9 @@
     <item row="0" column="0">
      <layout class="QHBoxLayout" name="horizontalLayout">
       <item>
-       <widget class="QPushButton" name="buttonTrackAdd">
+       <widget class="QPushButton" name="buttonTrackCreate">
         <property name="text">
-         <string>Add track</string>
+         <string>Create track</string>
         </property>
        </widget>
       </item>
