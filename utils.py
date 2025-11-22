@@ -1,4 +1,4 @@
-from qgis.core import (QgsFeature, QgsField, QgsGeometry, QgsLayerTreeGroup, QgsLineSymbol, QgsPoint, QgsProject,
+from qgis.core import (QgsFeature, QgsField, QgsGeometry, QgsLayerTreeGroup, QgsPoint, QgsProject,
                        QgsVectorLayer, QgsWkbTypes, QgsTextBufferSettings, QgsTextFormat, QgsPalLayerSettings,
                        QgsVectorLayerSimpleLabeling, Qgis)
 from qgis.PyQt.QtCore import QVariant
@@ -56,29 +56,6 @@ class Utils:
         return layer
 
     @staticmethod
-    def get_parent_name(layer: QgsVectorLayer) -> str|None:
-        tree_parent = Utils.get_parent(layer)
-
-        if not tree_parent:
-            return None
-
-        return tree_parent.name()
-
-    @staticmethod
-    def get_parent(layer: QgsVectorLayer):
-        tree_layer = QgsProject.instance().layerTreeRoot().findLayer(layer.id())
-
-        if not tree_layer:
-            return None
-
-        tree_parent = tree_layer.parent()
-
-        if not tree_parent:
-            return None
-
-        return tree_parent
-
-    @staticmethod
     def get_or_create_tracks_directory() -> QgsLayerTreeGroup:
         root = QgsProject.instance().layerTreeRoot()
         routes = root.findGroup('Tracks')
@@ -108,6 +85,10 @@ class Utils:
         feature.setGeometry(QgsGeometry.fromPoint(point))
 
         return feature
+
+    @staticmethod
+    def create_point_geometry(point: QgsPoint) -> QgsGeometry:
+        return QgsGeometry.fromPoint(point)
 
     @staticmethod
     def create_polyline(points: list) -> QgsFeature:
@@ -176,16 +157,6 @@ class Utils:
         layer_settings.enabled = True
 
         return QgsVectorLayerSimpleLabeling(layer_settings)
-
-    @staticmethod
-    def get_point_count(layer: QgsVectorLayer) -> int:
-        count = 0
-
-        for feature in layer.getFeatures():
-            if feature.geometry().type() == QgsWkbTypes.PointGeometry:
-                count += 1
-
-        return count
 
     @staticmethod
     def refresh_position(layer: QgsVectorLayer):
