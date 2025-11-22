@@ -11,6 +11,7 @@ from .map_tools import Edit, PointCreateEnd, PointCreateMiddle, PointCreateStart
 from .options import Options
 from .route_planner_dockwidget import RoutePlannerDockWidget
 from .segment import Segment
+from .tree import Tree
 from .track import Track
 
 from .resources import *
@@ -65,59 +66,63 @@ class RoutePlanner:
         del self.toolbar
 
     def run(self):
-        if not self.pluginIsActive:
-            self.pluginIsActive = True
+        if self.pluginIsActive:
+            return
 
-            if self.dockwidget is None:
-                self.dockwidget = RoutePlannerDockWidget()
+        self.pluginIsActive = True
 
-            self.dockwidget.closingPlugin.connect(self.onClosePlugin)
+        if self.dockwidget is None:
+            self.dockwidget = RoutePlannerDockWidget()
 
-            # TODO: Does not work.
-            # self.dockwidget.buttonSelect.clicked.connect(lambda: self.iface.mapCanvas().unsetMapTool(None))
-            self.dockwidget.buttonEdit.clicked.connect(lambda: RoutePlanner.set_edit_tool(self.iface))
+        self.dockwidget.closingPlugin.connect(self.onClosePlugin)
 
-            # setup file buttons
-            self.dockwidget.buttonFileNew.clicked.connect(lambda: Segment.create(Track.create(File.new())))
-            self.dockwidget.buttonFileOpen.clicked.connect(lambda: File.open())
-            self.dockwidget.buttonFileSave.clicked.connect(lambda: File.save(File.get_active(self.iface)))
-            self.dockwidget.buttonFileClose.clicked.connect(lambda: File.close(File.get_active(self.iface)))
+        # TODO: Does not work.
+        # self.dockwidget.buttonSelect.clicked.connect(lambda: self.iface.mapCanvas().unsetMapTool(None))
+        self.dockwidget.buttonEdit.clicked.connect(lambda: RoutePlanner.set_edit_tool(self.iface))
 
-            # setup waypoint buttons
-            self.dockwidget.buttonWaypointCreate.clicked.connect(lambda : RoutePlanner.set_waypoint_create(self.iface))
-            self.dockwidget.buttonWaypointMove.clicked.connect(lambda: RoutePlanner.set_waypoint_move(self.iface))
-            self.dockwidget.buttonWaypointDelete.clicked.connect(lambda: RoutePlanner.set_waypoint_delete(self.iface))
+        # setup file buttons
+        self.dockwidget.buttonFileNew.clicked.connect(lambda: Segment.create(Track.create(File.new())))
+        self.dockwidget.buttonFileOpen.clicked.connect(lambda: File.open())
+        self.dockwidget.buttonFileSave.clicked.connect(lambda: File.save(File.get_active(self.iface)))
+        self.dockwidget.buttonFileClose.clicked.connect(lambda: File.close(File.get_active(self.iface)))
 
-            # setup track buttons
-            self.dockwidget.buttonTrackCreate.clicked.connect(lambda : Segment.create(Track.create(File.get_active(self.iface))))
-            self.dockwidget.buttonTrackRefresh.clicked.connect(lambda: Track.refresh(Track.get_active(self.iface)))
-            self.dockwidget.buttonTrackOptimize.clicked.connect(lambda: Track.optimize(Track.get_active(self.iface)))
-            self.dockwidget.buttonTrackDelete.clicked.connect(lambda: Track.delete(Track.get_active(self.iface)))
+        # setup waypoint buttons
+        self.dockwidget.buttonWaypointCreate.clicked.connect(lambda : RoutePlanner.set_waypoint_create(self.iface))
+        self.dockwidget.buttonWaypointMove.clicked.connect(lambda: RoutePlanner.set_waypoint_move(self.iface))
+        self.dockwidget.buttonWaypointDelete.clicked.connect(lambda: RoutePlanner.set_waypoint_delete(self.iface))
 
-            # setup segment buttons
-            self.dockwidget.buttonSegmentCreate.clicked.connect(lambda : Segment.create(Track.get_active(self.iface)))
-            self.dockwidget.buttonSegmentRefresh.clicked.connect(lambda: Segment.refresh(Segment.get_active(self.iface)))
-            self.dockwidget.buttonSegmentOptimize.clicked.connect(lambda: Segment.optimize(Segment.get_active(self.iface)))
-            self.dockwidget.buttonSegmentDelete.clicked.connect(lambda: Segment.delete(Segment.get_active(self.iface)))
+        # setup track buttons
+        self.dockwidget.buttonTrackCreate.clicked.connect(lambda : Segment.create(Track.create(File.get_active(self.iface))))
+        self.dockwidget.buttonTrackRefresh.clicked.connect(lambda: Track.refresh(Track.get_active(self.iface)))
+        self.dockwidget.buttonTrackOptimize.clicked.connect(lambda: Track.optimize(Track.get_active(self.iface)))
+        self.dockwidget.buttonTrackDelete.clicked.connect(lambda: Track.delete(Track.get_active(self.iface)))
 
-            # setup point buttons
-            self.dockwidget.buttonPointCreateStart.clicked.connect(lambda: RoutePlanner.set_point_start_tool(self.iface))
-            self.dockwidget.buttonPointCreateMiddle.clicked.connect(lambda: RoutePlanner.set_point_middle_tool(self.iface))
-            self.dockwidget.buttonPointCreateEnd.clicked.connect(lambda: RoutePlanner.set_point_end_tool(self.iface))
-            self.dockwidget.buttonPointMove.clicked.connect(lambda: RoutePlanner.set_point_move_tool(self.iface))
-            self.dockwidget.buttonPointDelete.clicked.connect(lambda: RoutePlanner.set_point_delete_tool(self.iface))
+        # setup segment buttons
+        self.dockwidget.buttonSegmentCreate.clicked.connect(lambda : Segment.create(Track.get_active(self.iface)))
+        self.dockwidget.buttonSegmentRefresh.clicked.connect(lambda: Segment.refresh(Segment.get_active(self.iface)))
+        self.dockwidget.buttonSegmentRefreshPoints.clicked.connect(lambda: Segment.refresh_points(Segment.get_active(self.iface)))
+        self.dockwidget.buttonSegmentOptimize.clicked.connect(lambda: Segment.optimize(Segment.get_active(self.iface)))
+        self.dockwidget.buttonSegmentDelete.clicked.connect(lambda: Segment.delete(Segment.get_active(self.iface)))
 
-            # setup options
-            self.dockwidget.optionRouting.stateChanged.connect(lambda: Options.set_routing(self.dockwidget.optionRouting.isChecked()))
-            self.dockwidget.optionRoutingProvider.addItems(['Google', 'MapQuest'])
-            self.dockwidget.optionRoutingProvider.currentTextChanged.connect(lambda: Options.set_routing_provider(self.dockwidget.optionRoutingProvider.currentText()))
-            self.dockwidget.optionRoutingMode.addItems(['driving', 'walking'])
-            self.dockwidget.optionRoutingMode.currentTextChanged.connect(lambda: Options.set_routing_mode(self.dockwidget.optionRoutingMode.currentText()))
+        # setup point buttons
+        self.dockwidget.buttonPointCreateStart.clicked.connect(lambda: RoutePlanner.set_point_start_tool(self.iface))
+        self.dockwidget.buttonPointCreateMiddle.clicked.connect(lambda: RoutePlanner.set_point_middle_tool(self.iface))
+        self.dockwidget.buttonPointCreateEnd.clicked.connect(lambda: RoutePlanner.set_point_end_tool(self.iface))
+        self.dockwidget.buttonPointMove.clicked.connect(lambda: RoutePlanner.set_point_move_tool(self.iface))
+        self.dockwidget.buttonPointDelete.clicked.connect(lambda: RoutePlanner.set_point_delete_tool(self.iface))
 
-            self.iface.addDockWidget(Qt.LeftDockWidgetArea, self.dockwidget)
-            self.dockwidget.show()
+        # setup options
+        self.dockwidget.optionRouting.stateChanged.connect(lambda: Options.set_routing(self.dockwidget.optionRouting.isChecked()))
+        self.dockwidget.optionRoutingProvider.addItems(['Google', 'MapQuest'])
+        self.dockwidget.optionRoutingProvider.currentTextChanged.connect(lambda: Options.set_routing_provider(self.dockwidget.optionRoutingProvider.currentText()))
+        self.dockwidget.optionRoutingMode.addItems(['driving', 'walking'])
+        self.dockwidget.optionRoutingMode.currentTextChanged.connect(lambda: Options.set_routing_mode(self.dockwidget.optionRoutingMode.currentText()))
+        self.dockwidget.spinBoxPointsPerSegment.valueChanged.connect(lambda: Options.set_points_per_segment(self.dockwidget.spinBoxPointsPerSegment.value()))
 
-            ContextMenu.create(self.iface.mapCanvas())
+        self.iface.addDockWidget(Qt.LeftDockWidgetArea, self.dockwidget)
+        self.dockwidget.show()
+
+        ContextMenu.create(self.iface.mapCanvas())
 
     @staticmethod
     def set_edit_tool(iface):
