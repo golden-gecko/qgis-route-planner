@@ -447,3 +447,12 @@ class Segment:
                     ET.SubElement(trkseg, 'trkpt', lat=str(vertex.y()), lon=str(vertex.x()))
 
         return trkseg
+
+    @staticmethod
+    def get_distance(segment: QgsLayerTreeGroup) -> float:
+        print(f'Segment::get_distance{segment})')
+
+        if not segment:
+            return 0.0
+
+        return Utils.get_distance(Layer.get_or_create_paths(segment))

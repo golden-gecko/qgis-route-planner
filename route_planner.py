@@ -122,7 +122,7 @@ class RoutePlanner:
         self.iface.addDockWidget(Qt.LeftDockWidgetArea, self.dockwidget)
         self.dockwidget.show()
 
-        ContextMenu.create(self.iface.mapCanvas())
+        # ContextMenu.create(self.iface.mapCanvas())
 
     @staticmethod
     def set_edit_tool(iface):

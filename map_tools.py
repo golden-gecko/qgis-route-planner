@@ -29,6 +29,9 @@ class Edit(MapTool):
         self.feature_position = None
         self.feature_type = None
 
+    def canvasMoveEvent(self, event):
+        print('Edit::canvasMoveEvent()')
+
     def canvasPressEvent(self, event):
         print('Edit::canvasPressEvent()')
 
@@ -302,6 +305,7 @@ class PointCreateEnd(MapTool):
 
         Point.create_end(points, point)
         Segment.refresh_point(segment, points.featureCount())
+        File.refresh_distance(File.get_active(self.iface))
 
 
 class PointMove(MapTool):

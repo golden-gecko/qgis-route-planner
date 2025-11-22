@@ -71,21 +71,6 @@ class Track:
 
         return None
 
-    """
-    TODO: Fix.
-    @staticmethod
-    def get_length(track: QgsLayerTreeGroup) -> float:
-        path_layer = Track.get_or_create_path_layer(track)
-
-        if not path_layer:
-            return 0.0
-
-        d = QgsDistanceArea()
-        d.setEllipsoid('WGS84')
-
-        return sum([d.measureLength(feature.geometry()) for feature in path_layer.getFeatures()]) / 1000.0
-    """
-
     @staticmethod
     def refresh(track: QgsLayerTreeGroup):
         print(f'Track::refresh({track})')
@@ -126,7 +111,7 @@ class Track:
         print(f'Track::to_xml{track})')
 
         if not track:
-            return
+            return None
 
         name = ET.Element('name')
         name.text = track.name()
@@ -135,7 +120,7 @@ class Track:
         trk.append(name)
 
         for segment in track.children():
-            if track.customProperty('type') != 'track':
+            if segment.customProperty('type') != 'segment':
                 continue
 
             trkseg = Segment.to_xml(segment)
@@ -146,3 +131,17 @@ class Track:
             trk.append(trkseg)
 
         return trk
+
+    @staticmethod
+    def get_distance(track: QgsLayerTreeGroup) -> float:
+        print(f'Track::get_distance{track})')
+
+        if not track:
+            return 0.0
+
+        distance = 0.0
+
+        for segment in track.children():
+            distance += Segment.get_distance(segment)
+
+        return distance
