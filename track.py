@@ -1,6 +1,10 @@
+import os
+
 from typing import Optional
 
-from qgis.core import QgsDistanceArea, QgsFeature, QgsLayerTreeGroup, QgsWkbTypes
+from qgis.core import QgsDistanceArea, QgsFeature, QgsField, QgsLayerTreeGroup, QgsProject, QgsVectorLayer, QgsWkbTypes
+from qgis.PyQt.QtCore import QVariant
+from qgis.PyQt.QtWidgets import QFileDialog
 
 from .color import Color
 from .google import Google
@@ -11,28 +15,43 @@ from .utils import Utils
 
 class Track:
     @staticmethod
-    def create():
-        tracks = Utils.get_or_create_tracks_directory()
+    def create() -> Optional[QgsLayerTreeGroup]:
+        dialog = QFileDialog()
+        dialog.setFileMode(QFileDialog.AnyFile)
+        dialog.setNameFilters(['GPX files (*.gpx)'])
 
-        if not tracks:
-            return
+        if not dialog.exec_():
+            return None
 
-        track = Utils.create_directory(tracks, Track.generate_name(tracks))
+        if len(dialog.selectedFiles()) != 1:
+            return None
+
+        file_name = dialog.selectedFiles()[0]
+        _, file_ext = os.path.splitext(file_name)
+
+        if len(file_ext) == 0:
+            file_name += '.gpx'
+
+        with open(file_name, 'w') as file:
+            file.write('<?xml version="1.0" encoding="utf-8"?><gpx version="1.0" creator="QGIS"></gpx>')
+
+        track = Utils.create_directory()
 
         if not track:
-            return
+            return None
 
         color = Color.random()
 
-        point_layer = Utils.get_or_create_point_layer(track)
-        point_layer.startEditing()
-        point_layer.renderer().symbol().setColor(color)
-        point_layer.commitChanges()
+        point_layer = Track.get_or_create_point_layer(track)
+        path_layer = Track.get_or_create_path_layer(track)
 
-        path_layer = Utils.get_or_create_path_layer(track)
-        path_layer.startEditing()
-        path_layer.renderer().setSymbol(Symbol.create_dashed_line(color))
-        path_layer.commitChanges()
+        Utils.set_symbol(point_layer, Symbol.create_point(color))
+        Utils.set_symbol(path_layer, Symbol.create_path(color))
+
+        Utils.set_data_source(point_layer, file_name + '?type=waypoint')
+        Utils.set_data_source(path_layer, file_name + '?type=track')
+
+        return track
 
     @staticmethod
     def delete(iface):
@@ -61,10 +80,6 @@ class Track:
             return
 
     @staticmethod
-    def generate_name(tracks: QgsLayerTreeGroup) -> str:
-        return f'Track {len(tracks.children()) + 1}'
-
-    @staticmethod
     def get_active(iface) -> Optional[QgsLayerTreeGroup]:
         nodes = iface.layerTreeView().selectedNodes()
 
@@ -76,14 +91,14 @@ class Track:
         if node.parent() and node.parent().name() == 'Tracks':
             return node
 
-        if node.name() in [Utils.LAYER_NAME_PATH, Utils.LAYER_NAME_POINT]:
+        if node.name() in ['Path', 'Point']:
             return node.parent()
 
         return None
 
     @staticmethod
     def get_length(track) -> float:
-        path_layer = Utils.get_or_create_path_layer(track)
+        path_layer = Track.get_or_create_path_layer(track)
 
         if not path_layer:
             return 0.0
@@ -95,12 +110,12 @@ class Track:
 
     @staticmethod
     def refresh(track):
-        point_layer = Utils.get_or_create_point_layer(track)
+        point_layer = Track.get_or_create_point_layer(track)
 
         if not point_layer:
             return
 
-        path_layer = Utils.get_or_create_path_layer(track)
+        path_layer = Track.get_or_create_path_layer(track)
 
         if not path_layer:
             return
@@ -147,15 +162,23 @@ class Track:
         Track.refresh(track)
 
     @staticmethod
+    def open(iface):
+        pass
+
+    @staticmethod
+    def save(iface):
+        pass
+
+    @staticmethod
     def refresh_point_create_start(track, position):
         print(f'Track::refresh_point_create_start(f{track}, {position})')
 
-        point_layer = Utils.get_or_create_point_layer(track)
+        point_layer = Track.get_or_create_point_layer(track)
 
         if not point_layer:
             return
 
-        path_layer = Utils.get_or_create_path_layer(track)
+        path_layer = Track.get_or_create_path_layer(track)
 
         if not path_layer:
             return
@@ -187,9 +210,6 @@ class Track:
             a = current_point.geometry().asPoint()
             b = next_point.geometry().asPoint()
 
-            print('current_point', current_point.attributes())
-            print('next_point', next_point.attributes())
-
             Track.refesh_segment(path_layer, position, a, b)
 
         # add middle segment
@@ -204,12 +224,12 @@ class Track:
     def refresh_point_create_middle(track, position):
         print(f'Track::refresh_point_create_middle(f{track}, {position})')
 
-        point_layer = Utils.get_or_create_point_layer(track)
+        point_layer = Track.get_or_create_point_layer(track)
 
         if not point_layer:
             return
 
-        path_layer = Utils.get_or_create_path_layer(track)
+        path_layer = Track.get_or_create_path_layer(track)
 
         if not path_layer:
             return
@@ -266,12 +286,12 @@ class Track:
     def refresh_point_create_end(track, position):
         print(f'Track::refresh_point(f{track}, {position})')
 
-        point_layer = Utils.get_or_create_point_layer(track)
+        point_layer = Track.get_or_create_point_layer(track)
 
         if not point_layer:
             return
 
-        path_layer = Utils.get_or_create_path_layer(track)
+        path_layer = Track.get_or_create_path_layer(track)
 
         if not path_layer:
             return
@@ -312,12 +332,12 @@ class Track:
     def refresh_point_move(track, position):
         print(f'Track::refresh_point_move(f{track}, {position})')
 
-        point_layer = Utils.get_or_create_point_layer(track)
+        point_layer = Track.get_or_create_point_layer(track)
 
         if not point_layer:
             return
 
-        path_layer = Utils.get_or_create_path_layer(track)
+        path_layer = Track.get_or_create_path_layer(track)
 
         if not path_layer:
             return
@@ -358,19 +378,18 @@ class Track:
     def refresh_point_delete(track, position):
         print(f'Track::refresh_point_delete(f{track}, {position})')
 
-        point_layer = Utils.get_or_create_point_layer(track)
+        point_layer = Track.get_or_create_point_layer(track)
 
         if not point_layer:
             return
 
-        path_layer = Utils.get_or_create_path_layer(track)
+        path_layer = Track.get_or_create_path_layer(track)
 
         if not path_layer:
             return
 
         previous_point = Track.get(point_layer, position - 1)
         current_point = Track.get(point_layer, position)
-        next_point = Track.get(point_layer, position + 1)
 
         # delete first segment
         if position == 1:
@@ -404,7 +423,7 @@ class Track:
             path_layer.commitChanges()
 
     @staticmethod
-    def refesh_segment(layer, position, a, b):
+    def refesh_segment(layer: QgsVectorLayer, position, a, b):
         if Options.routing:
             segment_points = Google.get_direction_as_points(f'{a.y()} {a.x()}', f'{b.y()} {b.x()}')
 
@@ -423,7 +442,7 @@ class Track:
         layer.commitChanges()
 
     @staticmethod
-    def get(layer, position) -> Optional[QgsFeature]:
+    def get(layer: QgsVectorLayer, position) -> Optional[QgsFeature]:
         print(f'Track::get(f{layer}, {position})')
 
         for feature in layer.getFeatures():
@@ -433,7 +452,7 @@ class Track:
         return None
 
     @staticmethod
-    def get_path(layer, position):
+    def get_path(layer: QgsVectorLayer, position):
         print(f'Track::get_path(f{layer}, {position})')
 
         for index, feature in enumerate(layer.getFeatures(), start=1):
@@ -441,3 +460,59 @@ class Track:
                 return feature
 
         return None
+
+    @staticmethod
+    def get_or_create_point_layer(track) -> Optional[QgsVectorLayer]:
+        print('Utils::get_or_create_point_layer()')
+
+        if not track:
+            return None
+
+        for child in track.children():
+            if child.layer() and child.layer().name() == 'Point':
+                return child.layer()
+
+        layer = QgsVectorLayer('Point', 'Point', 'memory')
+        layer.startEditing()
+        layer.setLabelsEnabled(True)
+        layer.setLabeling(Utils.create_label_settings())
+
+        Utils.set_crs(layer, 'EPSG:4326')
+
+        provider = layer.dataProvider()
+        provider.addAttributes([QgsField('position', QVariant.Int)])
+
+        layer.commitChanges()
+
+        QgsProject.instance().addMapLayer(layer, False)
+
+        node = track.addLayer(layer)
+
+        if node:
+            node.setCustomProperty('showFeatureCount', True)
+
+        return layer
+
+    @staticmethod
+    def get_or_create_path_layer(track) -> Optional[QgsVectorLayer]:
+        print('Utils::get_or_create_path_layer()')
+
+        if not track:
+            return None
+
+        for child in track.children():
+            if child.layer() and child.layer().name() == 'Path':
+                return child.layer()
+
+        layer = QgsVectorLayer('MultiLineStringZ', 'Path', 'memory')
+
+        Utils.set_crs(layer, 'EPSG:4326')
+
+        QgsProject.instance().addMapLayer(layer, False)
+
+        node = track.addLayer(layer)
+
+        if node:
+            node.setCustomProperty('showFeatureCount', True)
+
+        return layer

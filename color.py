@@ -7,13 +7,12 @@ class Color:
     @staticmethod
     def random() -> QColor:
         colors = [
-            'black',
             'blue',
             'cyan',
-            'gray',
             'green',
             'magenta',
             'red',
+            'yellow',
         ]
 
         return QColor(random.choice(colors))
