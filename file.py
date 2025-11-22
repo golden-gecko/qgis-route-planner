@@ -63,34 +63,7 @@ class File:
         if not file_name:
             return
 
-        # load XML
-        with open(file_name) as file:
-            xml_string = file.read()
-
-        xml_string = re.sub(r'\sxmlns="[^"]+"', '', xml_string, count=1)
-        xml_doc = ET.fromstring(xml_string)
-
-        # create file
-        file = File.new(os.path.basename(file_name))
-
-        if not file:
-            return
-
-        file.setCustomProperty('fileName', file_name)
-
-        waypoints = Tree.find_group(file, 'Waypoints')
-
-        if not waypoints:
-            return
-
-        for wpt in xml_doc.iter('wpt'):
-            Waypoint.from_xml(waypoints, wpt)
-
-        # load tracks
-        for trk in xml_doc.iter('trk'):
-            Track.from_xml(file, trk)
-
-        File.refresh_distance(file)
+        File.load_xml(file_name)
 
     @staticmethod
     def save(file: QgsLayerTreeGroup):
@@ -146,13 +119,13 @@ class File:
         tree.write(file_name)
 
     @staticmethod
-    def close(file: QgsLayerTreeGroup):
+    def close(file: QgsLayerTreeGroup, force: bool = False):
         print(f'File::close({file})')
 
         if not file:
             return
 
-        if Utils.confirm('Close file?'):
+        if force or Utils.confirm('Close file?'):
             Tree.delete_group(file)
 
     @staticmethod
@@ -217,6 +190,52 @@ class File:
                     name = name.strip()
 
                     segment.setName(f'{name} [{Segment.get_distance(segment):.2f} km]')
+
+    @staticmethod
+    def reload(file: QgsLayerTreeGroup):
+        print(f'File::close({file})')
+
+        if not file:
+            return
+
+        file_name = file.customProperty('fileName')
+
+        if not file_name:
+            return
+
+        File.close(file, True)
+        File.load_xml(file_name)
+
+    @staticmethod
+    def load_xml(file_name: str):
+        # load XML
+        with open(file_name) as f:
+            xml_string = f.read()
+
+        xml_string = re.sub(r'\sxmlns="[^"]+"', '', xml_string, count=1)
+        xml_doc = ET.fromstring(xml_string)
+
+        # create file
+        file = File.new(os.path.basename(file_name))
+
+        if not file:
+            return
+
+        file.setCustomProperty('fileName', file_name)
+
+        waypoints = Tree.find_group(file, 'Waypoints')
+
+        if not waypoints:
+            return
+
+        for wpt in xml_doc.iter('wpt'):
+            Waypoint.from_xml(waypoints, wpt)
+
+        # load tracks
+        for trk in xml_doc.iter('trk'):
+            Track.from_xml(file, trk)
+
+        File.refresh_distance(file)
 
     @staticmethod
     def get_distance(file: QgsLayerTreeGroup) -> float:

@@ -83,6 +83,7 @@ class RoutePlanner:
         # setup file buttons
         self.dockwidget.buttonFileNew.clicked.connect(lambda: Segment.create(Track.create(File.new())))
         self.dockwidget.buttonFileOpen.clicked.connect(lambda: File.open())
+        self.dockwidget.buttonFileReload.clicked.connect(lambda: File.reload(File.get_active(self.iface)))
         self.dockwidget.buttonFileSave.clicked.connect(lambda: File.save(File.get_active(self.iface)))
         self.dockwidget.buttonFileClose.clicked.connect(lambda: File.close(File.get_active(self.iface)))
 

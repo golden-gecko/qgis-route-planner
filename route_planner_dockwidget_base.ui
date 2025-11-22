@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1107</width>
+    <width>1296</width>
     <height>1110</height>
    </rect>
   </property>
@@ -194,6 +194,13 @@
        <widget class="QPushButton" name="buttonFileOpen">
         <property name="text">
          <string>Open file</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="buttonFileReload">
+        <property name="text">
+         <string>Reload</string>
         </property>
        </widget>
       </item>
