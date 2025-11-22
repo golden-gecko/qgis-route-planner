@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1024</width>
-    <height>721</height>
+    <width>1107</width>
+    <height>1110</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -15,10 +15,77 @@
   </property>
   <widget class="QWidget" name="dockWidgetContents">
    <layout class="QGridLayout" name="gridLayout">
-    <item row="5" column="0">
+    <item row="2" column="0">
+     <layout class="QHBoxLayout" name="horizontalLayout_6">
+      <item>
+       <widget class="QPushButton" name="buttonWaypointCreate">
+        <property name="text">
+         <string>Create waypoint</string>
+        </property>
+        <property name="checkable">
+         <bool>true</bool>
+        </property>
+        <property name="autoExclusive">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="buttonWaypointMove">
+        <property name="text">
+         <string>Move waypoint</string>
+        </property>
+        <property name="checkable">
+         <bool>true</bool>
+        </property>
+        <property name="autoExclusive">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="buttonWaypointDelete">
+        <property name="text">
+         <string>Delete waypoint</string>
+        </property>
+        <property name="checkable">
+         <bool>true</bool>
+        </property>
+        <property name="autoExclusive">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </item>
+    <item row="1" column="0">
+     <widget class="Line" name="line_3">
+      <property name="orientation">
+       <enum>Qt::Horizontal</enum>
+      </property>
+     </widget>
+    </item>
+    <item row="7" column="0">
+     <widget class="Line" name="line_2">
+      <property name="orientation">
+       <enum>Qt::Horizontal</enum>
+      </property>
+     </widget>
+    </item>
+    <item row="9" column="0">
+     <widget class="Line" name="line">
+      <property name="orientation">
+       <enum>Qt::Horizontal</enum>
+      </property>
+     </widget>
+    </item>
+    <item row="10" column="0">
      <layout class="QHBoxLayout" name="horizontalLayout_2">
       <item>
        <widget class="QComboBox" name="optionRoutingProvider"/>
+      </item>
+      <item>
+       <widget class="QComboBox" name="optionRoutingMode"/>
       </item>
       <item>
        <widget class="QCheckBox" name="optionRouting">
@@ -32,7 +99,71 @@
       </item>
      </layout>
     </item>
-    <item row="3" column="0">
+    <item row="5" column="0">
+     <widget class="Line" name="line_4">
+      <property name="orientation">
+       <enum>Qt::Horizontal</enum>
+      </property>
+     </widget>
+    </item>
+    <item row="0" column="0">
+     <layout class="QHBoxLayout" name="horizontalLayout_5">
+      <item>
+       <widget class="QPushButton" name="buttonFileNew">
+        <property name="text">
+         <string>New file</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="buttonFileOpen">
+        <property name="text">
+         <string>Open file</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="buttonFileSave">
+        <property name="text">
+         <string>Save file</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="buttonFileClose">
+        <property name="text">
+         <string>Close file</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </item>
+    <item row="6" column="0">
+     <layout class="QHBoxLayout" name="horizontalLayout_3">
+      <item>
+       <widget class="QPushButton" name="buttonSegmentCreate">
+        <property name="text">
+         <string>Create segment</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="buttonSegmentRefresh">
+        <property name="text">
+         <string>Refresh segment</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="buttonSegmentDelete">
+        <property name="text">
+         <string>Delete segment</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </item>
+    <item row="8" column="0">
      <layout class="QHBoxLayout" name="horizontalLayout_4">
       <item>
        <widget class="QToolButton" name="buttonPointCreateStart">
@@ -119,26 +250,18 @@
       </item>
      </layout>
     </item>
-    <item row="2" column="0">
-     <widget class="Line" name="line_2">
-      <property name="orientation">
-       <enum>Qt::Horizontal</enum>
-      </property>
-     </widget>
-    </item>
-    <item row="0" column="0">
+    <item row="4" column="0">
      <layout class="QHBoxLayout" name="horizontalLayout">
       <item>
        <widget class="QPushButton" name="buttonTrackCreate">
         <property name="text">
          <string>Create track</string>
         </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QPushButton" name="buttonTrackEdit">
-        <property name="text">
-         <string>Edit track</string>
+        <property name="checkable">
+         <bool>false</bool>
+        </property>
+        <property name="autoExclusive">
+         <bool>false</bool>
         </property>
        </widget>
       </item>
@@ -147,6 +270,12 @@
         <property name="text">
          <string>Refresh track</string>
         </property>
+        <property name="checkable">
+         <bool>false</bool>
+        </property>
+        <property name="autoExclusive">
+         <bool>false</bool>
+        </property>
        </widget>
       </item>
       <item>
@@ -154,30 +283,18 @@
         <property name="text">
          <string>Delete track</string>
         </property>
-       </widget>
-      </item>
-     </layout>
-    </item>
-    <item row="1" column="0">
-     <layout class="QHBoxLayout" name="horizontalLayout_3">
-      <item>
-       <widget class="QPushButton" name="buttonTrackOpen">
-        <property name="text">
-         <string>Open track</string>
+        <property name="checkable">
+         <bool>false</bool>
         </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QPushButton" name="buttonTrackSave">
-        <property name="text">
-         <string>Save track</string>
+        <property name="autoExclusive">
+         <bool>false</bool>
         </property>
        </widget>
       </item>
      </layout>
     </item>
-    <item row="4" column="0">
-     <widget class="Line" name="line">
+    <item row="3" column="0">
+     <widget class="Line" name="line_5">
       <property name="orientation">
        <enum>Qt::Horizontal</enum>
       </property>

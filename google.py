@@ -2,21 +2,23 @@ import datetime
 
 import googlemaps
 
+from .options import Options
+
 
 class Google:
     @staticmethod
-    def get_direction(a, b) -> list:
-        print(f'Google::get_direction({a}, {b})')
+    def get_direction(a, b, mode: str='driving') -> list:
+        print(f'Google::get_direction({a}, {b}, {mode})')
 
         client = googlemaps.Client(key='AIzaSyBw1mZbt__9-Ch863hR5K6c9_SPbZqIKrE')
 
-        return client.directions(a, b, mode='driving', departure_time=datetime.datetime.now())
+        return client.directions(a, b, mode=mode, departure_time=datetime.datetime.now())
 
     @staticmethod
     def get_direction_as_points(a, b) -> list:
         print(f'Google::get_direction_as_points({a}, {b})')
 
-        result = Google.get_direction(a, b)
+        result = Google.get_direction(a, b, Options.routing_mode)
 
         if len(result) <= 0:
             return []
