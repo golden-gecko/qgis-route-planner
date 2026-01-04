@@ -1,0 +1,2 @@
+class Config:
+    key = 'INSERT_KEY_HERE'
