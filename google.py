@@ -2,6 +2,7 @@ import datetime
 
 import googlemaps
 
+from .config import Config
 from .options import Options
 
 
@@ -10,7 +11,7 @@ class Google:
     def get_direction(a, b, mode: str='driving') -> list:
         print(f'Google::get_direction({a}, {b}, {mode})')
 
-        client = googlemaps.Client(key='INSERT_KEY_HERE')
+        client = googlemaps.Client(key=Config.key)
 
         return client.directions(a, b, mode=mode, departure_time=datetime.datetime.now())
 
