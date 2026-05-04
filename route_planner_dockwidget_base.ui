@@ -244,6 +244,13 @@
        </widget>
       </item>
       <item>
+       <widget class="QPushButton" name="buttonSegmentReverse">
+        <property name="text">
+         <string>Reverse segment</string>
+        </property>
+       </widget>
+      </item>
+      <item>
        <widget class="QPushButton" name="buttonSegmentOptimize">
         <property name="text">
          <string>Optimize segment</string>
@@ -371,6 +378,13 @@
         </property>
         <property name="autoExclusive">
          <bool>false</bool>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="buttonTrackReverse">
+        <property name="text">
+         <string>Reverse track</string>
         </property>
        </widget>
       </item>

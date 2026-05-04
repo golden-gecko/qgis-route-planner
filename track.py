@@ -75,13 +75,30 @@ class Track:
     def refresh(track: QgsLayerTreeGroup):
         print(f'Track::refresh({track})')
 
+        if not track:
+            return
+
         for segment in track.children():
             if segment.customProperty('type') == 'segment':
                 Segment.refresh(segment)
 
     @staticmethod
+    def reverse(track: QgsLayerTreeGroup):
+        print(f'Track::reverse({track})')
+
+        if not track:
+            return
+
+        for segment in track.children():
+            if segment.customProperty('type') == 'segment':
+                Segment.reverse(segment)
+
+    @staticmethod
     def optimize(track: QgsLayerTreeGroup):
         print(f'Track::optimize({track})')
+
+        if not track:
+            return
 
         for segment in track.children():
             if segment.customProperty('type') == 'segment':

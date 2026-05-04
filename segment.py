@@ -127,8 +127,72 @@ class Segment:
         points.commitChanges()
 
     @staticmethod
+    def reverse(segment: QgsLayerTreeGroup):
+        print(f'Segment::reverse({segment})')
+
+        if not segment:
+            return
+
+        points = Layer.get_or_create_points(segment)
+
+        if not points:
+            return
+
+        paths = Layer.get_or_create_paths(segment)
+
+        if not paths:
+            return
+
+        points_list = []
+        paths_list = []
+
+        for feature in points.getFeatures():
+            points_list.append((feature.geometry().asPoint().x(), feature.geometry().asPoint().y()))
+
+        for feature in paths.getFeatures():
+            lines = []
+
+            for part in feature.geometry().parts():
+                for vertex in part.vertices():
+                    lines.append((vertex.x(), vertex.y()))
+
+            paths_list.append(lines)
+
+        points.startEditing()
+        paths.startEditing()
+
+        for feature in points.getFeatures():
+            points.deleteFeature(feature.id())
+
+        for feature in paths.getFeatures():
+            paths.deleteFeature(feature.id())
+
+        points_list.reverse()
+
+        for point in points_list:
+            points.addFeature(Point.create_feature(QgsPoint(point[0], point[1]), points.fields()))
+
+        for path in paths_list:
+            path.reverse()
+
+        paths_list.reverse()
+
+        for i in paths_list:
+            paths.addFeature(Utils.create_polyline(i, paths.fields()))
+
+        points.commitChanges()
+        paths.commitChanges()
+
+        points.startEditing()
+        Utils.refresh_position(points)
+        points.commitChanges()
+
+    @staticmethod
     def optimize(segment: QgsLayerTreeGroup):
         print(f'Segment::optimize({segment})')
+
+        if not segment:
+            return
 
     @staticmethod
     def delete(segment: QgsLayerTreeGroup):
