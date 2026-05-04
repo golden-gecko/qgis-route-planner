@@ -4,14 +4,12 @@ from qgis.PyQt.QtCore import Qt
 from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import QAction
 
-from .context_menu import ContextMenu
 from .file import File
 from .iface import Iface
 from .map_tools import Edit, PointCreateEnd, PointCreateMiddle, PointCreateStart, PointDelete, PointMove, WaypointCreate, WaypointDelete, WaypointMove
 from .options import Options
 from .route_planner_dockwidget import RoutePlannerDockWidget
 from .segment import Segment
-from .tree import Tree
 from .track import Track
 
 from .resources import *
@@ -95,6 +93,7 @@ class RoutePlanner:
         # setup track buttons
         self.dockwidget.buttonTrackCreate.clicked.connect(lambda : Segment.create(Track.create(File.get_active(self.iface))))
         self.dockwidget.buttonTrackRefresh.clicked.connect(lambda: Track.refresh(Track.get_active(self.iface)))
+        self.dockwidget.buttonTrackReverse.clicked.connect(lambda: Track.reverse(Track.get_active(self.iface)))
         self.dockwidget.buttonTrackOptimize.clicked.connect(lambda: Track.optimize(Track.get_active(self.iface)))
         self.dockwidget.buttonTrackDelete.clicked.connect(lambda: Track.delete(Track.get_active(self.iface)))
 
@@ -102,6 +101,7 @@ class RoutePlanner:
         self.dockwidget.buttonSegmentCreate.clicked.connect(lambda : Segment.create(Track.get_active(self.iface)))
         self.dockwidget.buttonSegmentRefresh.clicked.connect(lambda: Segment.refresh(Segment.get_active(self.iface)))
         self.dockwidget.buttonSegmentRefreshPoints.clicked.connect(lambda: Segment.refresh_points(Segment.get_active(self.iface)))
+        self.dockwidget.buttonSegmentReverse.clicked.connect(lambda: Segment.reverse(Segment.get_active(self.iface)))
         self.dockwidget.buttonSegmentOptimize.clicked.connect(lambda: Segment.optimize(Segment.get_active(self.iface)))
         self.dockwidget.buttonSegmentDelete.clicked.connect(lambda: Segment.delete(Segment.get_active(self.iface)))
 
@@ -122,8 +122,6 @@ class RoutePlanner:
 
         self.iface.addDockWidget(Qt.LeftDockWidgetArea, self.dockwidget)
         self.dockwidget.show()
-
-        # ContextMenu.create(self.iface.mapCanvas())
 
     @staticmethod
     def set_edit_tool(iface):
