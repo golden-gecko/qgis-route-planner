@@ -2,7 +2,6 @@ class Options:
     routing = True
     routing_provider = 'Google'
     routing_mode = 'driving'
-
     points_per_segment = 30
 
     @staticmethod
@@ -11,10 +10,16 @@ class Options:
 
     @staticmethod
     def set_routing_provider(routing_provider: str):
+        if routing_provider != 'Google':
+            routing_provider = 'Google'
+
         Options.routing_provider = routing_provider
 
     @staticmethod
     def set_routing_mode(routing_mode: str):
+        if routing_mode not in ['driving', 'walking']:
+            routing_mode = 'driving'
+
         Options.routing_mode = routing_mode
 
     @staticmethod

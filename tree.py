@@ -1,3 +1,4 @@
+from .log import log_call
 from typing import Optional
 
 from qgis.core import QgsLayerTreeGroup, QgsProject, QgsVectorLayer
@@ -5,8 +6,8 @@ from qgis.core import QgsLayerTreeGroup, QgsProject, QgsVectorLayer
 
 class Tree:
     @staticmethod
-    def get_root():
-        print('Tree::get_root()')
+    @log_call
+    def get_root() -> Optional[QgsLayerTreeGroup]:
 
         root = QgsProject.instance().layerTreeRoot()
         files = root.findGroup('Files')
@@ -17,8 +18,8 @@ class Tree:
         return Tree.create_group(root, 'Files', None, 0)
 
     @staticmethod
+    @log_call
     def create_group(parent: QgsLayerTreeGroup, name: str, custom_type: str = None, position: int = -1) -> Optional[QgsLayerTreeGroup]:
-        print(f'Tree::create_group({parent}, {name}, {custom_type}, {position})')
 
         group = parent.addGroup(name)
         group_clone = group.clone()
@@ -32,8 +33,8 @@ class Tree:
         return group_clone
 
     @staticmethod
+    @log_call
     def find_group(parent: QgsLayerTreeGroup, name: str) -> Optional[QgsLayerTreeGroup]:
-        print(f'Tree::find_group({parent}, {name})')
 
         if not parent:
             return None
@@ -41,8 +42,8 @@ class Tree:
         return parent.findGroup(name)
 
     @staticmethod
+    @log_call
     def find_layer(parent: QgsLayerTreeGroup, name: str) -> Optional[QgsVectorLayer]:
-        print(f'Tree::find_layer({parent}, {name})')
 
         if not parent:
             return None
@@ -54,7 +55,7 @@ class Tree:
         return None
 
     @staticmethod
+    @log_call
     def delete_group(group: QgsLayerTreeGroup):
-        print(f'Tree::delete_group({group})')
 
         group.parent().removeChildNode(group)

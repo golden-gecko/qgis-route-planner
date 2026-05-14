@@ -1,28 +1,24 @@
 from qgis.core import QgsFeature, QgsGeometry, QgsPoint, QgsPointXY, QgsVectorLayer
 
+from .feature import Feature
+from .log import log_call
+from .geometry import Geometry
 from .utils import Utils
 
 
 class Point:
     @staticmethod
-    def create_feature(point: QgsPoint, fields) -> QgsFeature:
-        feature = QgsFeature(fields)
-        feature.setGeometry(QgsGeometry.fromPoint(point))
-
-        return feature
-
-    @staticmethod
     def create_geometry(point: QgsPoint) -> QgsGeometry:
         return QgsGeometry.fromPoint(point)
 
     @staticmethod
+    @log_call
     def create_start(layer: QgsVectorLayer, point: QgsPointXY):
-        print(f'Point::create_start({layer}, {point}')
 
         layer.startEditing()
 
         geometries = [
-            Point.create_geometry(QgsPoint(point.x(), point.y()))
+            Geometry.from_point(QgsPoint(point.x(), point.y()))
         ]
 
         for feature in layer.getFeatures():
@@ -42,8 +38,8 @@ class Point:
         layer.commitChanges()
 
     @staticmethod
+    @log_call
     def create_middle(layer: QgsVectorLayer, point: QgsPointXY, position: int):
-        print(f'Point::create_middle({layer}, {point}, {position}')
 
         layer.startEditing()
 
@@ -51,7 +47,7 @@ class Point:
 
         for local_position, feature in enumerate(layer.getFeatures(), start=1):
             if local_position == position:
-                geometries.append(Point.create_geometry(QgsPoint(point.x(), point.y())))
+                geometries.append(Geometry.from_point(QgsPoint(point.x(), point.y())))
 
             geometries.append(feature.geometry())
             layer.deleteFeature(feature.id())
@@ -69,10 +65,10 @@ class Point:
         layer.commitChanges()
 
     @staticmethod
+    @log_call
     def create_end(layer: QgsVectorLayer, point: QgsPointXY):
-        print(f'Point::create_end({layer}, {point}')
 
-        feature = Point.create_feature(QgsPoint(point.x(), point.y()), layer.fields())
+        feature = Feature.from_point(QgsPoint(point.x(), point.y()), layer.fields())
 
         layer.startEditing()
         layer.addFeature(feature)
@@ -83,16 +79,16 @@ class Point:
         layer.commitChanges()
 
     @staticmethod
+    @log_call
     def move(layer: QgsVectorLayer, feature: int, position: int, point: QgsPointXY):
-        print(f'Point::move({layer}, {feature}, {position}, {point}')
 
         layer.startEditing()
         layer.changeGeometry(feature, QgsGeometry.fromPoint(QgsPoint(point.x(), point.y())))
         layer.commitChanges()
 
     @staticmethod
+    @log_call
     def delete(layer: QgsVectorLayer, point: QgsPointXY):
-        print(f'Point::delete({layer}, {point}')
 
         buffer = Utils.create_buffer(point)
 

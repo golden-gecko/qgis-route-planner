@@ -7,6 +7,7 @@ from typing import Optional
 from qgis.core import QgsLayerTree, QgsLayerTreeGroup
 
 from .color import Color
+from .log import log_call
 from .layer import Layer
 from .segment import Segment
 from .symbol import Symbol
@@ -18,9 +19,8 @@ from .waypoint import Waypoint
 
 class File:
     @staticmethod
+    @log_call
     def new(name: str=None) -> Optional[QgsLayerTreeGroup]:
-        print(f'File::new({name})')
-
         files = Tree.get_root()
 
         if not files:
@@ -54,8 +54,8 @@ class File:
         return file
 
     @staticmethod
+    @log_call
     def open():
-        print('File::open()')
 
         # get file name
         file_name = Utils.get_file_name_from_dialog()
@@ -66,8 +66,8 @@ class File:
         File.load_xml(file_name)
 
     @staticmethod
+    @log_call
     def save(file: QgsLayerTreeGroup):
-        print(f'File::save({file})')
 
         if not file:
             return
@@ -90,7 +90,7 @@ class File:
         if not waypoints:
             return
 
-        gpx = ET.Element('gpx', version='1.1', xmlns='http://www.topografix.com/GPX/1/1')
+        gpx = ET.Element('gpx', version='1.1', xmlns='https://www.topografix.com/GPX/1/1')
 
         wpts = Waypoint.to_xml(waypoints)
 
@@ -119,8 +119,8 @@ class File:
         tree.write(file_name)
 
     @staticmethod
+    @log_call
     def close(file: QgsLayerTreeGroup, force: bool = False):
-        print(f'File::close({file})')
 
         if not file:
             return
@@ -129,9 +129,8 @@ class File:
             Tree.delete_group(file)
 
     @staticmethod
+    @log_call
     def get_active(iface) -> Optional[QgsLayerTreeGroup]:
-        print('File::get_active()')
-
         nodes = iface.layerTreeView().selectedNodes()
 
         if len(nodes) != 1:
@@ -150,8 +149,8 @@ class File:
         return None
 
     @staticmethod
+    @log_call
     def refresh_distance(file: QgsLayerTreeGroup):
-        print(f'File::refresh_distance{file})')
 
         if not file:
             return
@@ -192,8 +191,8 @@ class File:
                     segment.setName(f'{name} [{Segment.get_distance(segment):.2f} km]')
 
     @staticmethod
+    @log_call
     def reload(file: QgsLayerTreeGroup):
-        print(f'File::close({file})')
 
         if not file:
             return
@@ -238,8 +237,8 @@ class File:
         File.refresh_distance(file)
 
     @staticmethod
+    @log_call
     def get_distance(file: QgsLayerTreeGroup) -> float:
-        print(f'File::get_distance{file})')
 
         if not file:
             return 0.0

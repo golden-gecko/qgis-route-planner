@@ -3,13 +3,14 @@ import xml.etree.ElementTree as ET
 from qgis.core import QgsFeature, QgsGeometry, QgsLayerTreeGroup, QgsPoint, QgsPointXY, QgsVectorLayer
 
 from .layer import Layer
+from .log import log_call
 from .utils import Utils
 
 
 class Waypoint:
     @staticmethod
+    @log_call
     def create(layer: QgsVectorLayer, point: QgsPointXY, name: str = None):
-        print(f'Waypoint::create({layer}, {point}')
 
         if not layer:
             return
@@ -25,16 +26,16 @@ class Waypoint:
         layer.commitChanges()
 
     @staticmethod
+    @log_call
     def move(layer: QgsVectorLayer, feature: int, position: int, point: QgsPointXY):
-        print(f'Waypoint::move({layer}, {feature}, {position}, {point}')
 
         layer.startEditing()
         layer.changeGeometry(feature, QgsGeometry.fromPoint(QgsPoint(point.x(), point.y())))
         layer.commitChanges()
 
     @staticmethod
+    @log_call
     def delete(layer: QgsVectorLayer, point: QgsPointXY):
-        print(f'Waypoint::delete({layer}, {point}')
 
         buffer = Utils.create_buffer(point)
 
@@ -53,16 +54,16 @@ class Waypoint:
         return None
 
     @staticmethod
+    @log_call
     def from_xml(waypoints: QgsLayerTreeGroup, wpt: ET.Element):
-        print(f'Waypoint::from_xml{waypoints}, {wpt})')
 
         if not waypoints:
-            return None
+            return
 
         points = Layer.get_or_create_points(waypoints)
 
         if not points:
-            return None
+            return
 
         wpt_name = wpt.find('name')
 
@@ -74,8 +75,8 @@ class Waypoint:
         Waypoint.create(points, QgsPointXY(float(wpt.get('lon')), float(wpt.get('lat'))), name)
 
     @staticmethod
+    @log_call
     def to_xml(waypoints: QgsLayerTreeGroup) -> list[ET.Element]:
-        print(f'Waypoint::to_xml{waypoints})')
 
         if not waypoints:
             return []
