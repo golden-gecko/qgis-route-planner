@@ -4,13 +4,14 @@ from qgis.core import QgsField, QgsLayerTreeGroup, QgsProject, QgsVectorLayer
 from qgis.PyQt.QtCore import QVariant
 
 from .tree import Tree
+from .log import log_call
 from .utils import Utils
 
 
 class Layer:
     @staticmethod
+    @log_call
     def get_or_create_waypoints(segment: QgsLayerTreeGroup) -> Optional[QgsVectorLayer]:
-        print(f'Layer::get_or_create_waypoints({segment})')
 
         points = Tree.find_layer(segment, 'Points')
 
@@ -39,8 +40,8 @@ class Layer:
         return layer
 
     @staticmethod
+    @log_call
     def get_or_create_points(segment: QgsLayerTreeGroup) -> Optional[QgsVectorLayer]:
-        print(f'Layer::get_or_create_points({segment})')
 
         points = Tree.find_layer(segment, 'Points')
 
@@ -69,8 +70,8 @@ class Layer:
         return layer
 
     @staticmethod
+    @log_call
     def get_or_create_paths(segment: QgsLayerTreeGroup) -> Optional[QgsVectorLayer]:
-        print(f'Layer::get_or_create_paths({segment})')
 
         points = Tree.find_layer(segment, 'Paths')
 

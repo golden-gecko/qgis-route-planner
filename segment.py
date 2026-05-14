@@ -5,11 +5,12 @@ from typing import Optional
 
 from qgis.core import QgsFeature, QgsLayerTree, QgsLayerTreeGroup, QgsPoint, QgsPointXY, QgsVectorLayer
 
+from .feature import Feature
+from .log import log_call
 from .color import Color
 from .google import Google
 from .layer import Layer
 from .options import Options
-from .point import Point
 from .symbol import Symbol
 from .tree import Tree
 from .utils import Utils
@@ -17,8 +18,8 @@ from .utils import Utils
 
 class Segment:
     @staticmethod
+    @log_call
     def create(track: QgsLayerTreeGroup) -> Optional[QgsLayerTreeGroup]:
-        print(f'Segment::create({track})')
 
         if not track:
             return None
@@ -39,8 +40,8 @@ class Segment:
         return segment
 
     @staticmethod
+    @log_call
     def refresh(segment: QgsLayerTreeGroup):
-        print(f'Segment::refresh({segment})')
 
         points = Layer.get_or_create_points(segment)
 
@@ -77,8 +78,8 @@ class Segment:
         Utils.update_layer(points, paths, lines)
 
     @staticmethod
+    @log_call
     def refresh_points(segment: QgsLayerTreeGroup):
-        print(f'Segment::refresh_points({segment})')
 
         if not segment:
             return
@@ -114,10 +115,10 @@ class Segment:
         for i in range(math.ceil(len(results) / chunk_size)):
             chunk = results[i * chunk_size:(i + 1) * chunk_size]
 
-            points.addFeature(Point.create_feature(QgsPoint(chunk[0][0], chunk[0][1]), points.fields()))
+            points.addFeature(Feature.from_point(QgsPoint(chunk[0][0], chunk[0][1]), points.fields()))
             paths.addFeature(Utils.create_polyline(chunk, paths.fields()))
 
-        points.addFeature(Point.create_feature(QgsPoint(results[-1][0], results[-1][1]), points.fields()))
+        points.addFeature(Feature.from_point(QgsPoint(results[-1][0], results[-1][1]), points.fields()))
 
         points.commitChanges()
         paths.commitChanges()
@@ -127,8 +128,8 @@ class Segment:
         points.commitChanges()
 
     @staticmethod
+    @log_call
     def reverse(segment: QgsLayerTreeGroup):
-        print(f'Segment::reverse({segment})')
 
         if not segment:
             return
@@ -170,7 +171,7 @@ class Segment:
         points_list.reverse()
 
         for point in points_list:
-            points.addFeature(Point.create_feature(QgsPoint(point[0], point[1]), points.fields()))
+            points.addFeature(Feature.from_point(QgsPoint(point[0], point[1]), points.fields()))
 
         for path in paths_list:
             path.reverse()
@@ -188,15 +189,15 @@ class Segment:
         points.commitChanges()
 
     @staticmethod
+    @log_call
     def optimize(segment: QgsLayerTreeGroup):
-        print(f'Segment::optimize({segment})')
 
         if not segment:
             return
 
     @staticmethod
+    @log_call
     def delete(segment: QgsLayerTreeGroup):
-        print(f'Segment::delete({segment})')
 
         if not segment:
             return
@@ -205,8 +206,8 @@ class Segment:
             Tree.delete_group(segment)
 
     @staticmethod
+    @log_call
     def get_active(iface) -> Optional[QgsLayerTreeGroup]:
-        print('Segment::get_active()')
 
         nodes = iface.layerTreeView().selectedNodes()
 
@@ -226,8 +227,8 @@ class Segment:
         return None
 
     @staticmethod
+    @log_call
     def refresh_point(segment: QgsLayerTreeGroup, position: int):
-        print(f'Segment::refresh_point(f{segment}, {position})')
 
         points = Layer.get_or_create_points(segment)
 
@@ -313,8 +314,8 @@ class Segment:
             Segment.refesh_segment(paths, position - 1, a, b)
 
     @staticmethod
+    @log_call
     def refresh_point_move(segment: QgsLayerTreeGroup, position: int):
-        print(f'Segment::refresh_point_move(f{segment}, {position})')
 
         points = Layer.get_or_create_points(segment)
 
@@ -354,8 +355,8 @@ class Segment:
             Segment.refesh_segment(paths, position - 1, a, b)
 
     @staticmethod
+    @log_call
     def refresh_point_delete(segment: QgsLayerTreeGroup, position: int):
-        print(f'Segment::refresh_point_delete(f{segment}, {position})')
 
         points = Layer.get_or_create_points(segment)
 
@@ -369,7 +370,6 @@ class Segment:
 
         previous_point = Segment.get_point(points, position - 1)
         current_point = Segment.get_point(points, position)
-        next_point = Segment.get_point(points, position + 1)
 
         # refresh first
         if position == 1:
@@ -404,8 +404,8 @@ class Segment:
             Segment.refesh_segment(paths, position - 1, a, b)
 
     @staticmethod
+    @log_call
     def refesh_segment(layer: QgsVectorLayer, position: int, a: QgsPointXY, b: QgsPointXY):
-        print(f'Segment::refesh_segment({layer}, {position}, {a}, {b})')
 
         if Options.routing:
             results = Google.get_direction_as_points(f'{a.y()} {a.x()}', f'{b.y()} {b.x()}')
@@ -425,8 +425,8 @@ class Segment:
         layer.commitChanges()
 
     @staticmethod
+    @log_call
     def get_point(layer: QgsVectorLayer, position: int) -> Optional[QgsFeature]:
-        print(f'Segment::get_point(f{layer}, {position})')
 
         for feature_position, feature in enumerate(layer.getFeatures(), start=1):
             if feature_position == position:
@@ -435,8 +435,8 @@ class Segment:
         return None
 
     @staticmethod
+    @log_call
     def get_path(layer: QgsVectorLayer, position: int):
-        print(f'Segment::get_path(f{layer}, {position})')
 
         for feature_position, feature in enumerate(layer.getFeatures(), start=1):
             if feature_position == position:
@@ -445,8 +445,8 @@ class Segment:
         return None
 
     @staticmethod
+    @log_call
     def from_xml(track: QgsLayerTreeGroup, trkseg: ET.Element):
-        print(f'Segment::from_xml{track}, {trkseg})')
 
         segment = Segment.create(track)
 
@@ -479,10 +479,10 @@ class Segment:
         for i in range(math.ceil(len(results) / chunk_size)):
             chunk = results[i * chunk_size:(i + 1) * chunk_size]
 
-            points.addFeature(Point.create_feature(QgsPoint(chunk[0][0], chunk[0][1]), points.fields()))
+            points.addFeature(Feature.from_point(QgsPoint(chunk[0][0], chunk[0][1]), points.fields()))
             paths.addFeature(Utils.create_polyline(chunk, paths.fields()))
 
-        points.addFeature(Point.create_feature(QgsPoint(results[-1][0], results[-1][1]), points.fields()))
+        points.addFeature(Feature.from_point(QgsPoint(results[-1][0], results[-1][1]), points.fields()))
 
         points.commitChanges()
         paths.commitChanges()
@@ -492,8 +492,8 @@ class Segment:
         points.commitChanges()
 
     @staticmethod
+    @log_call
     def to_xml(segment: QgsLayerTreeGroup) -> Optional[ET.Element]:
-        print(f'Segment::to_xml{segment})')
 
         if not segment:
             return None
@@ -513,8 +513,8 @@ class Segment:
         return trkseg
 
     @staticmethod
+    @log_call
     def get_distance(segment: QgsLayerTreeGroup) -> float:
-        print(f'Segment::get_distance{segment})')
 
         if not segment:
             return 0.0

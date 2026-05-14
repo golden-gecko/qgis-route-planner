@@ -5,14 +5,15 @@ from typing import Optional
 from qgis.core import QgsLayerTree, QgsLayerTreeGroup
 
 from .segment import Segment
+from .log import log_call
 from .tree import Tree
 from .utils import Utils
 
 
 class Track:
     @staticmethod
+    @log_call
     def create(file: QgsLayerTreeGroup, name: str=None) -> Optional[QgsLayerTreeGroup]:
-        print(f'Track::create({file}, {name})')
 
         tracks = Tree.find_group(file, 'Tracks')
 
@@ -31,18 +32,16 @@ class Track:
 
         return track
 
-        """
         # TODO: Try to use data sources.
         # Utils.set_data_source(point_layer, file_name + '?type=waypoint')
         # Utils.set_data_source(path_layer, file_name + '?type=track')
 
         # TODO: Must be called after setting data source.
         # point_layer.setLabeling(Utils.create_label_settings())
-        """
 
     @staticmethod
+    @log_call
     def delete(track: QgsLayerTreeGroup):
-        print(f'Track::delete({track})')
 
         if not track:
             return
@@ -51,8 +50,8 @@ class Track:
             Tree.delete_group(track)
 
     @staticmethod
+    @log_call
     def get_active(iface) -> Optional[QgsLayerTreeGroup]:
-        print('Track::get_active()')
 
         nodes = iface.layerTreeView().selectedNodes()
 
@@ -72,8 +71,8 @@ class Track:
         return None
 
     @staticmethod
+    @log_call
     def refresh(track: QgsLayerTreeGroup):
-        print(f'Track::refresh({track})')
 
         if not track:
             return
@@ -83,8 +82,8 @@ class Track:
                 Segment.refresh(segment)
 
     @staticmethod
+    @log_call
     def reverse(track: QgsLayerTreeGroup):
-        print(f'Track::reverse({track})')
 
         if not track:
             return
@@ -94,8 +93,8 @@ class Track:
                 Segment.reverse(segment)
 
     @staticmethod
+    @log_call
     def optimize(track: QgsLayerTreeGroup):
-        print(f'Track::optimize({track})')
 
         if not track:
             return
@@ -105,8 +104,8 @@ class Track:
                 Segment.optimize(segment)
 
     @staticmethod
+    @log_call
     def from_xml(file: QgsLayerTreeGroup, trk: ET.Element):
-        print(f'Track::from_xml{file}, {trk})')
 
         trk_name = trk.find('name')
 
@@ -124,8 +123,8 @@ class Track:
             Segment.from_xml(track, trkseg)
 
     @staticmethod
+    @log_call
     def to_xml(track: QgsLayerTreeGroup) -> Optional[ET.Element]:
-        print(f'Track::to_xml{track})')
 
         if not track:
             return None
@@ -150,8 +149,8 @@ class Track:
         return trk
 
     @staticmethod
+    @log_call
     def get_distance(track: QgsLayerTreeGroup) -> float:
-        print(f'Track::get_distance{track})')
 
         if not track:
             return 0.0

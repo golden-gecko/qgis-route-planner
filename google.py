@@ -3,21 +3,22 @@ import datetime
 import googlemaps
 
 from .config import Config
+from .log import log_call
 from .options import Options
 
 
 class Google:
     @staticmethod
+    @log_call
     def get_direction(a, b, mode: str='driving') -> list:
-        print(f'Google::get_direction({a}, {b}, {mode})')
 
         client = googlemaps.Client(key=Config.key)
 
         return client.directions(a, b, mode=mode, departure_time=datetime.datetime.now())
 
     @staticmethod
+    @log_call
     def get_direction_as_points(a, b) -> list:
-        print(f'Google::get_direction_as_points({a}, {b})')
 
         result = Google.get_direction(a, b, Options.routing_mode)
 

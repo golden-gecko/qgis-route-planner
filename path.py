@@ -16,10 +16,9 @@ class Path:
         if not layer:
             return
 
-        layer.startEditing()
-
         feature = QgsFeature(layer.fields())
         feature.setGeometry(QgsGeometry.fromPolyline([QgsPoint(lon, lat) for lon, lat in points]))
 
+        layer.startEditing()
         layer.addFeature(feature)
         layer.commitChanges()

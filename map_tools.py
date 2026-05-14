@@ -2,6 +2,7 @@ from qgis.gui import QgsMapCanvas, QgsMapTool
 from qgis.PyQt.QtCore import Qt
 
 from .file import File
+from .log import log_call
 from .layer import Layer
 from .point import Point
 from .segment import Segment
@@ -29,11 +30,12 @@ class Edit(MapTool):
         self.feature_position = None
         self.feature_type = None
 
+    @log_call
     def canvasMoveEvent(self, event):
-        print('Edit::canvasMoveEvent()')
+        pass
 
+    @log_call
     def canvasPressEvent(self, event):
-        print('Edit::canvasPressEvent()')
 
         if event.button() != Qt.LeftButton:
             return
@@ -61,6 +63,7 @@ class Edit(MapTool):
                 self.feature = feature.id()
                 self.feature_position = feature_position
                 self.feature_type = 'point'
+                File.refresh_distance(File.get_active(self.iface))
 
                 return
 
@@ -81,8 +84,8 @@ class Edit(MapTool):
 
                 return
 
+    @log_call
     def canvasReleaseEvent(self, event):
-        print('Edit::canvasReleaseEvent()')
 
         segment = Segment.get_active(self.iface)
 
@@ -115,8 +118,8 @@ class WaypointCreate(MapTool):
     def __init__(self, iface, canvas: QgsMapCanvas):
         MapTool.__init__(self, iface, canvas)
 
+    @log_call
     def canvasReleaseEvent(self, event):
-        print('WaypointCreate::canvasReleaseEvent()')
 
         file = File.get_active(self.iface)
 
@@ -140,8 +143,8 @@ class WaypointDelete(MapTool):
     def __init__(self, iface, canvas: QgsMapCanvas):
         MapTool.__init__(self, iface, canvas)
 
+    @log_call
     def canvasReleaseEvent(self, event):
-        print('WaypointDelete::canvasReleaseEvent()')
 
         file = File.get_active(self.iface)
 
@@ -168,8 +171,8 @@ class WaypointMove(MapTool):
         self.feature = None
         self.feature_position = None
 
+    @log_call
     def canvasPressEvent(self, event):
-        print('WaypointMove::canvasPressEvent()')
 
         self.feature = None
         self.feature_position = None
@@ -199,8 +202,8 @@ class WaypointMove(MapTool):
 
                 break
 
+    @log_call
     def canvasReleaseEvent(self, event):
-        print('WaypointMove::canvasReleaseEvent()')
 
         file = File.get_active(self.iface)
 
@@ -227,8 +230,8 @@ class PointCreateStart(MapTool):
     def __init__(self, iface, canvas: QgsMapCanvas):
         MapTool.__init__(self, iface, canvas)
 
+    @log_call
     def canvasReleaseEvent(self, event):
-        print('PointCreateStart::canvasReleaseEvent()')
 
         segment = Segment.get_active(self.iface)
 
@@ -244,14 +247,15 @@ class PointCreateStart(MapTool):
 
         Point.create_start(points, point)
         Segment.refresh_point(segment, 1)
+        File.refresh_distance(File.get_active(self.iface))
 
 
 class PointCreateMiddle(MapTool):
     def __init__(self, iface, canvas: QgsMapCanvas):
         MapTool.__init__(self, iface, canvas)
 
+    @log_call
     def canvasReleaseEvent(self, event):
-        print('PointCreateMiddle::canvasReleaseEvent()')
 
         segment = Segment.get_active(self.iface)
 
@@ -275,6 +279,7 @@ class PointCreateMiddle(MapTool):
             if feature.geometry().intersects(buffer):
                 Point.create_middle(points, point, position + 1)
                 Segment.refresh_point(segment, position + 1)
+                File.refresh_distance(File.get_active(self.iface))
 
                 break
 
@@ -283,8 +288,8 @@ class PointCreateEnd(MapTool):
     def __init__(self, iface, canvas: QgsMapCanvas):
         MapTool.__init__(self, iface, canvas)
 
+    @log_call
     def canvasReleaseEvent(self, event):
-        print('PointCreateEnd::canvasReleaseEvent()')
 
         track = Track.get_active(self.iface)
 
@@ -315,8 +320,8 @@ class PointMove(MapTool):
         self.feature = None
         self.feature_position = None
 
+    @log_call
     def canvasPressEvent(self, event):
-        print('PointMove::canvasPressEvent()')
 
         self.feature = None
         self.feature_position = None
@@ -338,11 +343,12 @@ class PointMove(MapTool):
             if feature.geometry().intersects(buffer):
                 self.feature = feature.id()
                 self.feature_position = feature_position
+                File.refresh_distance(File.get_active(self.iface))
 
                 break
 
+    @log_call
     def canvasReleaseEvent(self, event):
-        print('PointMove::canvasReleaseEvent()')
 
         segment = Segment.get_active(self.iface)
 
@@ -359,14 +365,15 @@ class PointMove(MapTool):
         if self.feature and self.feature_position:
             Point.move(points, self.feature, self.feature_position, point)
             Segment.refresh_point_move(segment, self.feature_position)
+            File.refresh_distance(File.get_active(self.iface))
 
 
 class PointDelete(MapTool):
     def __init__(self, iface, canvas: QgsMapCanvas):
         MapTool.__init__(self, iface, canvas)
 
+    @log_call
     def canvasReleaseEvent(self, event):
-        print('PointDelete::canvasReleaseEvent()')
 
         segment = Segment.get_active(self.iface)
 
@@ -383,3 +390,4 @@ class PointDelete(MapTool):
 
         if position is not None:
             Segment.refresh_point_delete(segment, position)
+            File.refresh_distance(File.get_active(self.iface))

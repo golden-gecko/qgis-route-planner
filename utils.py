@@ -1,6 +1,6 @@
 from typing import Optional
 
-from qgis.core import (QgsFeature, QgsGeometry, QgsLayerTreeGroup, QgsPoint, QgsProject, QgsSymbol,
+from qgis.core import (QgsFeature, QgsGeometry, QgsPoint, QgsProject, QgsSymbol,
                        QgsVectorLayer,QgsTextBufferSettings, QgsTextFormat, QgsPalLayerSettings, QgsPointXY,
                        QgsVectorLayerSimpleLabeling, Qgis, QgsCoordinateReferenceSystem, QgsCoordinateTransform,
                        QgsDistanceArea)
@@ -8,6 +8,7 @@ from qgis.PyQt.QtGui import QColor, QFont
 from qgis.PyQt.QtWidgets import QFileDialog, QMessageBox
 
 from .iface import Iface
+from .log import log_call
 
 
 class Utils:
@@ -31,8 +32,8 @@ class Utils:
         return QgsGeometry.fromPolyline(point_list)
 
     @staticmethod
+    @log_call
     def update_layer(points: QgsVectorLayer, paths: QgsVectorLayer, lines: list):
-        print(f'Utils::update_layer({points}, {paths}, {lines})')
 
         provider = paths.dataProvider()
         paths.startEditing()
