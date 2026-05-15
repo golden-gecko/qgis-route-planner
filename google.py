@@ -10,7 +10,7 @@ from .options import Options
 class Google:
     @staticmethod
     @log_call
-    def get_direction(a, b, mode: str='driving') -> list:
+    def get_direction(a, b, mode: str = 'driving') -> list:
 
         client = googlemaps.Client(key=Config.key)
 

@@ -20,7 +20,7 @@ from .waypoint import Waypoint
 class File:
     @staticmethod
     @log_call
-    def new(name: str=None) -> Optional[QgsLayerTreeGroup]:
+    def new(name: str = None) -> Optional[QgsLayerTreeGroup]:
         files = Tree.get_root()
 
         if not files:
@@ -56,7 +56,6 @@ class File:
     @staticmethod
     @log_call
     def open():
-
         # get file name
         file_name = Utils.get_file_name_from_dialog()
 

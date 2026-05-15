@@ -83,19 +83,19 @@ class RoutePlanner:
             self.dockwidget.buttonFileClose.clicked.connect(lambda: File.close(File.get_active(self.iface)))
 
             # setup waypoint buttons
-            self.dockwidget.buttonWaypointCreate.clicked.connect(lambda : RoutePlanner.set_waypoint_create(self.iface))
+            self.dockwidget.buttonWaypointCreate.clicked.connect(lambda: RoutePlanner.set_waypoint_create(self.iface))
             self.dockwidget.buttonWaypointMove.clicked.connect(lambda: RoutePlanner.set_waypoint_move(self.iface))
             self.dockwidget.buttonWaypointDelete.clicked.connect(lambda: RoutePlanner.set_waypoint_delete(self.iface))
 
             # setup track buttons
-            self.dockwidget.buttonTrackCreate.clicked.connect(lambda : Segment.create(Track.create(File.get_active(self.iface))))
+            self.dockwidget.buttonTrackCreate.clicked.connect(lambda: Segment.create(Track.create(File.get_active(self.iface))))
             self.dockwidget.buttonTrackRefresh.clicked.connect(lambda: Track.refresh(Track.get_active(self.iface)))
             self.dockwidget.buttonTrackReverse.clicked.connect(lambda: Track.reverse(Track.get_active(self.iface)))
             self.dockwidget.buttonTrackOptimize.clicked.connect(lambda: Track.optimize(Track.get_active(self.iface)))
             self.dockwidget.buttonTrackDelete.clicked.connect(lambda: Track.delete(Track.get_active(self.iface)))
 
             # setup segment buttons
-            self.dockwidget.buttonSegmentCreate.clicked.connect(lambda : Segment.create(Track.get_active(self.iface)))
+            self.dockwidget.buttonSegmentCreate.clicked.connect(lambda: Segment.create(Track.get_active(self.iface)))
             self.dockwidget.buttonSegmentRefresh.clicked.connect(lambda: Segment.refresh(Segment.get_active(self.iface)))
             self.dockwidget.buttonSegmentRefreshPoints.clicked.connect(lambda: Segment.refresh_points(Segment.get_active(self.iface)))
             self.dockwidget.buttonSegmentReverse.clicked.connect(lambda: Segment.reverse(Segment.get_active(self.iface)))

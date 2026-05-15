@@ -13,7 +13,7 @@ from .utils import Utils
 class Track:
     @staticmethod
     @log_call
-    def create(file: QgsLayerTreeGroup, name: str=None) -> Optional[QgsLayerTreeGroup]:
+    def create(file: QgsLayerTreeGroup, name: str = None) -> Optional[QgsLayerTreeGroup]:
 
         tracks = Tree.find_group(file, 'Tracks')
 
