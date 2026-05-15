@@ -36,7 +36,6 @@ class Edit(MapTool):
 
     @log_call
     def canvasPressEvent(self, event):
-
         if event.button() != Qt.LeftButton:
             return
 
@@ -113,6 +112,7 @@ class Edit(MapTool):
                 if event.button() == Qt.LeftButton:
                     Point.create_middle(points, point, self.feature_position + 1)
                     Segment.refresh_point(segment, self.feature_position + 1)
+
 
 class WaypointCreate(MapTool):
     def __init__(self, iface, canvas: QgsMapCanvas):

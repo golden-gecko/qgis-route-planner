@@ -1,7 +1,7 @@
 from typing import Optional
 
 from qgis.core import (QgsFeature, QgsGeometry, QgsPoint, QgsProject, QgsSymbol,
-                       QgsVectorLayer,QgsTextBufferSettings, QgsTextFormat, QgsPalLayerSettings, QgsPointXY,
+                       QgsVectorLayer, QgsTextBufferSettings, QgsTextFormat, QgsPalLayerSettings, QgsPointXY,
                        QgsVectorLayerSimpleLabeling, Qgis, QgsCoordinateReferenceSystem, QgsCoordinateTransform,
                        QgsDistanceArea)
 from qgis.PyQt.QtGui import QColor, QFont
@@ -129,7 +129,7 @@ class Utils:
         return dialog.selectedFiles()[0]
 
     @staticmethod
-    def create_buffer(point: QgsPointXY, distance: float=0.001, segments: int=5):
+    def create_buffer(point: QgsPointXY, distance: float = 0.001, segments: int = 5):
         return QgsGeometry.fromPoint(QgsPoint(point.x(), point.y())).buffer(distance, segments)
 
     @staticmethod
