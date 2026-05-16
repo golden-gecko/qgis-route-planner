@@ -8,13 +8,8 @@ from .utils import Utils
 
 class Point:
     @staticmethod
-    def create_geometry(point: QgsPoint) -> QgsGeometry:
-        return QgsGeometry.fromPoint(point)
-
-    @staticmethod
     @log_call
     def create_start(layer: QgsVectorLayer, point: QgsPointXY):
-
         layer.startEditing()
 
         geometries = [
@@ -40,7 +35,6 @@ class Point:
     @staticmethod
     @log_call
     def create_middle(layer: QgsVectorLayer, point: QgsPointXY, position: int):
-
         layer.startEditing()
 
         geometries = []
@@ -67,7 +61,6 @@ class Point:
     @staticmethod
     @log_call
     def create_end(layer: QgsVectorLayer, point: QgsPointXY):
-
         feature = Feature.from_point(QgsPoint(point.x(), point.y()), layer.fields())
 
         layer.startEditing()
@@ -81,7 +74,6 @@ class Point:
     @staticmethod
     @log_call
     def move(layer: QgsVectorLayer, feature: int, position: int, point: QgsPointXY):
-
         layer.startEditing()
         layer.changeGeometry(feature, QgsGeometry.fromPoint(QgsPoint(point.x(), point.y())))
         layer.commitChanges()
@@ -89,7 +81,6 @@ class Point:
     @staticmethod
     @log_call
     def delete(layer: QgsVectorLayer, point: QgsPointXY):
-
         buffer = Utils.create_buffer(point)
 
         for position, feature in enumerate(layer.getFeatures(), start=1):

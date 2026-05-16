@@ -7,9 +7,11 @@ from typing import Optional
 from qgis.core import QgsLayerTree, QgsLayerTreeGroup
 
 from .color import Color
+from .dialog import Dialog
 from .log import log_call
 from .layer import Layer
 from .segment import Segment
+from .string import String
 from .symbol import Symbol
 from .track import Track
 from .tree import Tree
@@ -20,35 +22,35 @@ from .waypoint import Waypoint
 class File:
     @staticmethod
     @log_call
-    def new(name: str = None) -> Optional[QgsLayerTreeGroup]:
+    def new(name: Optional[str] = None) -> Optional[QgsLayerTreeGroup]:
         files = Tree.get_root()
 
-        if not files:
+        if files is None:
             return None
 
-        if not name:
-            name = Utils.generate_name('File', len(files.children()))
+        if name is None:
+            name = String.generate_name('File', len(files.children()))
 
         file = Tree.create_group(files, name, 'file')
 
-        if not file:
+        if file is None:
             return None
 
         waypoints = Tree.create_group(file, 'Waypoints', 'waypoints')
 
-        if not waypoints:
+        if waypoints is None:
             return None
 
         points = Layer.get_or_create_waypoints(waypoints)
 
-        if not points:
+        if points is None:
             return None
 
-        Utils.set_symbol(points, Symbol.create_waypoint(Color.random()))
+        Symbol.set(points, Symbol.create_waypoint(Color.random()))
 
         tracks = Tree.create_group(file, 'Tracks', 'tracks')
 
-        if not tracks:
+        if tracks is None:
             return None
 
         return file
@@ -56,10 +58,9 @@ class File:
     @staticmethod
     @log_call
     def open():
-        # get file name
-        file_name = Utils.get_file_name_from_dialog()
+        file_name = Dialog.get_file_name()
 
-        if not file_name:
+        if file_name is None:
             return
 
         File.load_xml(file_name)
@@ -67,14 +68,13 @@ class File:
     @staticmethod
     @log_call
     def save(file: QgsLayerTreeGroup):
-
         if not file:
             return
 
         file_name = file.customProperty('fileName')
 
         if not file_name:
-            file_name = Utils.get_file_name_from_dialog()
+            file_name = Dialog.get_file_name()
 
             if not file_name:
                 return
@@ -120,11 +120,10 @@ class File:
     @staticmethod
     @log_call
     def close(file: QgsLayerTreeGroup, force: bool = False):
-
         if not file:
             return
 
-        if force or Utils.confirm('Close file?'):
+        if force or Dialog.confirm('Close file?'):
             Tree.delete_group(file)
 
     @staticmethod
@@ -150,7 +149,6 @@ class File:
     @staticmethod
     @log_call
     def refresh_distance(file: QgsLayerTreeGroup):
-
         if not file:
             return
 
@@ -192,7 +190,6 @@ class File:
     @staticmethod
     @log_call
     def reload(file: QgsLayerTreeGroup):
-
         if not file:
             return
 
@@ -238,7 +235,6 @@ class File:
     @staticmethod
     @log_call
     def get_distance(file: QgsLayerTreeGroup) -> float:
-
         if not file:
             return 0.0
 

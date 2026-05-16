@@ -4,24 +4,24 @@ from typing import Optional
 
 from qgis.core import QgsLayerTree, QgsLayerTreeGroup
 
-from .segment import Segment
+from .dialog import Dialog
 from .log import log_call
+from .segment import Segment
+from .string import String
 from .tree import Tree
-from .utils import Utils
 
 
 class Track:
     @staticmethod
     @log_call
-    def create(file: QgsLayerTreeGroup, name: str = None) -> Optional[QgsLayerTreeGroup]:
-
+    def create(file: QgsLayerTreeGroup, name: Optional[str] = None) -> Optional[QgsLayerTreeGroup]:
         tracks = Tree.find_group(file, 'Tracks')
 
         if not tracks:
             return None
 
         if not name:
-            name = Utils.generate_name('Track', len(tracks.children()))
+            name = String.generate_name('Track', len(tracks.children()))
 
         track = Tree.create_group(tracks, name)
 
@@ -33,26 +33,24 @@ class Track:
         return track
 
         # TODO: Try to use data sources.
-        # Utils.set_data_source(point_layer, file_name + '?type=waypoint')
-        # Utils.set_data_source(path_layer, file_name + '?type=track')
+        # DataSource.set(point_layer, file_name + '?type=waypoint')
+        # DataSource.set(path_layer, file_name + '?type=track')
 
         # TODO: Must be called after setting data source.
-        # point_layer.setLabeling(Utils.create_label_settings())
+        # point_layer.setLabeling(Label.create_settings())
 
     @staticmethod
     @log_call
     def delete(track: QgsLayerTreeGroup):
-
         if not track:
             return
 
-        if Utils.confirm('Delete track?'):
+        if Dialog.confirm('Delete track?'):
             Tree.delete_group(track)
 
     @staticmethod
     @log_call
     def get_active(iface) -> Optional[QgsLayerTreeGroup]:
-
         nodes = iface.layerTreeView().selectedNodes()
 
         if len(nodes) != 1:
@@ -73,7 +71,6 @@ class Track:
     @staticmethod
     @log_call
     def refresh(track: QgsLayerTreeGroup):
-
         if not track:
             return
 
@@ -84,7 +81,6 @@ class Track:
     @staticmethod
     @log_call
     def reverse(track: QgsLayerTreeGroup):
-
         if not track:
             return
 
@@ -95,7 +91,6 @@ class Track:
     @staticmethod
     @log_call
     def optimize(track: QgsLayerTreeGroup):
-
         if not track:
             return
 
@@ -106,7 +101,6 @@ class Track:
     @staticmethod
     @log_call
     def from_xml(file: QgsLayerTreeGroup, trk: ET.Element):
-
         trk_name = trk.find('name')
 
         if trk_name is not None:
@@ -125,7 +119,6 @@ class Track:
     @staticmethod
     @log_call
     def to_xml(track: QgsLayerTreeGroup) -> Optional[ET.Element]:
-
         if not track:
             return None
 
@@ -151,7 +144,6 @@ class Track:
     @staticmethod
     @log_call
     def get_distance(track: QgsLayerTreeGroup) -> float:
-
         if not track:
             return 0.0
 

@@ -1,5 +1,7 @@
 import xml.etree.ElementTree as ET
 
+from typing import Optional
+
 from qgis.core import QgsFeature, QgsGeometry, QgsLayerTreeGroup, QgsPoint, QgsPointXY, QgsVectorLayer
 
 from .layer import Layer
@@ -10,9 +12,8 @@ from .utils import Utils
 class Waypoint:
     @staticmethod
     @log_call
-    def create(layer: QgsVectorLayer, point: QgsPointXY, name: str = None):
-
-        if not layer:
+    def create(layer: QgsVectorLayer, point: QgsPointXY, name: Optional[str] = None):
+        if layer is None:
             return
 
         feature = QgsFeature(layer.fields())
@@ -27,8 +28,7 @@ class Waypoint:
 
     @staticmethod
     @log_call
-    def move(layer: QgsVectorLayer, feature: int, position: int, point: QgsPointXY):
-
+    def move(layer: QgsVectorLayer, feature: int, point: QgsPointXY):
         layer.startEditing()
         layer.changeGeometry(feature, QgsGeometry.fromPoint(QgsPoint(point.x(), point.y())))
         layer.commitChanges()
@@ -36,7 +36,6 @@ class Waypoint:
     @staticmethod
     @log_call
     def delete(layer: QgsVectorLayer, point: QgsPointXY):
-
         buffer = Utils.create_buffer(point)
 
         for position, feature in enumerate(layer.getFeatures(), start=1):
@@ -56,28 +55,32 @@ class Waypoint:
     @staticmethod
     @log_call
     def from_xml(waypoints: QgsLayerTreeGroup, wpt: ET.Element):
-
-        if not waypoints:
+        if waypoints is None:
             return
 
         points = Layer.get_or_create_points(waypoints)
 
-        if not points:
+        if points is None:
             return
 
         wpt_name = wpt.find('name')
 
-        if wpt_name is not None:
-            name = wpt_name.text
-        else:
+        if wpt_name is None:
             name = None
+        else:
+            name = wpt_name.text
 
-        Waypoint.create(points, QgsPointXY(float(wpt.get('lon')), float(wpt.get('lat'))), name)
+        lon = wpt.get('lon')
+        lat = wpt.get('lat')
+
+        if lon is None or lat is None:
+            return
+
+        Waypoint.create(points, QgsPointXY(float(lon), float(lat)), name)
 
     @staticmethod
     @log_call
     def to_xml(waypoints: QgsLayerTreeGroup) -> list[ET.Element]:
-
         if not waypoints:
             return []
 

@@ -30,7 +30,7 @@ class RoutePlanner:
         self.pluginIsActive = False
         self.dockwidget = None
 
-    def add_action(self, icon_path, text, callback, add_to_menu=True, add_to_toolbar=True, status_tip=None, whats_this=None, parent=None):
+    def add_action(self, icon_path, text, callback, add_to_menu: bool = True, add_to_toolbar: bool = True, status_tip = None, whats_this = None, parent = None):
         action = QAction(QIcon(icon_path), text, parent)
         action.triggered.connect(callback)
         action.setEnabled(True)
