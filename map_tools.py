@@ -98,10 +98,10 @@ class Edit(MapTool):
 
         point = self.toLayerCoordinates(points, event.pos())
 
-        if self.feature and self.feature_position:
+        if self.feature is not None and self.feature_position is not None:
             if self.feature_type == 'point':
                 if event.button() == Qt.LeftButton:
-                    Point.move(points, self.feature, self.feature_position, point)
+                    Point.move(points, self.feature, point)
                     Segment.refresh_point_move(segment, self.feature_position)
                 elif event.button() == Qt.RightButton:
                     position = Point.delete(points, point)
@@ -218,7 +218,7 @@ class WaypointMove(MapTool):
 
         point = self.toLayerCoordinates(points, event.pos())
 
-        if self.feature and self.feature_position:
+        if self.feature is not None and self.feature_position is not None:
             Waypoint.move(points, self.feature, point)
 
 
@@ -353,8 +353,8 @@ class PointMove(MapTool):
 
         point = self.toLayerCoordinates(points, event.pos())
 
-        if self.feature and self.feature_position:
-            Point.move(points, self.feature, self.feature_position, point)
+        if self.feature is not None and self.feature_position is not None:
+            Point.move(points, self.feature, point)
             Segment.refresh_point_move(segment, self.feature_position)
             File.refresh_distance(File.get_active(self.iface))
 

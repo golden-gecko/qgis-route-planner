@@ -25,7 +25,7 @@ class Utils:
 
     @staticmethod
     @log_call
-    def update_layer(points: QgsVectorLayer, paths: QgsVectorLayer, lines: list):
+    def update_layer(paths: QgsVectorLayer, lines: list):
         provider = paths.dataProvider()
         paths.startEditing()
 

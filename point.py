@@ -73,7 +73,7 @@ class Point:
 
     @staticmethod
     @log_call
-    def move(layer: QgsVectorLayer, feature: int, position: int, point: QgsPointXY):
+    def move(layer: QgsVectorLayer, feature: int, point: QgsPointXY):
         layer.startEditing()
         layer.changeGeometry(feature, QgsGeometry.fromPoint(QgsPoint(point.x(), point.y())))
         layer.commitChanges()
