@@ -53,8 +53,10 @@ class RoutePlanner:
         self.add_action(':/plugins/route_planner/icon.png', text='Show', callback=self.run, parent=self.iface.mainWindow())
 
     def onClosePlugin(self):
-        self.dockwidget.closingPlugin.disconnect(self.onClosePlugin)
         self.pluginIsActive = False
+
+        self.dockwidget.closingPlugin.disconnect(self.onClosePlugin)
+        self.dockwidget = None
 
     def unload(self):
         for action in self.actions:

@@ -76,7 +76,7 @@ class Segment:
             for i in range(len(vertices) - 1):
                 lines.append([vertices[i], vertices[i + 1]])
 
-        Utils.update_layer(points, paths, lines)
+        Utils.update_layer(paths, lines)
 
     @staticmethod
     @log_call
@@ -406,7 +406,13 @@ class Segment:
         results = []
 
         for trkpt in trkseg.iter('trkpt'):
-            results.append((float(trkpt.get('lon')), float(trkpt.get('lat'))))
+            lon = trkpt.get('lon')
+            lat = trkpt.get('lat')
+
+            if lon is None or lat is None:
+                continue
+
+            results.append((float(lon), float(lat)))
 
         if len(results) < 2:
             return
