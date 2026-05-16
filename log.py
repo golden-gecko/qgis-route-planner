@@ -4,7 +4,9 @@ from functools import wraps
 def _safe_repr(value, max_len: int = 200) -> str:
     try:
         result = repr(value)
-    except Exception:
+    except Exception as e:
+        print(e)
+
         result = f'<unreprable {type(value).__name__}>'
 
     if len(result) > max_len:
@@ -21,6 +23,7 @@ def log_call(func):
         call_args = ', '.join(part for part in [args_repr, kwargs_repr] if part)
 
         print(f'{func.__qualname__}({call_args})')
+
         return func(*args, **kwargs)
 
     return wrapper

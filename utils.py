@@ -1,5 +1,4 @@
 from qgis.core import QgsFeature, QgsGeometry, QgsPoint, QgsVectorLayer, QgsPointXY
-from qgis.PyQt.QtWidgets import QFileDialog, QMessageBox
 
 from .log import log_call
 
