@@ -14,7 +14,7 @@ from .tree import Tree
 class Track:
     @staticmethod
     @log_call
-    def create(file: QgsLayerTreeGroup, name: Optional[str] = None) -> Optional[QgsLayerTreeGroup]:
+    def create(file: Optional[QgsLayerTreeGroup], name: Optional[str] = None) -> Optional[QgsLayerTreeGroup]:
         tracks = Tree.find_group(file, 'Tracks')
 
         if not tracks:
@@ -41,7 +41,7 @@ class Track:
 
     @staticmethod
     @log_call
-    def delete(track: QgsLayerTreeGroup):
+    def delete(track: Optional[QgsLayerTreeGroup]):
         if not track:
             return
 
@@ -70,7 +70,7 @@ class Track:
 
     @staticmethod
     @log_call
-    def refresh(track: QgsLayerTreeGroup):
+    def refresh(track: Optional[QgsLayerTreeGroup]):
         if not track:
             return
 
@@ -80,7 +80,7 @@ class Track:
 
     @staticmethod
     @log_call
-    def reverse(track: QgsLayerTreeGroup):
+    def reverse(track: Optional[QgsLayerTreeGroup]):
         if not track:
             return
 
@@ -90,7 +90,7 @@ class Track:
 
     @staticmethod
     @log_call
-    def optimize(track: QgsLayerTreeGroup):
+    def optimize(track: Optional[QgsLayerTreeGroup]):
         if not track:
             return
 
@@ -100,7 +100,7 @@ class Track:
 
     @staticmethod
     @log_call
-    def from_xml(file: QgsLayerTreeGroup, trk: ET.Element):
+    def from_xml(file: Optional[QgsLayerTreeGroup], trk: ET.Element):
         trk_name = trk.find('name')
 
         if trk_name is not None:
@@ -118,7 +118,7 @@ class Track:
 
     @staticmethod
     @log_call
-    def to_xml(track: QgsLayerTreeGroup) -> Optional[ET.Element]:
+    def to_xml(track: Optional[QgsLayerTreeGroup]) -> Optional[ET.Element]:
         if not track:
             return None
 
@@ -143,7 +143,7 @@ class Track:
 
     @staticmethod
     @log_call
-    def get_distance(track: QgsLayerTreeGroup) -> float:
+    def get_distance(track: Optional[QgsLayerTreeGroup]) -> float:
         if not track:
             return 0.0
 

@@ -15,7 +15,6 @@ from .string import String
 from .symbol import Symbol
 from .track import Track
 from .tree import Tree
-from .utils import Utils
 from .waypoint import Waypoint
 
 
@@ -67,7 +66,7 @@ class File:
 
     @staticmethod
     @log_call
-    def save(file: QgsLayerTreeGroup):
+    def save(file: Optional[QgsLayerTreeGroup]):
         if not file:
             return
 
@@ -119,7 +118,7 @@ class File:
 
     @staticmethod
     @log_call
-    def close(file: QgsLayerTreeGroup, force: bool = False):
+    def close(file: Optional[QgsLayerTreeGroup], force: bool = False):
         if not file:
             return
 
@@ -148,7 +147,7 @@ class File:
 
     @staticmethod
     @log_call
-    def refresh_distance(file: QgsLayerTreeGroup):
+    def refresh_distance(file: Optional[QgsLayerTreeGroup]):
         if not file:
             return
 
@@ -189,13 +188,13 @@ class File:
 
     @staticmethod
     @log_call
-    def reload(file: QgsLayerTreeGroup):
-        if not file:
+    def reload(file: Optional[QgsLayerTreeGroup]):
+        if file is None:
             return
 
         file_name = file.customProperty('fileName')
 
-        if not file_name:
+        if file_name is None:
             return
 
         File.close(file, True)
