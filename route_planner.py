@@ -1,5 +1,3 @@
-import os.path
-
 from qgis.gui import QgsMapToolPan
 from qgis.PyQt.QtCore import Qt
 from qgis.PyQt.QtGui import QIcon
@@ -21,34 +19,34 @@ class RoutePlanner:
         Iface.set(iface)
 
         self.iface = iface
-        self.plugin_dir = os.path.dirname(__file__)
-
         self.actions = []
         self.menu = '&RoutePlanner'
         self.toolbar = self.iface.addToolBar('RoutePlanner')
         self.toolbar.setObjectName('RoutePlanner')
-        self.mapToolPan = QgsMapToolPan(self.iface.mapCanvas())
-
         self.pluginIsActive = False
         self.dockwidget = None
 
-    def add_action(self, icon_path, text, callback, add_to_menu: bool = True, add_to_toolbar: bool = True, status_tip = None, whats_this = None, parent = None):
+        # create tools
+        self.mapToolPan = QgsMapToolPan(self.iface.mapCanvas())
+        self.mapToolEdit = Edit(self.iface, self.iface.mapCanvas())
+
+        self.mapToolWaypointCreate = WaypointCreate(self.iface, self.iface.mapCanvas())
+        self.mapToolWaypointMove = WaypointMove(self.iface, self.iface.mapCanvas())
+        self.mapToolWaypointDelete = WaypointDelete(self.iface, self.iface.mapCanvas())
+
+        self.mapToolPointCreateStart = PointCreateStart(self.iface, self.iface.mapCanvas())
+        self.mapToolPointCreateMiddle = PointCreateMiddle(self.iface, self.iface.mapCanvas())
+        self.mapToolPointCreateEnd = PointCreateEnd(self.iface, self.iface.mapCanvas())
+        self.mapToolPointMove = PointMove(self.iface, self.iface.mapCanvas())
+        self.mapToolPointDelete = PointDelete(self.iface, self.iface.mapCanvas())
+
+    def add_action(self, icon_path, text, callback, parent = None):
         action = QAction(QIcon(icon_path), text, parent)
         action.triggered.connect(callback)
         action.setEnabled(True)
 
-        if status_tip is not None:
-            action.setStatusTip(status_tip)
-
-        if whats_this is not None:
-            action.setWhatsThis(whats_this)
-
-        if add_to_toolbar:
-            self.toolbar.addAction(action)
-
-        if add_to_menu:
-            self.iface.addPluginToMenu(self.menu, action)
-
+        self.toolbar.addAction(action)
+        self.iface.addPluginToMenu(self.menu, action)
         self.actions.append(action)
 
     def initGui(self):
@@ -76,7 +74,7 @@ class RoutePlanner:
         self.dockwidget.closingPlugin.connect(self.onClosePlugin)
 
         self.dockwidget.buttonSelect.clicked.connect(lambda: self.iface.mapCanvas().setMapTool(self.mapToolPan))
-        self.dockwidget.buttonEdit.clicked.connect(lambda: RoutePlanner.set_edit_tool(self.iface))
+        self.dockwidget.buttonEdit.clicked.connect(lambda: self.iface.mapCanvas().setMapTool(self.mapToolEdit))
 
         # setup file buttons
         self.dockwidget.buttonFileNew.clicked.connect(lambda: Segment.create(Track.create(File.new())))
@@ -86,9 +84,9 @@ class RoutePlanner:
         self.dockwidget.buttonFileClose.clicked.connect(lambda: File.close(File.get_active(self.iface)))
 
         # setup waypoint buttons
-        self.dockwidget.buttonWaypointCreate.clicked.connect(lambda: RoutePlanner.set_waypoint_create(self.iface))
-        self.dockwidget.buttonWaypointMove.clicked.connect(lambda: RoutePlanner.set_waypoint_move(self.iface))
-        self.dockwidget.buttonWaypointDelete.clicked.connect(lambda: RoutePlanner.set_waypoint_delete(self.iface))
+        self.dockwidget.buttonWaypointCreate.clicked.connect(lambda: self.iface.mapCanvas().setMapTool(self.mapToolWaypointCreate))
+        self.dockwidget.buttonWaypointMove.clicked.connect(lambda: self.iface.mapCanvas().setMapTool(self.mapToolWaypointMove))
+        self.dockwidget.buttonWaypointDelete.clicked.connect(lambda: self.iface.mapCanvas().setMapTool(self.mapToolWaypointDelete))
 
         # setup track buttons
         self.dockwidget.buttonTrackCreate.clicked.connect(lambda: Segment.create(Track.create(File.get_active(self.iface))))
@@ -104,11 +102,11 @@ class RoutePlanner:
         self.dockwidget.buttonSegmentDelete.clicked.connect(lambda: Segment.delete(Segment.get_active(self.iface)))
 
         # setup point buttons
-        self.dockwidget.buttonPointCreateStart.clicked.connect(lambda: RoutePlanner.set_point_start_tool(self.iface))
-        self.dockwidget.buttonPointCreateMiddle.clicked.connect(lambda: RoutePlanner.set_point_middle_tool(self.iface))
-        self.dockwidget.buttonPointCreateEnd.clicked.connect(lambda: RoutePlanner.set_point_end_tool(self.iface))
-        self.dockwidget.buttonPointMove.clicked.connect(lambda: RoutePlanner.set_point_move_tool(self.iface))
-        self.dockwidget.buttonPointDelete.clicked.connect(lambda: RoutePlanner.set_point_delete_tool(self.iface))
+        self.dockwidget.buttonPointCreateStart.clicked.connect(lambda: self.iface.mapCanvas().setMapTool(self.mapToolPointCreateStart))
+        self.dockwidget.buttonPointCreateMiddle.clicked.connect(lambda: self.iface.mapCanvas().setMapTool(self.mapToolPointCreateMiddle))
+        self.dockwidget.buttonPointCreateEnd.clicked.connect(lambda: self.iface.mapCanvas().setMapTool(self.mapToolPointCreateEnd))
+        self.dockwidget.buttonPointMove.clicked.connect(lambda: self.iface.mapCanvas().setMapTool(self.mapToolPointMove))
+        self.dockwidget.buttonPointDelete.clicked.connect(lambda: self.iface.mapCanvas().setMapTool(self.mapToolPointDelete))
 
         # setup options
         self.dockwidget.optionRouting.stateChanged.connect(lambda: Options.set_routing(self.dockwidget.optionRouting.isChecked()))
@@ -119,48 +117,3 @@ class RoutePlanner:
         # show widget
         self.iface.addDockWidget(Qt.LeftDockWidgetArea, self.dockwidget)
         self.dockwidget.show()
-
-    @staticmethod
-    def set_edit_tool(iface):
-        canvas = iface.mapCanvas()
-        canvas.setMapTool(Edit(iface, canvas))
-
-    @staticmethod
-    def set_waypoint_create(iface):
-        canvas = iface.mapCanvas()
-        canvas.setMapTool(WaypointCreate(iface, canvas))
-
-    @staticmethod
-    def set_waypoint_move(iface):
-        canvas = iface.mapCanvas()
-        canvas.setMapTool(WaypointMove(iface, canvas))
-
-    @staticmethod
-    def set_waypoint_delete(iface):
-        canvas = iface.mapCanvas()
-        canvas.setMapTool(WaypointDelete(iface, canvas))
-
-    @staticmethod
-    def set_point_start_tool(iface):
-        canvas = iface.mapCanvas()
-        canvas.setMapTool(PointCreateStart(iface, canvas))
-
-    @staticmethod
-    def set_point_middle_tool(iface):
-        canvas = iface.mapCanvas()
-        canvas.setMapTool(PointCreateMiddle(iface, canvas))
-
-    @staticmethod
-    def set_point_end_tool(iface):
-        canvas = iface.mapCanvas()
-        canvas.setMapTool(PointCreateEnd(iface, canvas))
-
-    @staticmethod
-    def set_point_move_tool(iface):
-        canvas = iface.mapCanvas()
-        canvas.setMapTool(PointMove(iface, canvas))
-
-    @staticmethod
-    def set_point_delete_tool(iface):
-        canvas = iface.mapCanvas()
-        canvas.setMapTool(PointDelete(iface, canvas))
