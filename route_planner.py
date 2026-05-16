@@ -100,9 +100,7 @@ class RoutePlanner:
         # setup segment buttons
         self.dockwidget.buttonSegmentCreate.clicked.connect(lambda: Segment.create(Track.get_active(self.iface)))
         self.dockwidget.buttonSegmentRefresh.clicked.connect(lambda: Segment.refresh(Segment.get_active(self.iface)))
-        self.dockwidget.buttonSegmentRefreshPoints.clicked.connect(lambda: Segment.refresh_points(Segment.get_active(self.iface)))
         self.dockwidget.buttonSegmentReverse.clicked.connect(lambda: Segment.reverse(Segment.get_active(self.iface)))
-        self.dockwidget.buttonSegmentOptimize.clicked.connect(lambda: Segment.optimize(Segment.get_active(self.iface)))
         self.dockwidget.buttonSegmentDelete.clicked.connect(lambda: Segment.delete(Segment.get_active(self.iface)))
 
         # setup point buttons
@@ -114,9 +112,7 @@ class RoutePlanner:
 
         # setup options
         self.dockwidget.optionRouting.stateChanged.connect(lambda: Options.set_routing(self.dockwidget.optionRouting.isChecked()))
-        self.dockwidget.optionRoutingProvider.addItems(['Google'])
         self.dockwidget.optionRoutingProvider.currentTextChanged.connect(lambda: Options.set_routing_provider(self.dockwidget.optionRoutingProvider.currentText()))
-        self.dockwidget.optionRoutingMode.addItems(['driving', 'walking'])
         self.dockwidget.optionRoutingMode.currentTextChanged.connect(lambda: Options.set_routing_mode(self.dockwidget.optionRoutingMode.currentText()))
         self.dockwidget.spinBoxPointsPerSegment.valueChanged.connect(lambda: Options.set_points_per_segment(self.dockwidget.spinBoxPointsPerSegment.value()))
 

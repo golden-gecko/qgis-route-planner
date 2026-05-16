@@ -80,55 +80,6 @@ class Segment:
 
     @staticmethod
     @log_call
-    def refresh_points(segment: Optional[QgsLayerTreeGroup]):
-        if segment is None:
-            return
-
-        points = Layer.get_or_create_points(segment)
-
-        if points is None:
-            return
-
-        paths = Layer.get_or_create_paths(segment)
-
-        if paths is None:
-            return
-
-        points.startEditing()
-        paths.startEditing()
-
-        results = []
-
-        for path in paths.getFeatures():
-            for part in path.geometry().parts():
-                for vertex in part.vertices():
-                    results.append((vertex.x(), vertex.y()))
-
-        for feature in points.getFeatures():
-            points.deleteFeature(feature.id())
-
-        for feature in paths.getFeatures():
-            paths.deleteFeature(feature.id())
-
-        chunk_size = math.ceil(len(results) / (Options.points_per_segment - 1))
-
-        for i in range(math.ceil(len(results) / chunk_size)):
-            chunk = results[i * chunk_size:(i + 1) * chunk_size]
-
-            points.addFeature(Feature.from_point(QgsPoint(chunk[0][0], chunk[0][1]), points.fields()))
-            paths.addFeature(Utils.create_polyline(chunk, paths.fields()))
-
-        points.addFeature(Feature.from_point(QgsPoint(results[-1][0], results[-1][1]), points.fields()))
-
-        points.commitChanges()
-        paths.commitChanges()
-
-        points.startEditing()
-        Utils.refresh_position(points)
-        points.commitChanges()
-
-    @staticmethod
-    @log_call
     def reverse(segment: Optional[QgsLayerTreeGroup]):
         if not segment:
             return
@@ -186,12 +137,6 @@ class Segment:
         points.startEditing()
         Utils.refresh_position(points)
         points.commitChanges()
-
-    @staticmethod
-    @log_call
-    def optimize(segment: Optional[QgsLayerTreeGroup]):
-        if not segment:
-            return
 
     @staticmethod
     @log_call
