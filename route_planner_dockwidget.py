@@ -10,7 +10,7 @@ FORM_CLASS, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'route_pl
 class RoutePlannerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
     closingPlugin = pyqtSignal()
 
-    def __init__(self, parent=None):
+    def __init__(self, parent = None):
         super(RoutePlannerDockWidget, self).__init__(parent)
 
         self.setupUi(self)

@@ -6,6 +6,7 @@ from .log import log_call
 from .layer import Layer
 from .point import Point
 from .segment import Segment
+from .string import String
 from .track import Track
 from .tree import Tree
 from .utils import Utils
@@ -85,7 +86,6 @@ class Edit(MapTool):
 
     @log_call
     def canvasReleaseEvent(self, event):
-
         segment = Segment.get_active(self.iface)
 
         if not segment:
@@ -120,7 +120,6 @@ class WaypointCreate(MapTool):
 
     @log_call
     def canvasReleaseEvent(self, event):
-
         file = File.get_active(self.iface)
 
         if not file:
@@ -136,7 +135,7 @@ class WaypointCreate(MapTool):
         if not points:
             return
 
-        Waypoint.create(points, self.toLayerCoordinates(points, event.pos()), Utils.generate_name('Waypoint', points.featureCount()))
+        Waypoint.create(points, self.toLayerCoordinates(points, event.pos()), String.generate_name('Waypoint', points.featureCount()))
 
 
 class WaypointDelete(MapTool):
@@ -145,7 +144,6 @@ class WaypointDelete(MapTool):
 
     @log_call
     def canvasReleaseEvent(self, event):
-
         file = File.get_active(self.iface)
 
         if not file:
@@ -173,7 +171,6 @@ class WaypointMove(MapTool):
 
     @log_call
     def canvasPressEvent(self, event):
-
         self.feature = None
         self.feature_position = None
 
@@ -204,7 +201,6 @@ class WaypointMove(MapTool):
 
     @log_call
     def canvasReleaseEvent(self, event):
-
         file = File.get_active(self.iface)
 
         if not file:
@@ -223,7 +219,7 @@ class WaypointMove(MapTool):
         point = self.toLayerCoordinates(points, event.pos())
 
         if self.feature and self.feature_position:
-            Waypoint.move(points, self.feature, self.feature_position, point)
+            Waypoint.move(points, self.feature, point)
 
 
 class PointCreateStart(MapTool):
@@ -232,7 +228,6 @@ class PointCreateStart(MapTool):
 
     @log_call
     def canvasReleaseEvent(self, event):
-
         segment = Segment.get_active(self.iface)
 
         if not segment:
@@ -256,7 +251,6 @@ class PointCreateMiddle(MapTool):
 
     @log_call
     def canvasReleaseEvent(self, event):
-
         segment = Segment.get_active(self.iface)
 
         if not segment:
@@ -290,7 +284,6 @@ class PointCreateEnd(MapTool):
 
     @log_call
     def canvasReleaseEvent(self, event):
-
         track = Track.get_active(self.iface)
 
         if not track:
@@ -322,7 +315,6 @@ class PointMove(MapTool):
 
     @log_call
     def canvasPressEvent(self, event):
-
         self.feature = None
         self.feature_position = None
 
@@ -349,7 +341,6 @@ class PointMove(MapTool):
 
     @log_call
     def canvasReleaseEvent(self, event):
-
         segment = Segment.get_active(self.iface)
 
         if not segment:
@@ -374,7 +365,6 @@ class PointDelete(MapTool):
 
     @log_call
     def canvasReleaseEvent(self, event):
-
         segment = Segment.get_active(self.iface)
 
         if not segment:

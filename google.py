@@ -11,7 +11,6 @@ class Google:
     @staticmethod
     @log_call
     def get_direction(a, b, mode: str = 'driving') -> list:
-
         client = googlemaps.Client(key=Config.key)
 
         return client.directions(a, b, mode=mode, departure_time=datetime.datetime.now())
@@ -19,7 +18,6 @@ class Google:
     @staticmethod
     @log_call
     def get_direction_as_points(a, b) -> list:
-
         result = Google.get_direction(a, b, Options.routing_mode)
 
         if len(result) <= 0:

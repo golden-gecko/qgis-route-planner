@@ -4,15 +4,15 @@ from qgis.PyQt.QtGui import QColor
 
 
 class Color:
+    colors = [
+        'blue',
+        'cyan',
+        'green',
+        'magenta',
+        'red',
+        'yellow',
+    ]
+
     @staticmethod
     def random() -> QColor:
-        colors = [
-            'blue',
-            'cyan',
-            'green',
-            'magenta',
-            'red',
-            'yellow',
-        ]
-
-        return QColor(random.choice(colors))
+        return QColor(random.choice(Color.colors))

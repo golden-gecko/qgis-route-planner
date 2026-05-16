@@ -5,12 +5,15 @@ from typing import Optional
 
 from qgis.core import QgsFeature, QgsLayerTree, QgsLayerTreeGroup, QgsPoint, QgsPointXY, QgsVectorLayer
 
+from .dialog import Dialog
+from .distance import Distance
 from .feature import Feature
 from .log import log_call
 from .color import Color
 from .google import Google
 from .layer import Layer
 from .options import Options
+from .string import String
 from .symbol import Symbol
 from .tree import Tree
 from .utils import Utils
@@ -19,12 +22,11 @@ from .utils import Utils
 class Segment:
     @staticmethod
     @log_call
-    def create(track: QgsLayerTreeGroup) -> Optional[QgsLayerTreeGroup]:
-
+    def create(track: Optional[QgsLayerTreeGroup]) -> Optional[QgsLayerTreeGroup]:
         if not track:
             return None
 
-        segment = Tree.create_group(track, Utils.generate_name('Segment', len(track.children())), 'segment')
+        segment = Tree.create_group(track, String.generate_name('Segment', len(track.children())), 'segment')
 
         if not segment:
             return None
@@ -34,15 +36,14 @@ class Segment:
 
         color = Color.random()
 
-        Utils.set_symbol(points, Symbol.create_point(color))
-        Utils.set_symbol(paths, Symbol.create_path(color))
+        Symbol.set(points, Symbol.create_point(color))
+        Symbol.set(paths, Symbol.create_path(color))
 
         return segment
 
     @staticmethod
     @log_call
-    def refresh(segment: QgsLayerTreeGroup):
-
+    def refresh(segment: Optional[QgsLayerTreeGroup]):
         points = Layer.get_or_create_points(segment)
 
         if not points:
@@ -79,19 +80,18 @@ class Segment:
 
     @staticmethod
     @log_call
-    def refresh_points(segment: QgsLayerTreeGroup):
-
-        if not segment:
+    def refresh_points(segment: Optional[QgsLayerTreeGroup]):
+        if segment is None:
             return
 
         points = Layer.get_or_create_points(segment)
 
-        if not points:
+        if points is None:
             return
 
         paths = Layer.get_or_create_paths(segment)
 
-        if not paths:
+        if paths is None:
             return
 
         points.startEditing()
@@ -129,8 +129,7 @@ class Segment:
 
     @staticmethod
     @log_call
-    def reverse(segment: QgsLayerTreeGroup):
-
+    def reverse(segment: Optional[QgsLayerTreeGroup]):
         if not segment:
             return
 
@@ -190,25 +189,22 @@ class Segment:
 
     @staticmethod
     @log_call
-    def optimize(segment: QgsLayerTreeGroup):
-
+    def optimize(segment: Optional[QgsLayerTreeGroup]):
         if not segment:
             return
 
     @staticmethod
     @log_call
-    def delete(segment: QgsLayerTreeGroup):
-
+    def delete(segment: Optional[QgsLayerTreeGroup]):
         if not segment:
             return
 
-        if Utils.confirm('Delete segment?'):
+        if Dialog.confirm('Delete segment?'):
             Tree.delete_group(segment)
 
     @staticmethod
     @log_call
     def get_active(iface) -> Optional[QgsLayerTreeGroup]:
-
         nodes = iface.layerTreeView().selectedNodes()
 
         if len(nodes) != 1:
@@ -228,7 +224,9 @@ class Segment:
 
     @staticmethod
     @log_call
-    def refresh_point(segment: QgsLayerTreeGroup, position: int):
+    def refresh_point(segment: Optional[QgsLayerTreeGroup], position: int):
+        if segment is None:
+            return
 
         points = Layer.get_or_create_points(segment)
 
@@ -315,7 +313,9 @@ class Segment:
 
     @staticmethod
     @log_call
-    def refresh_point_move(segment: QgsLayerTreeGroup, position: int):
+    def refresh_point_move(segment: Optional[QgsLayerTreeGroup], position: int):
+        if segment is None:
+            return
 
         points = Layer.get_or_create_points(segment)
 
@@ -357,7 +357,6 @@ class Segment:
     @staticmethod
     @log_call
     def refresh_point_delete(segment: QgsLayerTreeGroup, position: int):
-
         points = Layer.get_or_create_points(segment)
 
         if not points:
@@ -375,7 +374,7 @@ class Segment:
         if position == 1:
             feature = Segment.get_path(paths, position)
 
-            if feature:
+            if feature is not None:
                 paths.startEditing()
                 paths.deleteFeature(feature.id())
                 paths.commitChanges()
@@ -384,7 +383,7 @@ class Segment:
         elif position - 1 == points.featureCount():
             feature = Segment.get_path(paths, position - 1)
 
-            if feature:
+            if feature is not None:
                 paths.startEditing()
                 paths.deleteFeature(feature.id())
                 paths.commitChanges()
@@ -396,7 +395,7 @@ class Segment:
 
             feature = Segment.get_path(paths, position)
 
-            if feature:
+            if feature is not None:
                 paths.startEditing()
                 paths.deleteFeature(feature.id())
                 paths.commitChanges()
@@ -406,7 +405,6 @@ class Segment:
     @staticmethod
     @log_call
     def refesh_segment(layer: QgsVectorLayer, position: int, a: QgsPointXY, b: QgsPointXY):
-
         if Options.routing:
             results = Google.get_direction_as_points(f'{a.y()} {a.x()}', f'{b.y()} {b.x()}')
 
@@ -417,7 +415,7 @@ class Segment:
 
         feature = Segment.get_path(layer, position)
 
-        if not feature:
+        if feature is None:
             return
 
         layer.startEditing()
@@ -427,7 +425,6 @@ class Segment:
     @staticmethod
     @log_call
     def get_point(layer: QgsVectorLayer, position: int) -> Optional[QgsFeature]:
-
         for feature_position, feature in enumerate(layer.getFeatures(), start=1):
             if feature_position == position:
                 return feature
@@ -436,8 +433,7 @@ class Segment:
 
     @staticmethod
     @log_call
-    def get_path(layer: QgsVectorLayer, position: int):
-
+    def get_path(layer: QgsVectorLayer, position: int) -> Optional[QgsFeature]:
         for feature_position, feature in enumerate(layer.getFeatures(), start=1):
             if feature_position == position:
                 return feature
@@ -447,7 +443,6 @@ class Segment:
     @staticmethod
     @log_call
     def from_xml(track: QgsLayerTreeGroup, trkseg: ET.Element):
-
         segment = Segment.create(track)
 
         if not segment:
@@ -494,7 +489,6 @@ class Segment:
     @staticmethod
     @log_call
     def to_xml(segment: QgsLayerTreeGroup) -> Optional[ET.Element]:
-
         if not segment:
             return None
 
@@ -515,8 +509,7 @@ class Segment:
     @staticmethod
     @log_call
     def get_distance(segment: QgsLayerTreeGroup) -> float:
-
         if not segment:
             return 0.0
 
-        return Utils.get_distance(Layer.get_or_create_paths(segment))
+        return Distance.get(Layer.get_or_create_paths(segment))

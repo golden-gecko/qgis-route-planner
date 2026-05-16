@@ -3,16 +3,16 @@ from typing import Optional
 from qgis.core import QgsField, QgsLayerTreeGroup, QgsProject, QgsVectorLayer
 from qgis.PyQt.QtCore import QVariant
 
-from .tree import Tree
+from .crs import Crs
+from .label import Label
 from .log import log_call
-from .utils import Utils
+from .tree import Tree
 
 
 class Layer:
     @staticmethod
     @log_call
     def get_or_create_waypoints(segment: QgsLayerTreeGroup) -> Optional[QgsVectorLayer]:
-
         points = Tree.find_layer(segment, 'Points')
 
         if points:
@@ -21,9 +21,9 @@ class Layer:
         layer = QgsVectorLayer('Point', 'Points', 'memory')
         layer.startEditing()
         layer.setLabelsEnabled(True)
-        layer.setLabeling(Utils.create_label_settings('name'))
+        layer.setLabeling(Label.create_settings('name'))
 
-        Utils.set_crs(layer, 'EPSG:4326')
+        Crs.set(layer, 'EPSG:4326')
 
         provider = layer.dataProvider()
         provider.addAttributes([QgsField('name', QVariant.String)])
@@ -42,7 +42,6 @@ class Layer:
     @staticmethod
     @log_call
     def get_or_create_points(segment: QgsLayerTreeGroup) -> Optional[QgsVectorLayer]:
-
         points = Tree.find_layer(segment, 'Points')
 
         if points:
@@ -51,9 +50,9 @@ class Layer:
         layer = QgsVectorLayer('Point', 'Points', 'memory')
         layer.startEditing()
         layer.setLabelsEnabled(True)
-        layer.setLabeling(Utils.create_label_settings('position'))
+        layer.setLabeling(Label.create_settings('position'))
 
-        Utils.set_crs(layer, 'EPSG:4326')
+        Crs.set(layer, 'EPSG:4326')
 
         provider = layer.dataProvider()
         provider.addAttributes([QgsField('position', QVariant.Int)])
@@ -72,7 +71,6 @@ class Layer:
     @staticmethod
     @log_call
     def get_or_create_paths(segment: QgsLayerTreeGroup) -> Optional[QgsVectorLayer]:
-
         points = Tree.find_layer(segment, 'Paths')
 
         if points:
@@ -81,7 +79,7 @@ class Layer:
         layer = QgsVectorLayer('LineString', 'Paths', 'memory')
         layer.startEditing()
 
-        Utils.set_crs(layer, 'EPSG:4326')
+        Crs.set(layer, 'EPSG:4326')
 
         provider = layer.dataProvider()
         provider.addAttributes([QgsField('position', QVariant.Int)])
