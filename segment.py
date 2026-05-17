@@ -1,4 +1,3 @@
-import math
 import xml.etree.ElementTree as ET
 
 from typing import Optional
@@ -387,20 +386,23 @@ class Segment:
 
     @staticmethod
     @log_call
-    def from_xml(track: QgsLayerTreeGroup, trkseg: ET.Element):
+    def from_xml(track: QgsLayerTreeGroup, trkseg: ET.Element) -> None:
+        if track is None:
+            return
+
         segment = Segment.create(track)
 
-        if not segment:
+        if segment is None:
             return
 
         points = Layer.get_or_create_points(segment)
 
-        if not points:
+        if points is None:
             return
 
         paths = Layer.get_or_create_paths(segment)
 
-        if not paths:
+        if paths is None:
             return
 
         results = []
@@ -420,15 +422,56 @@ class Segment:
         points.startEditing()
         paths.startEditing()
 
+        """
+        # Keep full track geometry in paths split into manageable chunks.
         chunk_size = math.ceil(len(results) / (Options.points_per_segment - 1))
 
         for i in range(math.ceil(len(results) / chunk_size)):
             chunk = results[i * chunk_size:(i + 1) * chunk_size]
 
-            points.addFeature(Feature.from_point(QgsPoint(chunk[0][0], chunk[0][1]), points.fields()))
             paths.addFeature(Utils.create_polyline(chunk, paths.fields()))
+        """
 
-        points.addFeature(Feature.from_point(QgsPoint(results[-1][0], results[-1][1]), points.fields()))
+        # Rank turn sharpness and keep only top N turns (plus first and last point).
+        top_turns = max(0, Options.points_per_segment - 2)
+        ranked_turns = []
+
+        for i in range(1, len(results) - 1):
+            delta = Utils.turn_delta_deg(results[i - 1], results[i], results[i + 1])
+
+            if delta > 0.0:
+                ranked_turns.append((i, delta))
+
+        ranked_turns.sort(key=lambda item: item[1], reverse=True)
+        selected_turn_indices = sorted(i for i, _ in ranked_turns[:top_turns])
+
+        control_indices = [0]
+
+        for i in selected_turn_indices:
+            candidate = results[i]
+            last = results[control_indices[-1]]
+
+            if Utils.distance_m(last, candidate) < Options.min_point_distance:
+                continue
+
+            control_indices.append(i)
+
+        if control_indices[-1] != len(results) - 1:
+            control_indices.append(len(results) - 1)
+
+        for i in control_indices:
+            lon, lat = results[i]
+            points.addFeature(Feature.from_point(QgsPoint(lon, lat), points.fields()))
+
+        for i in range(len(control_indices) - 1):
+            start = control_indices[i]
+            end = control_indices[i + 1]
+            segment_vertices = results[start:end + 1]
+
+            if len(segment_vertices) < 2:
+                continue
+
+            paths.addFeature(Utils.create_polyline(segment_vertices, paths.fields()))
 
         points.commitChanges()
         paths.commitChanges()

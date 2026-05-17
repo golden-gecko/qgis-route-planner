@@ -42,6 +42,9 @@ class Layer:
     @staticmethod
     @log_call
     def get_or_create_points(segment: QgsLayerTreeGroup) -> Optional[QgsVectorLayer]:
+        if segment is None:
+            return None
+
         points = Tree.find_layer(segment, 'Points')
 
         if points:
@@ -71,6 +74,9 @@ class Layer:
     @staticmethod
     @log_call
     def get_or_create_paths(segment: QgsLayerTreeGroup) -> Optional[QgsVectorLayer]:
+        if segment is None:
+            return None
+
         points = Tree.find_layer(segment, 'Paths')
 
         if points:
