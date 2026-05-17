@@ -1,7 +1,8 @@
-from .log import log_call
 from typing import Optional
 
 from qgis.core import QgsLayerTreeGroup, QgsProject, QgsVectorLayer
+
+from .log import log_call
 
 
 class Tree:

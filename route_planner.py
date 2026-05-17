@@ -114,7 +114,10 @@ class RoutePlanner:
         self.dockwidget.optionRouting.stateChanged.connect(lambda: Options.set_routing(self.dockwidget.optionRouting.isChecked()))
         self.dockwidget.optionRoutingProvider.currentTextChanged.connect(lambda: Options.set_routing_provider(self.dockwidget.optionRoutingProvider.currentText()))
         self.dockwidget.optionRoutingMode.currentTextChanged.connect(lambda: Options.set_routing_mode(self.dockwidget.optionRoutingMode.currentText()))
+        self.dockwidget.spinBoxPointsPerSegment.setValue(Options.points_per_segment)
         self.dockwidget.spinBoxPointsPerSegment.valueChanged.connect(lambda: Options.set_points_per_segment(self.dockwidget.spinBoxPointsPerSegment.value()))
+        self.dockwidget.spinBoxMinPointDistance.setValue(Options.min_point_distance)
+        self.dockwidget.spinBoxMinPointDistance.valueChanged.connect(lambda: Options.set_min_point_distance(self.dockwidget.spinBoxMinPointDistance.value()))
 
         # show widget
         self.iface.addDockWidget(Qt.LeftDockWidgetArea, self.dockwidget)
