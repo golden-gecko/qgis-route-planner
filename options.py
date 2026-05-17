@@ -3,6 +3,7 @@ class Options:
     routing_provider = 'Google'
     routing_mode = 'driving'
     points_per_segment = 30
+    min_point_distance = 50.0
 
     @staticmethod
     def set_routing(routing: bool):
