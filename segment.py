@@ -21,6 +21,25 @@ from .utils import Utils
 
 class Segment:
     @staticmethod
+    def _turn_delta_deg(a: tuple[float, float], b: tuple[float, float], c: tuple[float, float]) -> float:
+        v1x = b[0] - a[0]
+        v1y = b[1] - a[1]
+        v2x = c[0] - b[0]
+        v2y = c[1] - b[1]
+
+        if (v1x == 0 and v1y == 0) or (v2x == 0 and v2y == 0):
+            return 0.0
+
+        angle1 = math.atan2(v1y, v1x)
+        angle2 = math.atan2(v2y, v2x)
+        delta = abs(math.degrees(angle2 - angle1))
+
+        if delta > 180.0:
+            delta = 360.0 - delta
+
+        return delta
+
+    @staticmethod
     @log_call
     def create(track: Optional[QgsLayerTreeGroup]) -> Optional[QgsLayerTreeGroup]:
         if not track:
@@ -420,15 +439,35 @@ class Segment:
         points.startEditing()
         paths.startEditing()
 
+        # Keep full track geometry in paths split into manageable chunks.
         chunk_size = math.ceil(len(results) / (Options.points_per_segment - 1))
 
         for i in range(math.ceil(len(results) / chunk_size)):
             chunk = results[i * chunk_size:(i + 1) * chunk_size]
 
-            points.addFeature(Feature.from_point(QgsPoint(chunk[0][0], chunk[0][1]), points.fields()))
             paths.addFeature(Utils.create_polyline(chunk, paths.fields()))
 
-        points.addFeature(Feature.from_point(QgsPoint(results[-1][0], results[-1][1]), points.fields()))
+        # Rank turn sharpness and keep only top N turns (plus first and last point).
+        top_turns = max(0, Options.points_per_segment - 2)
+        ranked_turns = []
+
+        for i in range(1, len(results) - 1):
+            delta = Segment._turn_delta_deg(results[i - 1], results[i], results[i + 1])
+
+            if delta > 0.0:
+                ranked_turns.append((i, delta))
+
+        ranked_turns.sort(key=lambda item: item[1], reverse=True)
+        selected_turn_indices = sorted(i for i, _ in ranked_turns[:top_turns])
+
+        control_points = [results[0]]
+        control_points.extend(results[i] for i in selected_turn_indices)
+
+        if control_points[-1] != results[-1]:
+            control_points.append(results[-1])
+
+        for lon, lat in control_points:
+            points.addFeature(Feature.from_point(QgsPoint(lon, lat), points.fields()))
 
         points.commitChanges()
         paths.commitChanges()
