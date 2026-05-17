@@ -3,6 +3,7 @@ import xml.etree.ElementTree as ET
 
 from typing import Optional
 
+from geographiclib.geodesic import Geodesic
 from qgis.core import QgsFeature, QgsLayerTree, QgsLayerTreeGroup, QgsPoint, QgsPointXY, QgsVectorLayer
 
 from .dialog import Dialog
@@ -20,6 +21,8 @@ from .utils import Utils
 
 
 class Segment:
+    MIN_CONTROL_POINT_DISTANCE_M = 50.0
+
     @staticmethod
     def _turn_delta_deg(a: tuple[float, float], b: tuple[float, float], c: tuple[float, float]) -> float:
         v1x = b[0] - a[0]
@@ -38,6 +41,11 @@ class Segment:
             delta = 360.0 - delta
 
         return delta
+
+    @staticmethod
+    def _distance_m(a: tuple[float, float], b: tuple[float, float]) -> float:
+        result = Geodesic.WGS84.Inverse(a[1], a[0], b[1], b[0])
+        return float(result['s12'])
 
     @staticmethod
     @log_call
@@ -461,7 +469,14 @@ class Segment:
         selected_turn_indices = sorted(i for i, _ in ranked_turns[:top_turns])
 
         control_points = [results[0]]
-        control_points.extend(results[i] for i in selected_turn_indices)
+
+        for i in selected_turn_indices:
+            candidate = results[i]
+
+            if Segment._distance_m(control_points[-1], candidate) < Segment.MIN_CONTROL_POINT_DISTANCE_M:
+                continue
+
+            control_points.append(candidate)
 
         if control_points[-1] != results[-1]:
             control_points.append(results[-1])
