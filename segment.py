@@ -7,6 +7,7 @@ from qgis.core import QgsFeature, QgsLayerTree, QgsLayerTreeGroup, QgsPoint, Qgs
 from .dialog import Dialog
 from .distance import Distance
 from .feature import Feature
+from .geometry import Geometry
 from .log import log_call
 from .color import Color
 from .google import Google
@@ -128,7 +129,7 @@ class Segment:
         paths_list.reverse()
 
         for i in paths_list:
-            paths.addFeature(Utils.create_polyline(i, paths.fields()))
+            paths.addFeature(Feature.from_points(i, paths.fields()))
 
         points.commitChanges()
         paths.commitChanges()
@@ -140,7 +141,7 @@ class Segment:
     @staticmethod
     @log_call
     def delete(segment: Optional[QgsLayerTreeGroup]):
-        if not segment:
+        if segment is None:
             return
 
         if Dialog.confirm('Delete segment?'):
@@ -174,12 +175,12 @@ class Segment:
 
         points = Layer.get_or_create_points(segment)
 
-        if not points:
+        if points is None:
             return
 
         paths = Layer.get_or_create_paths(segment)
 
-        if not paths:
+        if paths is None:
             return
 
         previous_point = Segment.get_point(points, position - 1)
@@ -192,7 +193,7 @@ class Segment:
             b = next_point.geometry().asPoint()
 
             geometries = [
-                Utils.create_polyline_geometry([(0, 0)])
+                Geometry.from_points([(0, 0)])
             ]
 
             paths.startEditing()
@@ -225,7 +226,7 @@ class Segment:
                 geometries.append(feature.geometry())
 
                 if feature_position == position - 1:
-                    geometries.append(Utils.create_polyline_geometry([(0, 0)]))
+                    geometries.append(Geometry.from_points([(0, 0)]))
 
                 paths.deleteFeature(feature.id())
 
@@ -248,7 +249,7 @@ class Segment:
             paths.startEditing()
 
             feature = QgsFeature(paths.fields())
-            feature.setGeometry(Utils.create_polyline_geometry([(0, 0)]))
+            feature.setGeometry(Geometry.from_points([(0, 0)]))
 
             paths.addFeature(feature)
             paths.commitChanges()
@@ -263,12 +264,12 @@ class Segment:
 
         points = Layer.get_or_create_points(segment)
 
-        if not points:
+        if points is None:
             return
 
         paths = Layer.get_or_create_paths(segment)
 
-        if not paths:
+        if paths is None:
             return
 
         previous_point = Segment.get_point(points, position - 1)
@@ -303,12 +304,12 @@ class Segment:
     def refresh_point_delete(segment: QgsLayerTreeGroup, position: int):
         points = Layer.get_or_create_points(segment)
 
-        if not points:
+        if points is None:
             return
 
         paths = Layer.get_or_create_paths(segment)
 
-        if not paths:
+        if paths is None:
             return
 
         previous_point = Segment.get_point(points, position - 1)
@@ -363,7 +364,7 @@ class Segment:
             return
 
         layer.startEditing()
-        layer.changeGeometry(feature.id(), Utils.create_polyline_geometry(results))
+        layer.changeGeometry(feature.id(), Geometry.from_points(results))
         layer.commitChanges()
 
     @staticmethod
@@ -422,24 +423,14 @@ class Segment:
         points.startEditing()
         paths.startEditing()
 
-        """
-        # Keep full track geometry in paths split into manageable chunks.
-        chunk_size = math.ceil(len(results) / (Options.points_per_segment - 1))
-
-        for i in range(math.ceil(len(results) / chunk_size)):
-            chunk = results[i * chunk_size:(i + 1) * chunk_size]
-
-            paths.addFeature(Utils.create_polyline(chunk, paths.fields()))
-        """
-
         # Rank turn sharpness and keep only top N turns (plus first and last point).
         top_turns = max(0, Options.points_per_segment - 2)
         ranked_turns = []
 
         for i in range(1, len(results) - 1):
-            delta = Utils.turn_delta_deg(results[i - 1], results[i], results[i + 1])
+            delta = Distance.turn_delta_deg(results[i - 1], results[i], results[i + 1])
 
-            if delta > 0.0:
+            if delta > 20.0:
                 ranked_turns.append((i, delta))
 
         ranked_turns.sort(key=lambda item: item[1], reverse=True)
@@ -451,7 +442,7 @@ class Segment:
             candidate = results[i]
             last = results[control_indices[-1]]
 
-            if Utils.distance_m(last, candidate) < Options.min_point_distance:
+            if Distance.get_between_points(last, candidate) < Options.min_point_distance:
                 continue
 
             control_indices.append(i)
@@ -471,7 +462,7 @@ class Segment:
             if len(segment_vertices) < 2:
                 continue
 
-            paths.addFeature(Utils.create_polyline(segment_vertices, paths.fields()))
+            paths.addFeature(Feature.from_points(segment_vertices, paths.fields()))
 
         points.commitChanges()
         paths.commitChanges()
