@@ -445,21 +445,33 @@ class Segment:
         ranked_turns.sort(key=lambda item: item[1], reverse=True)
         selected_turn_indices = sorted(i for i, _ in ranked_turns[:top_turns])
 
-        control_points = [results[0]]
+        control_indices = [0]
 
         for i in selected_turn_indices:
             candidate = results[i]
+            last = results[control_indices[-1]]
 
-            if Utils.distance_m(control_points[-1], candidate) < Options.min_point_distance:
+            if Utils.distance_m(last, candidate) < Options.min_point_distance:
                 continue
 
-            control_points.append(candidate)
+            control_indices.append(i)
 
-        if control_points[-1] != results[-1]:
-            control_points.append(results[-1])
+        if control_indices[-1] != len(results) - 1:
+            control_indices.append(len(results) - 1)
 
-        for lon, lat in control_points:
+        for i in control_indices:
+            lon, lat = results[i]
             points.addFeature(Feature.from_point(QgsPoint(lon, lat), points.fields()))
+
+        for i in range(len(control_indices) - 1):
+            start = control_indices[i]
+            end = control_indices[i + 1]
+            segment_vertices = results[start:end + 1]
+
+            if len(segment_vertices) < 2:
+                continue
+
+            paths.addFeature(Utils.create_polyline(segment_vertices, paths.fields()))
 
         points.commitChanges()
         paths.commitChanges()
