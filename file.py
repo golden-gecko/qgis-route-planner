@@ -10,11 +10,12 @@ from .color import Color
 from .dialog import Dialog
 from .log import log_call
 from .layer import Layer
-from .segment import Segment
 from .string import String
+from .segment import Segment
 from .symbol import Symbol
 from .track import Track
 from .tree import Tree
+from .utils import Utils
 from .waypoint import Waypoint
 
 
@@ -170,21 +171,13 @@ class File:
                 if track.customProperty('type') != 'track':
                     continue
 
-                name = track.name()
-                name = re.sub(r'[[\d.]+ km]', '', name)
-                name = name.strip()
-
-                track.setName(f'{name} [{Track.get_distance(track):.2f} km]')
+                Utils.update_distance(track, Track.get_distance(track))
 
                 for segment in track.children():
                     if segment.customProperty('type') != 'segment':
                         continue
 
-                    name = track.name()
-                    name = re.sub(r'[[\d.]+ km]', '', name)
-                    name = name.strip()
-
-                    segment.setName(f'{name} [{Segment.get_distance(segment):.2f} km]')
+                    Utils.update_distance(segment, Segment.get_distance(segment))
 
     @staticmethod
     @log_call
