@@ -494,7 +494,7 @@ class Segment:
     @staticmethod
     @log_call
     def get_distance(segment: QgsLayerTreeGroup) -> float:
-        if not segment:
+        if segment is None:
             return 0.0
 
         return Distance.get(Layer.get_or_create_paths(segment))

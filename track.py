@@ -144,7 +144,7 @@ class Track:
     @staticmethod
     @log_call
     def get_distance(track: Optional[QgsLayerTreeGroup]) -> float:
-        if not track:
+        if track is None:
             return 0.0
 
         distance = 0.0

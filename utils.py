@@ -1,7 +1,10 @@
-from qgis.core import QgsFeature, QgsGeometry, QgsPoint, QgsVectorLayer, QgsPointXY
+import re
+
+from typing import Optional
+
+from qgis.core import QgsFeature, QgsGeometry, QgsLayerTreeGroup, QgsPoint, QgsVectorLayer, QgsPointXY
 
 from .feature import Feature
-from .geometry import Geometry
 from .log import log_call
 
 
@@ -33,3 +36,14 @@ class Utils:
     @staticmethod
     def create_buffer(point: QgsPointXY, distance: float = 0.001, segments: int = 5):
         return QgsGeometry.fromPoint(QgsPoint(point.x(), point.y())).buffer(distance, segments)
+
+    @staticmethod
+    def update_distance(group: Optional[QgsLayerTreeGroup], distance: float) -> None:
+        if group is None:
+            return
+
+        name = group.name()
+        name = re.sub(r'\s*\[\d+(?:\.\d+)?\s+km\]\s*$', '', name)
+        name = name.strip()
+
+        group.setName(f'{name} [{distance:.2f} km]')
