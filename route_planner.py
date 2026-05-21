@@ -103,14 +103,18 @@ class RoutePlanner:
         self.dockwidget.buttonPointMove.clicked.connect(lambda: self.iface.mapCanvas().setMapTool(self.mapToolPointMove))
         self.dockwidget.buttonPointDelete.clicked.connect(lambda: self.iface.mapCanvas().setMapTool(self.mapToolPointDelete))
 
-        # setup options
+        # setup routing options
         self.dockwidget.optionRouting.stateChanged.connect(lambda: Options.set_routing(self.dockwidget.optionRouting.isChecked()))
         self.dockwidget.optionRoutingProvider.currentTextChanged.connect(lambda: Options.set_routing_provider(self.dockwidget.optionRoutingProvider.currentText()))
         self.dockwidget.optionRoutingMode.currentTextChanged.connect(lambda: Options.set_routing_mode(self.dockwidget.optionRoutingMode.currentText()))
-        self.dockwidget.spinBoxPointsPerSegment.setValue(Options.points_per_segment)
-        self.dockwidget.spinBoxPointsPerSegment.valueChanged.connect(lambda: Options.set_points_per_segment(self.dockwidget.spinBoxPointsPerSegment.value()))
-        self.dockwidget.spinBoxMinPointDistance.setValue(Options.min_point_distance)
-        self.dockwidget.spinBoxMinPointDistance.valueChanged.connect(lambda: Options.set_min_point_distance(self.dockwidget.spinBoxMinPointDistance.value()))
+
+        # setup control point options
+        self.dockwidget.spinBoxPointsPerSegment.setValue(Options.control_point_per_segment)
+        self.dockwidget.spinBoxPointsPerSegment.valueChanged.connect(lambda: Options.set_control_point_per_segment(self.dockwidget.spinBoxPointsPerSegment.value()))
+        self.dockwidget.spinBoxMinPointDistance.setValue(Options.control_point_min_distance)
+        self.dockwidget.spinBoxMinPointDistance.valueChanged.connect(lambda: Options.set_control_point_min_distance(self.dockwidget.spinBoxMinPointDistance.value()))
+        self.dockwidget.spinBoxMinAngle.setValue(Options.control_point_min_angle)
+        self.dockwidget.spinBoxMinAngle.valueChanged.connect(lambda: Options.set_control_point_min_angle(self.dockwidget.spinBoxMinAngle.value()))
 
         # show widget
         self.iface.addDockWidget(Qt.LeftDockWidgetArea, self.dockwidget)
