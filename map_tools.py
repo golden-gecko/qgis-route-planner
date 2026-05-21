@@ -1,5 +1,6 @@
 from qgis.gui import QgsMapCanvas, QgsMapTool
 from qgis.PyQt.QtCore import Qt
+from qgis.PyQt.QtWidgets import QInputDialog
 
 from .file import File
 from .log import log_call
@@ -135,7 +136,17 @@ class WaypointCreate(MapTool):
         if not points:
             return
 
-        Waypoint.create(points, self.toLayerCoordinates(points, event.pos()), String.generate_name('Waypoint', points.featureCount()))
+        name, ok = QInputDialog.getText(self.iface.mainWindow(), 'Create new waypoint', 'Name:')
+
+        if not ok:
+            return
+
+        name = name.strip()
+
+        if not name:
+            return
+
+        Waypoint.create(points, self.toLayerCoordinates(points, event.pos()), name)
 
 
 class WaypointDelete(MapTool):
