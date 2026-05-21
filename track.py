@@ -25,7 +25,7 @@ class Track:
 
         track = Tree.create_group(tracks, name)
 
-        if not track:
+        if track is None:
             return None
 
         track.setCustomProperty('type', 'track')
@@ -42,7 +42,7 @@ class Track:
     @staticmethod
     @log_call
     def delete(track: Optional[QgsLayerTreeGroup]):
-        if not track:
+        if track is None:
             return
 
         if Dialog.confirm('Delete track?'):
@@ -71,7 +71,7 @@ class Track:
     @staticmethod
     @log_call
     def refresh(track: Optional[QgsLayerTreeGroup]):
-        if not track:
+        if track is None:
             return
 
         for segment in track.children():
@@ -81,7 +81,7 @@ class Track:
     @staticmethod
     @log_call
     def reverse(track: Optional[QgsLayerTreeGroup]):
-        if not track:
+        if track is None:
             return
 
         for segment in track.children():
@@ -91,7 +91,7 @@ class Track:
     @staticmethod
     @log_call
     def optimize(track: Optional[QgsLayerTreeGroup]):
-        if not track:
+        if track is None:
             return
 
         for segment in track.children():
@@ -110,7 +110,7 @@ class Track:
 
         track = Track.create(file, name)
 
-        if not track:
+        if track is None:
             return
 
         for trkseg in trk.iter('trkseg'):
@@ -119,7 +119,7 @@ class Track:
     @staticmethod
     @log_call
     def to_xml(track: Optional[QgsLayerTreeGroup]) -> Optional[ET.Element]:
-        if not track:
+        if track is None:
             return None
 
         name = ET.Element('name')

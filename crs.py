@@ -1,9 +1,11 @@
+from typing import Optional
+
 from qgis.core import QgsGeometry, QgsProject, QgsVectorLayer, QgsCoordinateReferenceSystem, QgsCoordinateTransform
 
 
 class Crs:
     @staticmethod
-    def set(layer: QgsVectorLayer, code: str) -> None:
+    def set(layer: Optional[QgsVectorLayer], code: str) -> None:
         crs = layer.crs()
         crs.createFromString(code)
 

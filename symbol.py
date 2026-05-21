@@ -30,7 +30,7 @@ class Symbol:
         })
 
     @staticmethod
-    def set(layer: QgsVectorLayer, symbol: Optional[QgsSymbol]):
+    def set(layer: Optional[QgsVectorLayer], symbol: Optional[QgsSymbol]):
         if layer is None:
             return
 

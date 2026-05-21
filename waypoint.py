@@ -12,7 +12,7 @@ from .utils import Utils
 class Waypoint:
     @staticmethod
     @log_call
-    def create(layer: QgsVectorLayer, point: QgsPointXY, name: Optional[str] = None):
+    def create(layer: Optional[QgsVectorLayer], point: QgsPointXY, name: Optional[str] = None):
         if layer is None:
             return
 
@@ -28,14 +28,14 @@ class Waypoint:
 
     @staticmethod
     @log_call
-    def move(layer: QgsVectorLayer, feature: int, point: QgsPointXY):
+    def move(layer: Optional[QgsVectorLayer], feature: int, point: QgsPointXY):
         layer.startEditing()
         layer.changeGeometry(feature, QgsGeometry.fromPoint(QgsPoint(point.x(), point.y())))
         layer.commitChanges()
 
     @staticmethod
     @log_call
-    def delete(layer: QgsVectorLayer, point: QgsPointXY):
+    def delete(layer: Optional[QgsVectorLayer], point: QgsPointXY):
         buffer = Utils.create_buffer(point)
 
         for position, feature in enumerate(layer.getFeatures(), start=1):
@@ -54,7 +54,7 @@ class Waypoint:
 
     @staticmethod
     @log_call
-    def from_xml(waypoints: QgsLayerTreeGroup, wpt: ET.Element):
+    def from_xml(waypoints: Optional[QgsLayerTreeGroup], wpt: ET.Element):
         if waypoints is None:
             return
 
@@ -80,7 +80,7 @@ class Waypoint:
 
     @staticmethod
     @log_call
-    def to_xml(waypoints: QgsLayerTreeGroup) -> list[ET.Element]:
+    def to_xml(waypoints: Optional[QgsLayerTreeGroup]) -> list[ET.Element]:
         if not waypoints:
             return []
 

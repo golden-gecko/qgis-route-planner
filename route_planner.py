@@ -23,7 +23,6 @@ class RoutePlanner:
         self.menu = '&RoutePlanner'
         self.toolbar = self.iface.addToolBar('RoutePlanner')
         self.toolbar.setObjectName('RoutePlanner')
-        self.pluginIsActive = False
         self.dockwidget = None
 
         # create tools
@@ -53,28 +52,22 @@ class RoutePlanner:
         self.add_action(':/plugins/route_planner/icon.png', text='Show', callback=self.run, parent=self.iface.mainWindow())
 
     def onClosePlugin(self):
-        self.pluginIsActive = False
-
         self.dockwidget.closingPlugin.disconnect(self.onClosePlugin)
         self.dockwidget = None
 
     def unload(self):
+        self.iface.removeDockWidget(self.dockwidget)
+        self.dockwidget.deleteLater()
+
         for action in self.actions:
             self.iface.removePluginMenu('&RoutePlanner', action)
             self.iface.removeToolBarIcon(action)
 
     def run(self):
-        if self.pluginIsActive:
-            return
-
-        self.pluginIsActive = True
-
-        if self.dockwidget is not None:
-            return
-
         self.dockwidget = RoutePlannerDockWidget()
         self.dockwidget.closingPlugin.connect(self.onClosePlugin)
 
+        # main modes
         self.dockwidget.buttonSelect.clicked.connect(lambda: self.iface.mapCanvas().setMapTool(self.mapToolPan))
         self.dockwidget.buttonEdit.clicked.connect(lambda: self.iface.mapCanvas().setMapTool(self.mapToolEdit))
 
