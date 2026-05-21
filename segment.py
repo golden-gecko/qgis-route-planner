@@ -424,13 +424,13 @@ class Segment:
         paths.startEditing()
 
         # Rank turn sharpness and keep only top N turns (plus first and last point).
-        top_turns = max(0, Options.points_per_segment - 2)
+        top_turns = max(0, Options.control_point_per_segment - 2)
         ranked_turns = []
 
         for i in range(1, len(results) - 1):
             delta = Distance.turn_delta_deg(results[i - 1], results[i], results[i + 1])
 
-            if delta > 20.0:
+            if delta > Options.control_point_min_angle:
                 ranked_turns.append((i, delta))
 
         ranked_turns.sort(key=lambda item: item[1], reverse=True)
@@ -442,7 +442,7 @@ class Segment:
             candidate = results[i]
             last = results[control_indices[-1]]
 
-            if Distance.get_between_points(last, candidate) < Options.min_point_distance:
+            if Distance.get_between_points(last, candidate) < Options.control_point_min_distance:
                 continue
 
             control_indices.append(i)

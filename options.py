@@ -2,8 +2,9 @@ class Options:
     routing = True
     routing_provider = 'Google'
     routing_mode = 'driving'
-    points_per_segment = 100
-    min_point_distance = 1000
+    control_point_per_segment = 100
+    control_point_min_distance = 1000
+    control_point_min_angle = 20
 
     @staticmethod
     def set_routing(routing: bool) -> None:
@@ -24,9 +25,13 @@ class Options:
         Options.routing_mode = routing_mode
 
     @staticmethod
-    def set_points_per_segment(points_per_segment: int) -> None:
-        Options.points_per_segment = max(2, min(points_per_segment, 100))
+    def set_control_point_per_segment(control_point_per_segment: int) -> None:
+        Options.control_point_per_segment = max(2, min(control_point_per_segment, 100))
 
     @staticmethod
-    def set_min_point_distance(min_point_distance: int) -> None:
-        Options.min_point_distance = max(1, min(min_point_distance, 1000))
+    def set_control_point_min_distance(control_point_min_distance: int) -> None:
+        Options.control_point_min_distance = max(1, min(control_point_min_distance, 1000))
+
+    @staticmethod
+    def set_control_point_min_angle(control_point_min_angle: int) -> None:
+        Options.control_point_min_angle = max(1, min(control_point_min_angle, 180))
