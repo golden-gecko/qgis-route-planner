@@ -1,3 +1,5 @@
+from typing import Optional
+
 from qgis.core import QgsFeature, QgsGeometry, QgsLayerTreeGroup, QgsPoint
 
 from .tree import Tree
@@ -5,15 +7,18 @@ from .tree import Tree
 
 class Path:
     @staticmethod
-    def create(segment: QgsLayerTreeGroup, points: list):
+    def create(segment: Optional[QgsLayerTreeGroup], points: list):
+        if segment is None:
+            return
+
         paths = Tree.find_layer(segment, 'Paths')
 
-        if not paths:
+        if paths is None:
             return
 
         layer = paths.layer()
 
-        if not layer:
+        if layer is None:
             return
 
         feature = QgsFeature(layer.fields())

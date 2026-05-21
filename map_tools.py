@@ -46,7 +46,7 @@ class Edit(MapTool):
 
         segment = Segment.get_active(self.iface)
 
-        if not segment:
+        if segment is None:
             return
 
         # check if user is selecting a point
@@ -88,7 +88,7 @@ class Edit(MapTool):
     def canvasReleaseEvent(self, event):
         segment = Segment.get_active(self.iface)
 
-        if not segment:
+        if segment is None:
             return
 
         points = Layer.get_or_create_points(segment)
@@ -122,7 +122,7 @@ class WaypointCreate(MapTool):
     def canvasReleaseEvent(self, event):
         file = File.get_active(self.iface)
 
-        if not file:
+        if file is None:
             return
 
         waypoints = Tree.find_group(file, 'Waypoints')
@@ -146,7 +146,7 @@ class WaypointDelete(MapTool):
     def canvasReleaseEvent(self, event):
         file = File.get_active(self.iface)
 
-        if not file:
+        if file is None:
             return
 
         waypoints = Tree.find_group(file, 'Waypoints')
@@ -176,7 +176,7 @@ class WaypointMove(MapTool):
 
         file = File.get_active(self.iface)
 
-        if not file:
+        if file is None:
             return
 
         waypoints = Tree.find_group(file, 'Waypoints')
@@ -203,7 +203,7 @@ class WaypointMove(MapTool):
     def canvasReleaseEvent(self, event):
         file = File.get_active(self.iface)
 
-        if not file:
+        if file is None:
             return
 
         waypoints = Tree.find_group(file, 'Waypoints')
@@ -230,7 +230,7 @@ class PointCreateStart(MapTool):
     def canvasReleaseEvent(self, event):
         segment = Segment.get_active(self.iface)
 
-        if not segment:
+        if segment is None:
             return
 
         points = Layer.get_or_create_points(segment)
@@ -253,7 +253,7 @@ class PointCreateMiddle(MapTool):
     def canvasReleaseEvent(self, event):
         segment = Segment.get_active(self.iface)
 
-        if not segment:
+        if segment is None:
             return
 
         points = Layer.get_or_create_points(segment)
@@ -286,12 +286,12 @@ class PointCreateEnd(MapTool):
     def canvasReleaseEvent(self, event):
         track = Track.get_active(self.iface)
 
-        if not track:
+        if track is None:
             return
 
         segment = Segment.get_active(self.iface)
 
-        if not segment:
+        if segment is None:
             return
 
         points = Layer.get_or_create_points(segment)
@@ -320,7 +320,7 @@ class PointMove(MapTool):
 
         segment = Segment.get_active(self.iface)
 
-        if not segment:
+        if segment is None:
             return
 
         points = Layer.get_or_create_points(segment)
@@ -343,7 +343,7 @@ class PointMove(MapTool):
     def canvasReleaseEvent(self, event):
         segment = Segment.get_active(self.iface)
 
-        if not segment:
+        if segment is None:
             return
 
         points = Layer.get_or_create_points(segment)
@@ -367,7 +367,7 @@ class PointDelete(MapTool):
     def canvasReleaseEvent(self, event):
         segment = Segment.get_active(self.iface)
 
-        if not segment:
+        if segment is None:
             return
 
         points = Layer.get_or_create_points(segment)

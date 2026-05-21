@@ -67,8 +67,8 @@ class File:
 
     @staticmethod
     @log_call
-    def save(file: Optional[QgsLayerTreeGroup]):
-        if not file:
+    def save(file: Optional[QgsLayerTreeGroup], extension_osmand:bool = True):
+        if file is None:
             return
 
         file_name = file.customProperty('fileName')
@@ -89,7 +89,13 @@ class File:
         if not waypoints:
             return
 
-        gpx = ET.Element('gpx', version='1.1', xmlns='https://www.topografix.com/GPX/1/1')
+        ns_gpx = 'https://www.topografix.com/GPX/1/1'
+        ns_osmand = 'https://osmand.net/docs/technical/osmand-file-formats/osmand-gpx'
+
+        ET.register_namespace('', ns_gpx)
+        ET.register_namespace('osmand', ns_osmand)
+
+        gpx = ET.Element(f'{{{ns_gpx}}}gpx', version='1.1')
 
         wpts = Waypoint.to_xml(waypoints)
 
@@ -112,15 +118,30 @@ class File:
 
             gpx.append(trk)
 
+        if extension_osmand:
+            """
+            color = ET.Element(f'{{{ns_osmand}}}color')
+            color.text = '#33FF33'
+
+            width = ET.Element(f'{{{ns_osmand}}}width')
+            width.text = 'bold'
+
+            extensions = ET.Element('extensions')
+            extensions.append(color)
+            extensions.append(width)
+
+            gpx.append(extensions)
+            """
+
         ET.indent(gpx, space='  ', level=0)
 
         tree = ET.ElementTree(gpx)
-        tree.write(file_name)
+        tree.write(file_name, encoding='utf-8', xml_declaration=True)
 
     @staticmethod
     @log_call
     def close(file: Optional[QgsLayerTreeGroup], force: bool = False):
-        if not file:
+        if file is None:
             return
 
         if force or Dialog.confirm('Close file?'):
@@ -149,7 +170,7 @@ class File:
     @staticmethod
     @log_call
     def refresh_distance(file: Optional[QgsLayerTreeGroup]):
-        if not file:
+        if file is None:
             return
 
         files = Tree.get_root()
@@ -205,7 +226,7 @@ class File:
         # create file
         file = File.new(os.path.basename(file_name))
 
-        if not file:
+        if file is None:
             return
 
         file.setCustomProperty('fileName', file_name)
@@ -226,8 +247,8 @@ class File:
 
     @staticmethod
     @log_call
-    def get_distance(file: QgsLayerTreeGroup) -> float:
-        if not file:
+    def get_distance(file: Optional[QgsLayerTreeGroup]) -> float:
+        if file is None:
             return 0.0
 
         tracks = Tree.find_group(file, 'Tracks')

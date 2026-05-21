@@ -12,7 +12,7 @@ from .tree import Tree
 class Layer:
     @staticmethod
     @log_call
-    def get_or_create_waypoints(segment: QgsLayerTreeGroup) -> Optional[QgsVectorLayer]:
+    def get_or_create_waypoints(segment: Optional[QgsLayerTreeGroup]) -> Optional[QgsVectorLayer]:
         points = Tree.find_layer(segment, 'Points')
 
         if points:
@@ -41,7 +41,7 @@ class Layer:
 
     @staticmethod
     @log_call
-    def get_or_create_points(segment: QgsLayerTreeGroup) -> Optional[QgsVectorLayer]:
+    def get_or_create_points(segment: Optional[QgsLayerTreeGroup]) -> Optional[QgsVectorLayer]:
         if segment is None:
             return None
 
@@ -73,7 +73,7 @@ class Layer:
 
     @staticmethod
     @log_call
-    def get_or_create_paths(segment: QgsLayerTreeGroup) -> Optional[QgsVectorLayer]:
+    def get_or_create_paths(segment: Optional[QgsLayerTreeGroup]) -> Optional[QgsVectorLayer]:
         if segment is None:
             return None
 

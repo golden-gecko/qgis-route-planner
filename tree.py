@@ -28,7 +28,7 @@ class Tree:
 
     @staticmethod
     @log_call
-    def create_group(parent: QgsLayerTreeGroup, name: str, custom_type: Optional[str] = None, position: int = -1) -> Optional[QgsLayerTreeGroup]:
+    def create_group(parent: Optional[QgsLayerTreeGroup], name: str, custom_type: Optional[str] = None, position: int = -1) -> Optional[QgsLayerTreeGroup]:
         group = parent.addGroup(name)
 
         if group is None:
@@ -49,7 +49,7 @@ class Tree:
 
     @staticmethod
     @log_call
-    def find_group(parent: QgsLayerTreeGroup, name: str) -> Optional[QgsLayerTreeGroup]:
+    def find_group(parent: Optional[QgsLayerTreeGroup], name: str) -> Optional[QgsLayerTreeGroup]:
         if parent is None:
             return None
 
@@ -57,7 +57,7 @@ class Tree:
 
     @staticmethod
     @log_call
-    def find_layer(parent: QgsLayerTreeGroup, name: str) -> Optional[QgsVectorLayer]:
+    def find_layer(parent: Optional[QgsLayerTreeGroup], name: str) -> Optional[QgsVectorLayer]:
         if parent is None:
             return None
 
@@ -69,7 +69,7 @@ class Tree:
 
     @staticmethod
     @log_call
-    def delete_group(group: QgsLayerTreeGroup) -> None:
+    def delete_group(group: Optional[QgsLayerTreeGroup]) -> None:
         parent = group.parent()
 
         if parent is not None:

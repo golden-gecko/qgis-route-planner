@@ -1,3 +1,5 @@
+from typing import Optional
+
 from qgis.core import QgsFeature, QgsGeometry, QgsPoint, QgsPointXY, QgsVectorLayer
 
 from .feature import Feature
@@ -9,7 +11,7 @@ from .utils import Utils
 class Point:
     @staticmethod
     @log_call
-    def create_start(layer: QgsVectorLayer, point: QgsPointXY):
+    def create_start(layer: Optional[QgsVectorLayer], point: QgsPointXY):
         layer.startEditing()
 
         geometries = [
@@ -34,7 +36,7 @@ class Point:
 
     @staticmethod
     @log_call
-    def create_middle(layer: QgsVectorLayer, point: QgsPointXY, position: int):
+    def create_middle(layer: Optional[QgsVectorLayer], point: QgsPointXY, position: int):
         layer.startEditing()
 
         geometries = []
@@ -60,7 +62,7 @@ class Point:
 
     @staticmethod
     @log_call
-    def create_end(layer: QgsVectorLayer, point: QgsPointXY):
+    def create_end(layer: Optional[QgsVectorLayer], point: QgsPointXY):
         feature = Feature.from_point(QgsPoint(point.x(), point.y()), layer.fields())
 
         layer.startEditing()
@@ -73,14 +75,14 @@ class Point:
 
     @staticmethod
     @log_call
-    def move(layer: QgsVectorLayer, feature: int, point: QgsPointXY):
+    def move(layer: Optional[QgsVectorLayer], feature: int, point: QgsPointXY):
         layer.startEditing()
         layer.changeGeometry(feature, QgsGeometry.fromPoint(QgsPoint(point.x(), point.y())))
         layer.commitChanges()
 
     @staticmethod
     @log_call
-    def delete(layer: QgsVectorLayer, point: QgsPointXY):
+    def delete(layer: Optional[QgsVectorLayer], point: QgsPointXY):
         buffer = Utils.create_buffer(point)
 
         for position, feature in enumerate(layer.getFeatures(), start=1):

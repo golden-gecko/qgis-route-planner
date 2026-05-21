@@ -27,7 +27,7 @@ class Utils:
         paths.commitChanges()
 
     @staticmethod
-    def refresh_position(layer: QgsVectorLayer):
+    def refresh_position(layer: Optional[QgsVectorLayer]):
         field_id = layer.fields().indexOf('position')
 
         for position, feature in enumerate(layer.getFeatures(), start=1):
