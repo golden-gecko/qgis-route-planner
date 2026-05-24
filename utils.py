@@ -2,13 +2,33 @@ import re
 
 from typing import Optional
 
-from qgis.core import QgsFeature, QgsGeometry, QgsLayerTreeGroup, QgsPoint, QgsVectorLayer, QgsPointXY
+from qgis.core import QgsFeature, QgsGeometry, QgsLayerTreeGroup, QgsPoint, QgsProject, QgsVectorLayer, QgsPointXY
 
 from .feature import Feature
 from .log import log_call
 
 
 class Utils:
+    @staticmethod
+    @log_call
+    def add_layer(parent: Optional[QgsLayerTreeGroup], layer: Optional[QgsVectorLayer]) -> None:
+        if parent is None:
+            return
+
+        if layer is None:
+            return
+
+        QgsProject.instance().addMapLayer(layer, False)
+
+        parent.addLayer(layer)
+
+        node = QgsProject.instance().layerTreeRoot().findLayer(layer.id())
+
+        if node is None:
+            return
+
+        node.setItemVisibilityChecked(False)
+
     @staticmethod
     @log_call
     def update_layer(paths: QgsVectorLayer, lines: list):
