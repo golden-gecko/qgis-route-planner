@@ -51,11 +51,11 @@ class Tree:
         for name in groups.keys():
             groups[name] = Tree.get_or_create_group(root, name)
 
-        # Tree.create_track_editable(groups['Tracks Editable'])
-        # Tree.create_tracks_read_only(groups['Tracks Read Only'])
-        # Tree.create_nature(groups['Nature'])
+        Tree.create_track_editable(groups['Tracks Editable'])
+        Tree.create_tracks_read_only(groups['Tracks Read Only'])
+        Tree.create_nature(groups['Nature'])
         Tree.create_woods(groups['Woods'])
-        # Tree.create_maps(groups['Maps'])
+        Tree.create_maps(groups['Maps'])
 
         #54b04a, 3, visited
         #487bb6, 3, planned
