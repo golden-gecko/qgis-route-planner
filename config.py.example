@@ -1,2 +1,28 @@
 class Config:
-    key = 'INSERT_KEY_HERE'
+    class Google:
+        Key = 'INSERT_KEY_HERE'
+
+    class MapBox:
+        Key = 'INSERT_KEY_HERE'
+        Styles = {
+            'MapBox': 'INSERT_USER_HERE/INSERT_ID_HERE',
+            'MapBox Satellite': 'INSERT_USER_HERE/INSERT_ID_HERE',
+        }
+
+    class Tree:
+        Items = [
+            {
+                'type': 'group',
+                'name': 'Places',
+                'items': [
+                    {
+                        'type': 'vector',
+                        'uri': r'\path\to\file.gpx|layername=waypoints',
+                        'style': {
+                            'color': '#54b04a',
+                            'size': 3
+                        }
+                    }
+                ]
+            }
+        ]
