@@ -23,7 +23,7 @@ class File:
     @staticmethod
     @log_call
     def new(name: Optional[str] = None) -> Optional[QgsLayerTreeGroup]:
-        files = Tree.get_or_create_group(Tree.get_root(), 'Tracks Editable')
+        files = Tree.get_or_create_group(Tree.get_root(), 'Tracks')
 
         if files is None:
             return None
@@ -173,7 +173,7 @@ class File:
         if file is None:
             return
 
-        files = Tree.get_or_create_group(Tree.get_root(), 'Tracks Editable')
+        files = Tree.get_or_create_group(Tree.get_root(), 'Tracks')
 
         if not files:
             return
