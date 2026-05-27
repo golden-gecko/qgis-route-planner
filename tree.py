@@ -1,8 +1,10 @@
+import copy
 import pathlib
+import re
 
 from typing import Optional
 
-from qgis.core import QgsLayerTreeGroup, QgsProject, QgsRasterLayer, QgsVectorLayer
+from qgis.core import QgsLayerTreeGroup, QgsLineSymbol, QgsMarkerSymbol, QgsProject, QgsRasterLayer, QgsVectorLayer
 from qgis.PyQt.QtCore import Qt
 from qgis.PyQt.QtGui import QColor
 
@@ -34,156 +36,72 @@ class Tree:
 
     @staticmethod
     @log_call
+    def process_group(parent: Optional[QgsLayerTreeGroup], item: dict) -> Optional[QgsLayerTreeGroup]:
+        if parent is None:
+            return None
+
+        if 'name' not in item:
+            return None
+
+        group = Tree.get_or_create_group(parent, item['name'])
+
+        if group is None:
+            return None
+
+        for child in item.get('items', []):
+            Tree.process_item(group, child)
+
+        return group
+
+    @staticmethod
+    @log_call
+    def process_raster(parent: Optional[QgsLayerTreeGroup], item: dict) -> None:
+        if parent is None:
+            return
+
+        if 'uri' not in item:
+            return
+
+        if 'name' in item:
+            name = item['name']
+        else:
+            name = pathlib.Path(item['uri']).stem
+
+        layer = Tree.find_layer(parent, name)
+
+        if layer is not None:
+            return
+
+        layer = Tree.create_raster(item['uri'], name)
+
+        if not layer.isValid():
+            return
+
+        Utils.add_layer(parent, layer)
+
+    @staticmethod
+    @log_call
+    def process_item(parent: Optional[QgsLayerTreeGroup], item: dict) -> None:
+        if 'type' not in item:
+            return
+
+        if item['type'] == 'group':
+            Tree.process_group(parent, item)
+        elif item['type'] == 'raster':
+            Tree.process_raster(parent, item)
+        elif item['type'] == 'vector':
+            Tree.process_vector(parent, item)
+
+    @staticmethod
+    @log_call
     def create_tree_structure() -> None:
         root = Tree.get_root()
 
         if root is None:
             return
 
-        groups = {
-            'Tracks Editable': None,
-            'Tracks Read Only': None,
-            'Nature': None,
-            'Woods': None,
-            'Maps': None,
-        }
-
-        for name in groups.keys():
-            groups[name] = Tree.get_or_create_group(root, name)
-
-        Tree.create_track_editable(groups['Tracks Editable'])
-        Tree.create_tracks_read_only(groups['Tracks Read Only'])
-        Tree.create_nature(groups['Nature'])
-        Tree.create_woods(groups['Woods'])
-        Tree.create_maps(groups['Maps'])
-
-        #54b04a, 3, visited
-        #487bb6, 3, planned
-
-        # db1e2a motorcycle
-        # 487bb6 car
-        # 54b04a bicycle
-    @staticmethod
-    @log_call
-    def create_track_editable(parent: Optional[QgsLayerTreeGroup]) -> None:
-        if parent is None:
-            return
-
-    @staticmethod
-    @log_call
-    def create_tracks_read_only(parent: Optional[QgsLayerTreeGroup]) -> None:
-        if parent is None:
-            return
-
-        for gpx in Config.Tree.Items['Tracks Read Only']:
-            if 'path' not in gpx:
-                continue
-
-            path = pathlib.Path(gpx['path'])
-
-            if path.is_dir():
-                Tree.process_directory(parent, gpx['path'], gpx['content'], gpx['style'])
-            elif path.is_file() and path.suffix.lower() == '.gpx':
-                Tree.process_file(parent, gpx['path'], gpx['content'], gpx['style'])
-
-    @staticmethod
-    @log_call
-    def create_nature(parent: Optional[QgsLayerTreeGroup]) -> None:
-        if parent is None:
-            return
-
-        gdos = [
-            'ObszaryChronionegoKrajobrazu',
-            'ObszarySpecjalnejOchrony',
-            'ParkiKrajobrazowe',
-            'ParkiNarodowe',
-            'PomnikiPrzyrody',
-            'Rezerwaty',
-            'SpecjalneObszaryOchrony',
-            'StanowiskaDokumentacyjne',
-            'UzytkiEkologiczne',
-            'ZespolyPrzyrodniczoKrajobrazowe',
-        ]
-
-        uri = (
-            "contextualWMSLegend=0&"
-            "crs=EPSG:2180&"
-            "dpiMode=7&"
-            "featureCount=10&"
-            "format=image/png&"
-            "layers=GDOS:__REPLACE__&"
-            "&styles=&"
-            "url=https://sdi.gdos.gov.pl/wms?"
-        )
-
-        nature = {}
-
-        for name in gdos:
-            nature[name] = uri.replace('__REPLACE__', name)
-
-        for name, uri in nature.items():
-            layer = Tree.find_layer(parent, name)
-
-            if layer is not None:
-                continue
-
-            layer = QgsRasterLayer(uri, name, 'wms')
-
-            if not layer.isValid():
-                continue
-
-            Utils.add_layer(parent, layer)
-
-    @staticmethod
-    @log_call
-    def create_woods(parent: Optional[QgsLayerTreeGroup]) -> None:
-        if parent is None:
-            return
-
-        for gpx in Config.Tree.Items['Woods']:
-            if 'path' not in gpx:
-                continue
-
-            path = pathlib.Path(gpx['path'])
-
-            if path.is_dir():
-                Tree.process_directory(parent, gpx['path'], gpx['content'], gpx['style'])
-            elif path.is_file() and (path.suffix.lower() == '.gpx' or path.suffix.lower() == '.zip'):
-                Tree.process_file(parent, gpx['path'], gpx['content'], gpx['style'])
-
-    @staticmethod
-    @log_call
-    def create_maps(parent: Optional[QgsLayerTreeGroup]) -> None:
-        if parent is None:
-            return
-
-        """
-        maps = {
-            'Google StreetView': f'type=xyz&url={urllib.parse.quote('https://mts2.google.com/mapslt?lyrs=svv&x={x}&y={y}&z={z}&w=256&h=256&hl=en&style=40,18', safe=':/{}?=%')}',
-            'Bing Satellite': f"type=xyz&url={urllib.parse.quote('http://ecn.t3.tiles.virtualearth.net/tiles/a{q}.jpeg?g=0&dir=dir_n', safe=':/{}?=&')}&zmin=1&zmax=19",
-            'Google Hybrid': f'type=xyz&url={urllib.parse.quote('https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', safe=':/{}?=%')}',
-            'Google Satellite': f'type=xyz&url={urllib.parse.quote('https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', safe=':/{}?=%')}',
-            'Google Terrain': f'type=xyz&url={urllib.parse.quote('https://mt1.google.com/vt/lyrs=p&x={x}&y={y}&z={z}', safe=':/{}?=%')}',
-        }
-
-        for name, style in Config.MapBox.Styles.items():
-            maps[name] = f'type=xyz&url=https://api.mapbox.com/styles/v1/{style}/tiles/256/{{z}}/{{x}}/{{y}}?access_token={Config.MapBox.Key}'
-
-        maps['OpenStreetMap'] = 'type=xyz&url=https://tile.openstreetmap.org/{z}/{x}/{y}.png'
-        """
-
-        for name, uri in Config.Tree.Items['Maps'].items():
-            layer = Tree.find_layer(parent, name)
-
-            if layer is not None:
-                continue
-
-            layer = QgsRasterLayer(uri, name, 'wms')
-
-            if not layer.isValid():
-                continue
-
-            Utils.add_layer(parent, layer)
+        for item in Config.Tree.Items:
+            Tree.process_item(root, item)
 
     @staticmethod
     @log_call
@@ -255,70 +173,106 @@ class Tree:
 
     @staticmethod
     @log_call
-    def process_directory(parent: Optional[QgsLayerTreeGroup], path_name: str, content: dict, style: dict) -> None:
+    def process_vector(parent: Optional[QgsLayerTreeGroup], item: dict) -> None:
         if parent is None:
             return
 
-        path = pathlib.Path(path_name)
-
-        directory = Tree.get_or_create_group(parent, path.stem)
-
-        if directory is None:
+        if 'uri' not in item:
             return
 
-        for item in path.iterdir():
-            if item.is_dir():
-                Tree.process_directory(directory, item.resolve(), content, style)
-            elif item.is_file() and (item.suffix.lower() == '.gpx' or item.suffix.lower() == '.zip'):
-                Tree.process_file(directory, item.resolve(), content, style)
+        if 'path' in item and 'pattern' in item:
+            for path_item in pathlib.Path(item['path']).glob('*'):
+                if path_item.is_dir():
+                    new_item = {
+                        'type': 'group',
+                        'name': path_item.stem,
+                    }
 
-    @staticmethod
-    @log_call
-    def process_file(parent: Optional[QgsLayerTreeGroup], path_name: str, content: dict, style: dict) -> None:
-        if parent is None:
+                    group = Tree.process_group(parent, new_item)
+
+                    if group is None:
+                        continue
+
+                    new_item = copy.deepcopy(item)
+                    new_item['path'] = str(path_item.resolve())
+
+                    Tree.process_vector(group, new_item)
+
+            for path_item in pathlib.Path(item['path']).glob(item['pattern']):
+                if path_item.is_file():
+                    file_path = str(path_item.resolve()).replace('\\', '/')
+                    file_stem = str(path_item.stem)
+
+                    new_item = copy.deepcopy(item)
+                    new_item['uri'] = item['uri'].replace('__FILE_PATH__', file_path).replace('__FILE_STEM__', file_stem)
+
+                    new_item.pop('path', None)
+                    new_item.pop('pattern', None)
+
+                    Tree.process_item(parent, new_item)
+
+        name = Tree.get_layer_name_from_item(item)
+
+        if name is None:
             return
 
-        path = pathlib.Path(path_name)
-
-        layer = Tree.find_layer(parent, path.stem)
+        layer = Tree.find_layer(parent, name)
 
         if layer is not None:
             return
 
-        if 'layer' in content:
-            layer = QgsVectorLayer(content['layer'].replace('__FILE__PATH__', str(path)).replace('__FILE_STEM__', path.stem), path.stem, "ogr")
+        layer = Tree.make_vector(item['uri'], name)
 
-            if not layer.isValid():
-                return
-        elif 'tracks' in content and content['tracks']:
-            layer = QgsVectorLayer(f"{path_name}|layername=tracks", path.stem, "ogr")
-
-            if not layer.isValid():
-                return
-
-            symbol = layer.renderer().symbol()
-            symbol.setColor(QColor(style['color']))
-            symbol.setWidth(style['size'])
-
-            line_sl = symbol.symbolLayer(0)
-            line_sl.setPenStyle(Qt.DashLine)
-        elif 'waypoints' in content and content['waypoints']:
-            layer = QgsVectorLayer(f"{path_name}|layername=waypoints", path.stem, "ogr")
-
-            if not layer.isValid():
-                return
-
-            symbol = layer.renderer().symbol()
-            symbol.setColor(QColor(style['color']))
-            symbol.setSize(style['size'])
-        else:
+        if not layer.isValid():
             return
 
-        if 'color' in style:
+        if 'style' in item:
             symbol = layer.renderer().symbol()
-            symbol.setColor(QColor(style['color']))
 
-        if 'opacity' in style:
-            layer.setOpacity(style['opacity'])
+            if 'color' in item['style']:
+                symbol = layer.renderer().symbol()
+                symbol.setColor(QColor(item['style']['color']))
+
+            if 'opacity' in item['style']:
+                layer.setOpacity(item['style']['opacity'])
+
+            if isinstance(symbol, QgsMarkerSymbol):
+                if 'size' in item['style']:
+                    symbol.setSize(item['style']['size'])
+            elif isinstance(symbol, QgsLineSymbol):
+                line = symbol.symbolLayer(0)
+                line.setPenStyle(Qt.DashLine)
+
+                if 'size' in item['style']:
+                    symbol.setWidth(item['style']['size'])
 
         Utils.add_layer(parent, layer)
+
+    @staticmethod
+    @log_call
+    def make_vector(uri: str, name: str) -> QgsVectorLayer:
+        return QgsVectorLayer(uri, name, 'ogr')
+
+    @staticmethod
+    @log_call
+    def make_raster(uri: str, name: str) -> QgsRasterLayer:
+        return QgsRasterLayer(uri, name, 'wms')
+
+    @staticmethod
+    @log_call
+    def get_layer_name_from_item(item: dict) -> Optional[str]:
+        if 'name' in item:
+            return item['name']
+
+        if 'uri' in item:
+            if item['uri'].startswith('/vsizip'):
+                m = re.search(r'^/vsizip/([^?]+?\.zip)(?=[/\\])', item['uri'], flags=re.IGNORECASE)
+
+                if m is None:
+                    return None
+
+                return pathlib.Path(m.group(1)).stem
+            else:
+                return pathlib.Path(item['uri']).stem
+
+        return None
