@@ -2,6 +2,8 @@ class Options:
     routing = True
     routing_provider = 'Google'
     routing_mode = 'driving'
+    avoid_highways = False
+    avoid_tolls = False
     control_point_per_segment = 100
     control_point_min_distance = 1000
     control_point_min_angle = 20
@@ -23,6 +25,14 @@ class Options:
             routing_mode = 'driving'
 
         Options.routing_mode = routing_mode
+
+    @staticmethod
+    def set_avoid_highways(avoid_highways: bool) -> None:
+        Options.avoid_highways = avoid_highways
+
+    @staticmethod
+    def set_avoid_tolls(avoid_tolls: bool) -> None:
+        Options.avoid_tolls = avoid_tolls
 
     @staticmethod
     def set_control_point_per_segment(control_point_per_segment: int) -> None:

@@ -1,5 +1,4 @@
 import datetime
-
 import googlemaps
 
 from .config import Config
@@ -9,11 +8,30 @@ from .options import Options
 
 class Google:
     @staticmethod
+    def get_avoid_options() -> list[str]:
+        avoid = []
+
+        if Options.avoid_highways:
+            avoid.append('highways')
+
+        if Options.avoid_tolls:
+            avoid.append('tolls')
+
+        return avoid
+
+    @staticmethod
     @log_call
     def get_direction(a, b, mode: str = 'driving') -> list:
-        client = googlemaps.Client(key=Config.key)
+        client = googlemaps.Client(key=Config.Google.Key)
+        avoid = Google.get_avoid_options()
 
-        return client.directions(a, b, mode=mode, departure_time=datetime.datetime.now())
+        return client.directions(
+            a,
+            b,
+            mode=mode,
+            avoid=avoid or None,
+            departure_time=datetime.datetime.now()
+        )
 
     @staticmethod
     @log_call
