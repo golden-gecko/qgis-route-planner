@@ -72,7 +72,7 @@ class Tree:
         if layer is not None:
             return
 
-        layer = Tree.create_raster(item['uri'], name)
+        layer = Tree.make_raster(item['uri'], name)
 
         if not layer.isValid():
             return
@@ -187,6 +187,9 @@ class Tree:
                         'type': 'group',
                         'name': path_item.stem,
                     }
+
+                    if Config.Tree.RefreshDirectory == False and Tree.find_group(parent, new_item['name']) is not None:
+                        continue
 
                     group = Tree.process_group(parent, new_item)
 
