@@ -130,6 +130,10 @@ class RoutePlanner:
             self.dockwidget.optionRouting.stateChanged.connect(lambda: Options.set_routing(self.dockwidget.optionRouting.isChecked()))
             self.dockwidget.optionRoutingProvider.currentTextChanged.connect(lambda: Options.set_routing_provider(self.dockwidget.optionRoutingProvider.currentText()))
             self.dockwidget.optionRoutingMode.currentTextChanged.connect(lambda: Options.set_routing_mode(self.dockwidget.optionRoutingMode.currentText()))
+            self.dockwidget.optionAvoidHighways.setChecked(Options.avoid_highways)
+            self.dockwidget.optionAvoidHighways.stateChanged.connect(lambda: Options.set_avoid_highways(self.dockwidget.optionAvoidHighways.isChecked()))
+            self.dockwidget.optionAvoidTolls.setChecked(Options.avoid_tolls)
+            self.dockwidget.optionAvoidTolls.stateChanged.connect(lambda: Options.set_avoid_tolls(self.dockwidget.optionAvoidTolls.isChecked()))
 
             # setup control point options
             self.dockwidget.spinBoxPointsPerSegment.setValue(Options.control_point_per_segment)

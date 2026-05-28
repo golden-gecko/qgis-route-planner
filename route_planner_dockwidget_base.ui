@@ -290,22 +290,50 @@
         </property>
        </widget>
       </item>
-      <item row="2" column="1">
-       <widget class="QComboBox" name="optionRoutingMode">
-        <item>
-         <property name="text">
-          <string>driving</string>
+       <item row="2" column="1">
+        <widget class="QComboBox" name="optionRoutingMode">
+         <item>
+          <property name="text">
+           <string>driving</string>
          </property>
         </item>
         <item>
          <property name="text">
           <string>walking</string>
          </property>
-        </item>
-       </widget>
-      </item>
-     </layout>
-    </item>
+         </item>
+        </widget>
+       </item>
+       <item row="3" column="0">
+        <widget class="QLabel" name="labelAvoidHighways">
+         <property name="text">
+          <string>Avoid highways</string>
+         </property>
+        </widget>
+       </item>
+       <item row="3" column="1">
+        <widget class="QCheckBox" name="optionAvoidHighways">
+         <property name="text">
+          <string/>
+         </property>
+        </widget>
+       </item>
+       <item row="4" column="0">
+        <widget class="QLabel" name="labelAvoidTolls">
+         <property name="text">
+          <string>Avoid tolls</string>
+         </property>
+        </widget>
+       </item>
+       <item row="4" column="1">
+        <widget class="QCheckBox" name="optionAvoidTolls">
+         <property name="text">
+          <string/>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </item>
     <item row="7" column="0">
      <widget class="Line" name="line_4">
       <property name="orientation">
