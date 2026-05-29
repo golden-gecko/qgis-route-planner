@@ -1,22 +1,12 @@
-from qgis.core import QgsProject, QgsRasterLayer, QgsPointXY
-from qgis.gui import QgsMapToolPan, QgsVertexMarker
+import math
+
+from PyQt5.QtWebChannel import QWebChannel
+
+from qgis.core import QgsCoordinateReferenceSystem, QgsCoordinateTransform, QgsProject, QgsRasterLayer, QgsPointXY, QgsGeometry, QgsWkbTypes
+from qgis.gui import QgsMapToolPan, QgsVertexMarker, QgsRubberBand
 from qgis.PyQt.QtCore import Qt, QObject, pyqtSlot, pyqtSignal
 from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import QAction
-
-try:
-    from qgis.PyQt.QtWebChannel import QWebChannel
-except Exception:
-    try:
-        from PyQt5.QtWebChannel import QWebChannel
-    except Exception:
-        try:
-            from PyQt6.QtWebChannel import QWebChannel
-        except Exception:
-            try:
-                from PySide2.QtWebChannel import QWebChannel
-            except Exception:
-                QWebChannel = None
 
 from .config import Config
 from .file import File
@@ -35,7 +25,6 @@ class Bridge(QObject):
 
     @pyqtSlot(float, float, float, float)
     def onPos(self, lat, lng, heading, pitch):
-        # Called from JS via QWebChannel
         self.posChanged.emit(lat, lng, heading, pitch)
 
 
@@ -66,7 +55,8 @@ class RoutePlanner:
         self.mapToolPointCreateEnd = PointCreateEnd(self.iface, self.iface.mapCanvas())
         self.mapToolPointMove = PointMove(self.iface, self.iface.mapCanvas())
         self.mapToolPointDelete = PointDelete(self.iface, self.iface.mapCanvas())
-        self.streetViewMarker = None
+
+        self.streetViewHeadingBand = None
 
     def add_action(self, icon_path: str, text: str, callback, parent = None):
         print('RoutePlanner.add_action()')
@@ -182,46 +172,52 @@ class RoutePlanner:
 
         lat = point.y()
         lng = point.x()
-        page = f"""<!doctype html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <style>html,body,#pano{{width:100%;height:100%;margin:0}}</style>
-</head>
-<body>
-  <div id="pano"></div>
-  <script src="qrc:///qtwebchannel/qwebchannel.js"></script>
-  <script>
-    let panorama;
-    function initialize() {{
-      const pos = {{lat: {lat}, lng: {lng}}};
-      panorama = new google.maps.StreetViewPanorama(
-        document.getElementById('pano'),
-        {{
-          position: pos,
-          pov: {{heading:0, pitch:0}},
-          addressControl: false,
-          linksControl: false
-        }}
-      );
 
-      new QWebChannel(qt.webChannelTransport, function(channel) {{
-        window.bridge = channel.objects.bridge;
-        function send() {{
-          const p = panorama.getPosition();
-          const pov = panorama.getPov();
-          bridge.onPos(p.lat(), p.lng(), pov.heading || 0, pov.pitch || 0);
-        }}
-        panorama.addListener('position_changed', send);
-        panorama.addListener('pov_changed', send);
-        send();
-      }});
-    }}
-  </script>
-  <script src="https://maps.googleapis.com/maps/api/js?key={Config.Google.Key}&callback=initialize&v=weekly" defer></script>
-</body>
-</html>
-"""
+        page = f"""
+            <!doctype html>
+            <html>
+            <head>
+                <meta charset="utf-8">
+                <style>html,body,#pano{{width:100%;height:100%;margin:0}}</style>
+            </head>
+            <body>
+                <div id="pano"></div>
+                <script src="qrc:///qtwebchannel/qwebchannel.js"></script>
+                <script>
+                    let panorama;
+                    function initialize() {{
+                        const pos = {{
+                            lat: {lat},
+                            lng: {lng}
+                        }};
+                        panorama = new google.maps.StreetViewPanorama(
+                        document.getElementById('pano'), {{
+                            position: pos,
+                            pov: {{
+                                heading:0,
+                                pitch:0
+                            }},
+                            addressControl: false,
+                            linksControl: false
+                        }});
+                    
+                        new QWebChannel(qt.webChannelTransport, function(channel) {{
+                            window.bridge = channel.objects.bridge;
+                            function send() {{
+                                const p = panorama.getPosition();
+                                const pov = panorama.getPov();
+                                bridge.onPos(p.lat(), p.lng(), pov.heading || 0, pov.pitch || 0);
+                            }}
+                            panorama.addListener('position_changed', send);
+                            panorama.addListener('pov_changed', send);
+                            send();
+                        }});
+                    }}
+                </script>
+                <script src="https://maps.googleapis.com/maps/api/js?key={Config.Google.Key}&callback=initialize&v=weekly" defer></script>
+            </body>
+            </html>
+        """
 
         self.dockwidget.streetViewBrowser.setHtml(page)
 
@@ -238,33 +234,32 @@ class RoutePlanner:
             pass
 
     def _on_streetview_pos(self, lat, lng, heading, pitch):
-        # lat, lng: floats in degrees
-        # create marker if needed
-        if self.streetViewMarker is None:
-            self.streetViewMarker = QgsVertexMarker(self.iface.mapCanvas())
-            self.streetViewMarker.setColor(Qt.red)
-            try:
-                self.streetViewMarker.setIconSize(12)
-                self.streetViewMarker.setIconType(QgsVertexMarker.ICON_CROSS)
-            except Exception:
-                pass
-            self.streetViewMarker.setPenWidth(3)
         pt_wgs84 = QgsPointXY(lng, lat)
-        # transform to project CRS
-        try:
-            from qgis.core import QgsCoordinateReferenceSystem, QgsCoordinateTransform
-            src_crs = QgsCoordinateReferenceSystem('EPSG:4326')
-            dest_crs = QgsProject.instance().crs()
-            xform = QgsCoordinateTransform(src_crs, dest_crs, QgsProject.instance())
-            pt = xform.transform(pt_wgs84)
-        except Exception:
-            # fallback to using WGS84 coords if transform unavailable
-            pt = pt_wgs84
 
-        self.streetViewMarker.setCenter(pt)
-        # center map on the panorama position
+        # compute heading endpoint in WGS84 at a small distance (meters)
         try:
-            self.iface.mapCanvas().setCenter(pt)
-            self.iface.mapCanvas().refresh()
+            R = 6378137.0  # earth radius in meters
+            d = 100.0  # arrow length in meters
+            brng = math.radians(heading)
+            lat1 = math.radians(lat)
+            lon1 = math.radians(lng)
+            lat2 = math.asin(math.sin(lat1) * math.cos(d / R) + math.cos(lat1) * math.sin(d / R) * math.cos(brng))
+            lon2 = lon1 + math.atan2(math.sin(brng) * math.sin(d / R) * math.cos(lat1), math.cos(d / R) - math.sin(lat1) * math.sin(lat2))
+            dest_wgs84 = QgsPointXY(math.degrees(lon2), math.degrees(lat2))
         except Exception:
-            pass
+            dest_wgs84 = QgsPointXY(lng + 0.0001, lat)  # tiny fallback
+
+        # transform to project CRS
+        src_crs = QgsCoordinateReferenceSystem('EPSG:4326')
+        dest_crs = QgsProject.instance().crs()
+        xform = QgsCoordinateTransform(src_crs, dest_crs, QgsProject.instance())
+        pt = xform.transform(pt_wgs84)
+        dest_pt = xform.transform(dest_wgs84)
+
+        # draw/update heading arrow as a rubber band line
+        if self.streetViewHeadingBand is None:
+            self.streetViewHeadingBand = QgsRubberBand(self.iface.mapCanvas(), QgsWkbTypes.LineGeometry)
+            self.streetViewHeadingBand.setColor(Qt.red)
+            self.streetViewHeadingBand.setWidth(2)
+
+        self.streetViewHeadingBand.setToGeometry(QgsGeometry.fromPolylineXY([pt, dest_pt]), None)
