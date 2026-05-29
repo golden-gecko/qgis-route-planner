@@ -8,10 +8,10 @@ from .options import Options
 
 
 class GraphHopper:
-    PROFILES = {
-        'driving': 'car',
-        'walking': 'foot',
-        'bicycling': 'bike',
+    Profiles = {
+        'bicycle': 'bike',
+        'car': 'car',
+        'foot': 'foot',
     }
 
     @staticmethod
@@ -36,14 +36,14 @@ class GraphHopper:
 
     @staticmethod
     @log_call
-    def get_direction(a, b, mode: str = 'driving') -> dict:
+    def get_direction(a, b, mode: str = 'car') -> dict:
         start = GraphHopper._parse_point(a)
         end = GraphHopper._parse_point(b)
 
         params = [
             ('point', f'{start[1]},{start[0]}'),
             ('point', f'{end[1]},{end[0]}'),
-            ('profile', GraphHopper.PROFILES.get(mode, 'car')),
+            ('profile', GraphHopper.Profiles.get(mode, 'car')),
             ('points_encoded', 'false'),
             ('key', Config.GraphHopper.Key),
         ]

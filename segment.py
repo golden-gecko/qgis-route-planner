@@ -14,7 +14,6 @@ from .google import Google
 from .graphhopper import GraphHopper
 from .layer import Layer
 from .mapbox import MapBox
-from .openrouteservice import OpenRouteService
 from .options import Options
 from .string import String
 from .symbol import Symbol
@@ -30,9 +29,6 @@ class Segment:
 
         if Options.routing_provider == 'GraphHopper':
             return GraphHopper.get_direction_as_points(a, b)
-
-        if Options.routing_provider == 'OpenRouteService':
-            return OpenRouteService.get_direction_as_points(a, b)
 
         return Google.get_direction_as_points(a, b)
 

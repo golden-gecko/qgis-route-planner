@@ -291,11 +291,6 @@
            <string>GraphHopper</string>
           </property>
          </item>
-         <item>
-          <property name="text">
-           <string>OpenRouteService</string>
-          </property>
-         </item>
         </widget>
       </item>
       <item row="2" column="0">
@@ -309,12 +304,17 @@
         <widget class="QComboBox" name="optionRoutingMode">
          <item>
           <property name="text">
-           <string>driving</string>
+           <string>car</string>
          </property>
         </item>
         <item>
          <property name="text">
-          <string>walking</string>
+          <string>bicycle</string>
+         </property>
+         </item>
+        <item>
+         <property name="text">
+          <string>foot</string>
          </property>
          </item>
         </widget>
