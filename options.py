@@ -21,7 +21,7 @@ class Options:
 
     @staticmethod
     def set_routing_mode(routing_mode: str) -> None:
-        if routing_mode not in ['driving', 'walking']:
+        if routing_mode not in ['driving', 'bicycling', 'walking']:
             routing_mode = 'driving'
 
         Options.routing_mode = routing_mode
