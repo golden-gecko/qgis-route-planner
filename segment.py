@@ -11,7 +11,9 @@ from .geometry import Geometry
 from .log import log_call
 from .color import Color
 from .google import Google
+from .graphhopper import GraphHopper
 from .layer import Layer
+from .mapbox import MapBox
 from .options import Options
 from .string import String
 from .symbol import Symbol
@@ -20,6 +22,16 @@ from .utils import Utils
 
 
 class Segment:
+    @staticmethod
+    def get_direction_as_points(a, b) -> list:
+        if Options.routing_provider == 'MapBox':
+            return MapBox.get_direction_as_points(a, b)
+
+        if Options.routing_provider == 'GraphHopper':
+            return GraphHopper.get_direction_as_points(a, b)
+
+        return Google.get_direction_as_points(a, b)
+
     @staticmethod
     @log_call
     def create(track: Optional[QgsLayerTreeGroup]) -> Optional[QgsLayerTreeGroup]:
@@ -66,7 +78,7 @@ class Segment:
 
         if Options.routing:
             for i in range(len(vertices) - 1):
-                results = Google.get_direction_as_points(f'{vertices[i][1]} {vertices[i][0]}', f'{vertices[i + 1][1]} {vertices[i + 1][0]}')
+                results = Segment.get_direction_as_points(f'{vertices[i][1]} {vertices[i][0]}', f'{vertices[i + 1][1]} {vertices[i + 1][0]}')
 
                 if not results:
                     continue
@@ -351,7 +363,7 @@ class Segment:
     @log_call
     def refesh_segment(layer: Optional[QgsVectorLayer], position: int, a: QgsPointXY, b: QgsPointXY):
         if Options.routing:
-            results = Google.get_direction_as_points(f'{a.y()} {a.x()}', f'{b.y()} {b.x()}')
+            results = Segment.get_direction_as_points(f'{a.y()} {a.x()}', f'{b.y()} {b.x()}')
 
             if not results:
                 return
