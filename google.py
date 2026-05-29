@@ -7,6 +7,12 @@ from .options import Options
 
 
 class Google:
+    Profiles = {
+        'bicycle': 'bicycling',
+        'car': 'driving',
+        'foot': 'walking',
+    }
+
     @staticmethod
     def get_avoid_options() -> list[str]:
         avoid = []
@@ -21,14 +27,14 @@ class Google:
 
     @staticmethod
     @log_call
-    def get_direction(a, b, mode: str = 'driving') -> list:
+    def get_direction(a, b, mode: str = 'car') -> list:
         client = googlemaps.Client(key=Config.Google.Key)
         avoid = Google.get_avoid_options()
 
         return client.directions(
             a,
             b,
-            mode=mode,
+            mode=Google.Profiles.get(mode, 'driving'),
             avoid=avoid or None,
             departure_time=datetime.datetime.now()
         )

@@ -275,13 +275,23 @@
        </widget>
       </item>
       <item row="1" column="1">
-       <widget class="QComboBox" name="optionRoutingProvider">
-        <item>
-         <property name="text">
-          <string>Google</string>
-         </property>
-        </item>
-       </widget>
+        <widget class="QComboBox" name="optionRoutingProvider">
+         <item>
+          <property name="text">
+           <string>Google</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>MapBox</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>GraphHopper</string>
+          </property>
+         </item>
+        </widget>
       </item>
       <item row="2" column="0">
        <widget class="QLabel" name="label_2">
@@ -294,12 +304,17 @@
         <widget class="QComboBox" name="optionRoutingMode">
          <item>
           <property name="text">
-           <string>driving</string>
+           <string>car</string>
          </property>
         </item>
         <item>
          <property name="text">
-          <string>walking</string>
+          <string>bicycle</string>
+         </property>
+         </item>
+        <item>
+         <property name="text">
+          <string>foot</string>
          </property>
          </item>
         </widget>
