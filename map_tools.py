@@ -1,3 +1,4 @@
+from qgis.core import QgsCoordinateReferenceSystem, QgsCoordinateTransform, QgsProject
 from qgis.gui import QgsMapCanvas, QgsMapTool
 from qgis.PyQt.QtCore import Qt
 from qgis.PyQt.QtWidgets import QInputDialog
@@ -7,7 +8,6 @@ from .log import log_call
 from .layer import Layer
 from .point import Point
 from .segment import Segment
-from .string import String
 from .track import Track
 from .tree import Tree
 from .utils import Utils
@@ -22,6 +22,27 @@ class MapTool(QgsMapTool):
         self.canvas = canvas
 
         self.setCursor(Qt.CrossCursor)
+
+
+class StreetView(MapTool):
+    def __init__(self, iface, canvas: QgsMapCanvas, callback):
+        MapTool.__init__(self, iface, canvas)
+
+        self.callback = callback
+
+    @log_call
+    def canvasReleaseEvent(self, event):
+        if event.button() != Qt.LeftButton:
+            return
+
+        point = self.toMapCoordinates(event.pos())
+        transform = QgsCoordinateTransform(
+            self.canvas.mapSettings().destinationCrs(),
+            QgsCoordinateReferenceSystem('EPSG:4326'),
+            QgsProject.instance()
+        )
+
+        self.callback(transform.transform(point))
 
 
 class Edit(MapTool):
@@ -64,6 +85,7 @@ class Edit(MapTool):
                 self.feature = feature.id()
                 self.feature_position = feature_position
                 self.feature_type = 'point'
+
                 File.refresh_distance(File.get_active(self.iface))
 
                 return

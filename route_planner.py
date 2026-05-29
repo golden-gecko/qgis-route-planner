@@ -1,12 +1,16 @@
+import html
+import urllib.parse
+
 from qgis.core import QgsProject, QgsRasterLayer
 from qgis.gui import QgsMapToolPan
 from qgis.PyQt.QtCore import Qt
 from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import QAction
 
+from .config import Config
 from .file import File
 from .iface import Iface
-from .map_tools import Edit, PointCreateEnd, PointCreateMiddle, PointCreateStart, PointDelete, PointMove, WaypointCreate, WaypointDelete, WaypointMove
+from .map_tools import Edit, PointCreateEnd, PointCreateMiddle, PointCreateStart, PointDelete, PointMove, StreetView, WaypointCreate, WaypointDelete, WaypointMove
 from .options import Options
 from .route_planner_dockwidget import RoutePlannerDockWidget
 from .segment import Segment
@@ -31,6 +35,7 @@ class RoutePlanner:
 
         # create tools
         self.mapToolPan = QgsMapToolPan(self.iface.mapCanvas())
+        self.mapToolStreetView = StreetView(self.iface, self.iface.mapCanvas(), self.show_street_view)
         self.mapToolEdit = Edit(self.iface, self.iface.mapCanvas())
 
         self.mapToolWaypointCreate = WaypointCreate(self.iface, self.iface.mapCanvas())
@@ -91,7 +96,7 @@ class RoutePlanner:
 
             # main modes
             self.dockwidget.buttonLoad.clicked.connect(lambda: Tree.create_tree_structure())
-            self.dockwidget.buttonSelect.clicked.connect(lambda: self.iface.mapCanvas().setMapTool(self.mapToolPan))
+            self.dockwidget.buttonSelect.clicked.connect(lambda: self.iface.mapCanvas().setMapTool(self.mapToolStreetView))
             self.dockwidget.buttonEdit.clicked.connect(lambda: self.iface.mapCanvas().setMapTool(self.mapToolEdit))
 
             # setup file buttons
@@ -146,3 +151,39 @@ class RoutePlanner:
         # show widget
         self.iface.addDockWidget(Qt.LeftDockWidgetArea, self.dockwidget)
         self.dockwidget.show()
+
+    def show_street_view(self, point):
+        if self.dockwidget is None:
+            return
+
+        if self.dockwidget.streetViewBrowser is None:
+            self.dockwidget.labelStreetView.setText('QtWebEngine is not available')
+            return
+
+        params = urllib.parse.urlencode({
+            'key': Config.Google.Key,
+            'location': f'{point.y()},{point.x()}',
+        })
+        url = f'https://www.google.com/maps/embed/v1/streetview?{params}'
+        page = f"""
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    html, body, iframe {{
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      border: 0;
+      overflow: hidden;
+    }}
+  </style>
+</head>
+<body>
+  <iframe src="{html.escape(url, quote=True)}" allowfullscreen></iframe>
+</body>
+</html>
+"""
+
+        self.dockwidget.streetViewBrowser.setHtml(page)
