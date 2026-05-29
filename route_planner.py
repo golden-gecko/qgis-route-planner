@@ -1,11 +1,22 @@
-import html
-import urllib.parse
-
-from qgis.core import QgsProject, QgsRasterLayer
-from qgis.gui import QgsMapToolPan
-from qgis.PyQt.QtCore import Qt
+from qgis.core import QgsProject, QgsRasterLayer, QgsPointXY
+from qgis.gui import QgsMapToolPan, QgsVertexMarker
+from qgis.PyQt.QtCore import Qt, QObject, pyqtSlot, pyqtSignal
 from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import QAction
+
+try:
+    from qgis.PyQt.QtWebChannel import QWebChannel
+except Exception:
+    try:
+        from PyQt5.QtWebChannel import QWebChannel
+    except Exception:
+        try:
+            from PyQt6.QtWebChannel import QWebChannel
+        except Exception:
+            try:
+                from PySide2.QtWebChannel import QWebChannel
+            except Exception:
+                QWebChannel = None
 
 from .config import Config
 from .file import File
@@ -18,6 +29,14 @@ from .track import Track
 from .tree import Tree
 
 from .resources import *
+
+class Bridge(QObject):
+    posChanged = pyqtSignal(float, float, float, float)
+
+    @pyqtSlot(float, float, float, float)
+    def onPos(self, lat, lng, heading, pitch):
+        # Called from JS via QWebChannel
+        self.posChanged.emit(lat, lng, heading, pitch)
 
 
 class RoutePlanner:
@@ -47,6 +66,7 @@ class RoutePlanner:
         self.mapToolPointCreateEnd = PointCreateEnd(self.iface, self.iface.mapCanvas())
         self.mapToolPointMove = PointMove(self.iface, self.iface.mapCanvas())
         self.mapToolPointDelete = PointDelete(self.iface, self.iface.mapCanvas())
+        self.streetViewMarker = None
 
     def add_action(self, icon_path: str, text: str, callback, parent = None):
         print('RoutePlanner.add_action()')
@@ -160,30 +180,91 @@ class RoutePlanner:
             self.dockwidget.labelStreetView.setText('QtWebEngine is not available')
             return
 
-        params = urllib.parse.urlencode({
-            'key': Config.Google.Key,
-            'location': f'{point.y()},{point.x()}',
-        })
-        url = f'https://www.google.com/maps/embed/v1/streetview?{params}'
-        page = f"""
-<!doctype html>
+        lat = point.y()
+        lng = point.x()
+        page = f"""<!doctype html>
 <html>
 <head>
   <meta charset="utf-8">
-  <style>
-    html, body, iframe {{
-      width: 100%;
-      height: 100%;
-      margin: 0;
-      border: 0;
-      overflow: hidden;
-    }}
-  </style>
+  <style>html,body,#pano{{width:100%;height:100%;margin:0}}</style>
 </head>
 <body>
-  <iframe src="{html.escape(url, quote=True)}" allowfullscreen></iframe>
+  <div id="pano"></div>
+  <script src="qrc:///qtwebchannel/qwebchannel.js"></script>
+  <script>
+    let panorama;
+    function initialize() {{
+      const pos = {{lat: {lat}, lng: {lng}}};
+      panorama = new google.maps.StreetViewPanorama(
+        document.getElementById('pano'),
+        {{
+          position: pos,
+          pov: {{heading:0, pitch:0}},
+          addressControl: false,
+          linksControl: false
+        }}
+      );
+
+      new QWebChannel(qt.webChannelTransport, function(channel) {{
+        window.bridge = channel.objects.bridge;
+        function send() {{
+          const p = panorama.getPosition();
+          const pov = panorama.getPov();
+          bridge.onPos(p.lat(), p.lng(), pov.heading || 0, pov.pitch || 0);
+        }}
+        panorama.addListener('position_changed', send);
+        panorama.addListener('pov_changed', send);
+        send();
+      }});
+    }}
+  </script>
+  <script src="https://maps.googleapis.com/maps/api/js?key={Config.Google.Key}&callback=initialize&v=weekly" defer></script>
 </body>
 </html>
 """
 
         self.dockwidget.streetViewBrowser.setHtml(page)
+
+        # setup QWebChannel bridge so JS can notify Python about position/pov changes
+        if getattr(self, 'bridge', None) is None:
+            self.bridge = Bridge()
+            self.bridge.posChanged.connect(self._on_streetview_pos)
+        if QWebChannel is not None:
+            ch = QWebChannel(self.dockwidget.streetViewBrowser.page())
+            ch.registerObject('bridge', self.bridge)
+            self.dockwidget.streetViewBrowser.page().setWebChannel(ch)
+        else:
+            # Qt WebChannel not available; cannot receive JS updates
+            pass
+
+    def _on_streetview_pos(self, lat, lng, heading, pitch):
+        # lat, lng: floats in degrees
+        # create marker if needed
+        if self.streetViewMarker is None:
+            self.streetViewMarker = QgsVertexMarker(self.iface.mapCanvas())
+            self.streetViewMarker.setColor(Qt.red)
+            try:
+                self.streetViewMarker.setIconSize(12)
+                self.streetViewMarker.setIconType(QgsVertexMarker.ICON_CROSS)
+            except Exception:
+                pass
+            self.streetViewMarker.setPenWidth(3)
+        pt_wgs84 = QgsPointXY(lng, lat)
+        # transform to project CRS
+        try:
+            from qgis.core import QgsCoordinateReferenceSystem, QgsCoordinateTransform
+            src_crs = QgsCoordinateReferenceSystem('EPSG:4326')
+            dest_crs = QgsProject.instance().crs()
+            xform = QgsCoordinateTransform(src_crs, dest_crs, QgsProject.instance())
+            pt = xform.transform(pt_wgs84)
+        except Exception:
+            # fallback to using WGS84 coords if transform unavailable
+            pt = pt_wgs84
+
+        self.streetViewMarker.setCenter(pt)
+        # center map on the panorama position
+        try:
+            self.iface.mapCanvas().setCenter(pt)
+            self.iface.mapCanvas().refresh()
+        except Exception:
+            pass
