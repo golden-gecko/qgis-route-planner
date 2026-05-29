@@ -2,8 +2,10 @@ class Options:
     routing = True
     routing_provider = 'Google'
     routing_mode = 'driving'
+
     avoid_highways = False
     avoid_tolls = False
+
     control_point_per_segment = 100
     control_point_min_distance = 1000
     control_point_min_angle = 20
@@ -14,14 +16,14 @@ class Options:
 
     @staticmethod
     def set_routing_provider(routing_provider: str) -> None:
-        if routing_provider != 'Google':
+        if routing_provider not in ['Google', 'GraphHopper', 'MapBox', 'OpenRouteService']:
             routing_provider = 'Google'
 
         Options.routing_provider = routing_provider
 
     @staticmethod
     def set_routing_mode(routing_mode: str) -> None:
-        if routing_mode not in ['driving', 'bicycling', 'walking']:
+        if routing_mode not in ['bicycling', 'driving', 'walking']:
             routing_mode = 'driving'
 
         Options.routing_mode = routing_mode
