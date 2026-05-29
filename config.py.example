@@ -9,7 +9,12 @@ class Config:
             'MapBox Satellite': 'INSERT_USER_HERE/INSERT_ID_HERE',
         }
 
+    class GraphHopper:
+        Key = 'INSERT_KEY_HERE'
+
     class Tree:
+        RefreshDirectory = False
+
         Items = [
             {
                 'type': 'group',
