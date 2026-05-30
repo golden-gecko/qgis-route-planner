@@ -2,8 +2,8 @@ import math
 
 from PyQt5.QtWebChannel import QWebChannel
 
-from qgis.core import QgsCoordinateReferenceSystem, QgsCoordinateTransform, QgsProject, QgsRasterLayer, QgsPointXY, QgsGeometry, QgsWkbTypes
-from qgis.gui import QgsMapToolPan, QgsVertexMarker, QgsRubberBand
+from qgis.core import QgsCoordinateReferenceSystem, QgsCoordinateTransform, QgsGeometry, QgsProject, QgsPointXY, QgsRasterLayer, QgsWkbTypes
+from qgis.gui import QgsMapToolPan, QgsRubberBand, QgsVertexMarker
 from qgis.PyQt.QtCore import Qt, QObject, pyqtSlot, pyqtSignal
 from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import QAction
@@ -40,6 +40,8 @@ class RoutePlanner:
         self.toolbar = self.iface.addToolBar('RoutePlanner')
         self.toolbar.setObjectName('RoutePlanner')
         self.dockwidget = None
+        self.bridge = Bridge()
+        self.bridge.posChanged.connect(self._on_streetview_pos)
 
         # create tools
         self.mapToolPan = QgsMapToolPan(self.iface.mapCanvas())
@@ -56,7 +58,9 @@ class RoutePlanner:
         self.mapToolPointMove = PointMove(self.iface, self.iface.mapCanvas())
         self.mapToolPointDelete = PointDelete(self.iface, self.iface.mapCanvas())
 
-        self.streetViewHeadingBand = None
+        self.streetViewHeadingBand = QgsRubberBand(self.iface.mapCanvas(), QgsWkbTypes.LineGeometry)
+        self.streetViewHeadingBand.setColor(Qt.red)
+        self.streetViewHeadingBand.setWidth(2)
 
     def add_action(self, icon_path: str, text: str, callback, parent = None):
         print('RoutePlanner.add_action()')
@@ -78,23 +82,44 @@ class RoutePlanner:
         if action is not None:
             self.actions.append(action)
 
+    def destroy_heading_band(self):
+        print('RoutePlanner.destroy_heading_band()')
+
+        if self.streetViewHeadingBand is not None:
+            self.iface.mapCanvas().scene().removeItem(self.streetViewHeadingBand)
+            self.streetViewHeadingBand = None
+
+    """ All code must be in try-except to be able to reload the plugin without restarting QGIS. """
     def onClosePlugin(self):
         print('RoutePlanner.onClosePlugin()')
 
-        return
-        self.dockwidget.closingPlugin.disconnect(self.onClosePlugin)
-        self.dockwidget = None
+        try:
+            self.destroy_heading_band()
+        except Exception as e:
+            print(e)
 
+    """ All code must be in try-except to be able to reload the plugin without restarting QGIS. """
     def unload(self):
         print('RoutePlanner.unload()')
 
-        for action in self.actions:
-            self.iface.removePluginMenu('&RoutePlanner', action)
-            self.iface.removeToolBarIcon(action)
+        try:
+            for action in self.actions:
+                self.iface.removePluginMenu('&RoutePlanner', action)
+                self.iface.removeToolBarIcon(action)
+        except Exception as e:
+            print(e)
 
-        if self.dockwidget is not None:
-            self.iface.removeDockWidget(self.dockwidget)
-            self.dockwidget.deleteLater()
+        try:
+            self.destroy_heading_band()
+        except Exception as e:
+            print(e)
+
+        try:
+            if self.dockwidget is not None:
+                self.iface.removeDockWidget(self.dockwidget)
+                self.dockwidget.deleteLater()
+        except Exception as e:
+            print(e)
 
     def run(self):
         print('RoutePlanner.run()')
@@ -167,11 +192,7 @@ class RoutePlanner:
             return
 
         if self.dockwidget.streetViewBrowser is None:
-            self.dockwidget.labelStreetView.setText('QtWebEngine is not available')
             return
-
-        lat = point.y()
-        lng = point.x()
 
         page = f"""
             <!doctype html>
@@ -187,29 +208,34 @@ class RoutePlanner:
                     let panorama;
                     function initialize() {{
                         const pos = {{
-                            lat: {lat},
-                            lng: {lng}
+                            lat: {point.y()},
+                            lng: {point.x()}
                         }};
+    
                         panorama = new google.maps.StreetViewPanorama(
-                        document.getElementById('pano'), {{
-                            position: pos,
-                            pov: {{
-                                heading:0,
-                                pitch:0
-                            }},
-                            addressControl: false,
-                            linksControl: false
-                        }});
+                            document.getElementById('pano'), {{
+                                position: pos,
+                                pov: {{
+                                    heading:0,
+                                    pitch:0
+                                }},
+                                addressControl: false,
+                                linksControl: false
+                            }}
+                        );
                     
                         new QWebChannel(qt.webChannelTransport, function(channel) {{
                             window.bridge = channel.objects.bridge;
+                            
                             function send() {{
                                 const p = panorama.getPosition();
                                 const pov = panorama.getPov();
                                 bridge.onPos(p.lat(), p.lng(), pov.heading || 0, pov.pitch || 0);
                             }}
+                            
                             panorama.addListener('position_changed', send);
                             panorama.addListener('pov_changed', send);
+                            
                             send();
                         }});
                     }}
@@ -221,45 +247,28 @@ class RoutePlanner:
 
         self.dockwidget.streetViewBrowser.setHtml(page)
 
-        # setup QWebChannel bridge so JS can notify Python about position/pov changes
-        if getattr(self, 'bridge', None) is None:
-            self.bridge = Bridge()
-            self.bridge.posChanged.connect(self._on_streetview_pos)
-        if QWebChannel is not None:
-            ch = QWebChannel(self.dockwidget.streetViewBrowser.page())
-            ch.registerObject('bridge', self.bridge)
-            self.dockwidget.streetViewBrowser.page().setWebChannel(ch)
-        else:
-            # Qt WebChannel not available; cannot receive JS updates
-            pass
+        ch = QWebChannel(self.dockwidget.streetViewBrowser.page())
+        ch.registerObject('bridge', self.bridge)
+
+        self.dockwidget.streetViewBrowser.page().setWebChannel(ch)
 
     def _on_streetview_pos(self, lat, lng, heading, pitch):
         pt_wgs84 = QgsPointXY(lng, lat)
 
-        # compute heading endpoint in WGS84 at a small distance (meters)
-        try:
-            R = 6378137.0  # earth radius in meters
-            d = 100.0  # arrow length in meters
-            brng = math.radians(heading)
-            lat1 = math.radians(lat)
-            lon1 = math.radians(lng)
-            lat2 = math.asin(math.sin(lat1) * math.cos(d / R) + math.cos(lat1) * math.sin(d / R) * math.cos(brng))
-            lon2 = lon1 + math.atan2(math.sin(brng) * math.sin(d / R) * math.cos(lat1), math.cos(d / R) - math.sin(lat1) * math.sin(lat2))
-            dest_wgs84 = QgsPointXY(math.degrees(lon2), math.degrees(lat2))
-        except Exception:
-            dest_wgs84 = QgsPointXY(lng + 0.0001, lat)  # tiny fallback
+        r = 6378137.0 # earth radius in meters
+        d = 100.0     # arrow length in meters
 
-        # transform to project CRS
+        brng = math.radians(heading)
+        lat1 = math.radians(lat)
+        lon1 = math.radians(lng)
+        lat2 = math.asin(math.sin(lat1) * math.cos(d / r) + math.cos(lat1) * math.sin(d / r) * math.cos(brng))
+        lon2 = lon1 + math.atan2(math.sin(brng) * math.sin(d / r) * math.cos(lat1), math.cos(d / r) - math.sin(lat1) * math.sin(lat2))
+        dest_wgs84 = QgsPointXY(math.degrees(lon2), math.degrees(lat2))
+
         src_crs = QgsCoordinateReferenceSystem('EPSG:4326')
         dest_crs = QgsProject.instance().crs()
         xform = QgsCoordinateTransform(src_crs, dest_crs, QgsProject.instance())
         pt = xform.transform(pt_wgs84)
         dest_pt = xform.transform(dest_wgs84)
-
-        # draw/update heading arrow as a rubber band line
-        if self.streetViewHeadingBand is None:
-            self.streetViewHeadingBand = QgsRubberBand(self.iface.mapCanvas(), QgsWkbTypes.LineGeometry)
-            self.streetViewHeadingBand.setColor(Qt.red)
-            self.streetViewHeadingBand.setWidth(2)
 
         self.streetViewHeadingBand.setToGeometry(QgsGeometry.fromPolylineXY([pt, dest_pt]), None)

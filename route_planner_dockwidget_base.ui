@@ -10,127 +10,50 @@
     <height>1110</height>
    </rect>
   </property>
+  <property name="floating">
+   <bool>false</bool>
+  </property>
   <property name="windowTitle">
    <string>RoutePlanner</string>
   </property>
   <widget class="QWidget" name="dockWidgetContents">
    <layout class="QGridLayout" name="gridLayout">
-    <item row="0" column="0">
-     <widget class="QLabel" name="labelStreetView">
-      <property name="minimumSize">
-       <size>
-        <width>0</width>
-        <height>220</height>
-       </size>
-      </property>
-      <property name="text">
-       <string>Click the map to load Street View</string>
-      </property>
-      <property name="alignment">
-       <set>Qt::AlignCenter</set>
-      </property>
-      <property name="scaledContents">
-       <bool>true</bool>
+    <item row="7" column="0">
+     <widget class="Line" name="line_5">
+      <property name="orientation">
+       <enum>Qt::Horizontal</enum>
       </property>
      </widget>
-    </item>
-    <item row="1" column="0">
-     <layout class="QHBoxLayout" name="horizontalLayout_7">
-      <item>
-       <widget class="QPushButton" name="buttonLoad">
-        <property name="text">
-         <string>Load</string>
-        </property>
-        <property name="checkable">
-         <bool>false</bool>
-        </property>
-        <property name="autoExclusive">
-         <bool>true</bool>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QPushButton" name="buttonSelect">
-        <property name="text">
-         <string>Select</string>
-        </property>
-        <property name="checkable">
-         <bool>true</bool>
-        </property>
-        <property name="autoExclusive">
-         <bool>true</bool>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QPushButton" name="buttonEdit">
-        <property name="text">
-         <string>Edit</string>
-        </property>
-        <property name="checkable">
-         <bool>true</bool>
-        </property>
-        <property name="autoExclusive">
-         <bool>true</bool>
-        </property>
-       </widget>
-      </item>
-     </layout>
-    </item>
-    <item row="2" column="0">
-     <layout class="QHBoxLayout" name="horizontalLayout_5">
-      <item>
-       <widget class="QPushButton" name="buttonFileNew">
-        <property name="text">
-         <string>New file</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QPushButton" name="buttonFileOpen">
-        <property name="text">
-         <string>Open file</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QPushButton" name="buttonFileReload">
-        <property name="text">
-         <string>Reload</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QPushButton" name="buttonFileSave">
-        <property name="text">
-         <string>Save file</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QPushButton" name="buttonFileClose">
-        <property name="text">
-         <string>Close file</string>
-        </property>
-       </widget>
-      </item>
-     </layout>
     </item>
     <item row="9" column="0">
-     <widget class="Line" name="line_2">
+     <widget class="Line" name="line_4">
       <property name="orientation">
        <enum>Qt::Horizontal</enum>
       </property>
      </widget>
     </item>
-    <item row="11" column="0">
-     <widget class="Line" name="line">
+    <item row="17" column="0">
+     <widget class="Line" name="line_7">
       <property name="orientation">
        <enum>Qt::Horizontal</enum>
       </property>
      </widget>
     </item>
-    <item row="4" column="0">
+    <item row="15" column="0">
+     <widget class="Line" name="line_6">
+      <property name="orientation">
+       <enum>Qt::Horizontal</enum>
+      </property>
+     </widget>
+    </item>
+    <item row="5" column="0">
+     <widget class="Line" name="line_3">
+      <property name="orientation">
+       <enum>Qt::Horizontal</enum>
+      </property>
+     </widget>
+    </item>
+    <item row="6" column="0">
      <layout class="QHBoxLayout" name="horizontalLayout_6">
       <item>
        <widget class="QPushButton" name="buttonWaypointCreate">
@@ -173,209 +96,179 @@
       </item>
      </layout>
     </item>
-    <item row="3" column="0">
-     <widget class="Line" name="line_3">
+    <item row="11" column="0">
+     <widget class="Line" name="line_2">
       <property name="orientation">
        <enum>Qt::Horizontal</enum>
       </property>
      </widget>
     </item>
-    <item row="14" column="0">
-     <layout class="QFormLayout" name="formLayout_2">
-      <item row="0" column="0">
-       <widget class="QLabel" name="label_4">
+    <item row="13" column="0">
+     <widget class="Line" name="line">
+      <property name="orientation">
+       <enum>Qt::Horizontal</enum>
+      </property>
+     </widget>
+    </item>
+    <item row="2" column="0">
+     <layout class="QHBoxLayout" name="horizontalLayout_7">
+      <item>
+       <widget class="QPushButton" name="buttonLoad">
         <property name="text">
-         <string>Points per segment</string>
+         <string>Load</string>
+        </property>
+        <property name="checkable">
+         <bool>false</bool>
+        </property>
+        <property name="autoExclusive">
+         <bool>true</bool>
         </property>
        </widget>
       </item>
-      <item row="0" column="1">
-       <widget class="QSpinBox" name="spinBoxPointsPerSegment">
-        <property name="minimum">
-         <number>2</number>
-        </property>
-        <property name="maximum">
-         <number>100</number>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="0">
-       <widget class="QLabel" name="label_4">
+      <item>
+       <widget class="QPushButton" name="buttonSelect">
         <property name="text">
-         <string>Min point distance</string>
+         <string>Select</string>
+        </property>
+        <property name="checkable">
+         <bool>true</bool>
+        </property>
+        <property name="autoExclusive">
+         <bool>true</bool>
         </property>
        </widget>
       </item>
-      <item row="1" column="1">
-       <widget class="QSpinBox" name="spinBoxMinPointDistance">
-        <property name="minimum">
-         <number>1</number>
-        </property>
-        <property name="maximum">
-         <number>1000</number>
-        </property>
-       </widget>
-      </item>
-      <item row="2" column="0">
-       <widget class="QLabel" name="label_5">
+      <item>
+       <widget class="QPushButton" name="buttonEdit">
         <property name="text">
-         <string>Min point angle</string>
+         <string>Edit</string>
         </property>
-       </widget>
-      </item>
-      <item row="2" column="1">
-       <widget class="QSpinBox" name="spinBoxMinAngle">
-        <property name="minimum">
-         <number>1</number>
+        <property name="checkable">
+         <bool>true</bool>
         </property>
-        <property name="maximum">
-         <number>180</number>
+        <property name="autoExclusive">
+         <bool>true</bool>
         </property>
        </widget>
       </item>
      </layout>
     </item>
+    <item row="4" column="0">
+     <layout class="QHBoxLayout" name="horizontalLayout_5">
+      <item>
+       <widget class="QPushButton" name="buttonFileNew">
+        <property name="text">
+         <string>New file</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="buttonFileOpen">
+        <property name="text">
+         <string>Open file</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="buttonFileReload">
+        <property name="text">
+         <string>Reload</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="buttonFileSave">
+        <property name="text">
+         <string>Save file</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="buttonFileClose">
+        <property name="text">
+         <string>Close file</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </item>
+    <item row="0" column="0">
+     <widget class="QLabel" name="labelStreetView">
+      <property name="minimumSize">
+       <size>
+        <width>0</width>
+        <height>220</height>
+       </size>
+      </property>
+      <property name="text">
+       <string>Click the map to load Street View</string>
+      </property>
+      <property name="scaledContents">
+       <bool>true</bool>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignCenter</set>
+      </property>
+     </widget>
+    </item>
     <item row="8" column="0">
-     <layout class="QHBoxLayout" name="horizontalLayout_3">
+     <layout class="QHBoxLayout" name="horizontalLayout">
       <item>
-       <widget class="QPushButton" name="buttonSegmentCreate">
+       <widget class="QPushButton" name="buttonTrackCreate">
         <property name="text">
-         <string>Create segment</string>
+         <string>Create track</string>
+        </property>
+        <property name="checkable">
+         <bool>false</bool>
+        </property>
+        <property name="autoExclusive">
+         <bool>false</bool>
         </property>
        </widget>
       </item>
       <item>
-       <widget class="QPushButton" name="buttonSegmentRefresh">
+       <widget class="QPushButton" name="buttonTrackRefresh">
         <property name="text">
-         <string>Refresh segment</string>
+         <string>Refresh track</string>
+        </property>
+        <property name="checkable">
+         <bool>false</bool>
+        </property>
+        <property name="autoExclusive">
+         <bool>false</bool>
         </property>
        </widget>
       </item>
       <item>
-       <widget class="QPushButton" name="buttonSegmentReverse">
+       <widget class="QPushButton" name="buttonTrackReverse">
         <property name="text">
-         <string>Reverse segment</string>
+         <string>Reverse track</string>
         </property>
        </widget>
       </item>
       <item>
-       <widget class="QPushButton" name="buttonSegmentDelete">
+       <widget class="QPushButton" name="buttonTrackOptimize">
         <property name="text">
-         <string>Delete segment</string>
+         <string>Optimize track</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="buttonTrackDelete">
+        <property name="text">
+         <string>Delete track</string>
+        </property>
+        <property name="checkable">
+         <bool>false</bool>
+        </property>
+        <property name="autoExclusive">
+         <bool>false</bool>
         </property>
        </widget>
       </item>
      </layout>
     </item>
     <item row="12" column="0">
-     <layout class="QFormLayout" name="formLayout">
-      <item row="0" column="0">
-       <widget class="QLabel" name="label_3">
-        <property name="text">
-         <string>Routing enabled</string>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="1">
-       <widget class="QCheckBox" name="optionRouting">
-        <property name="text">
-         <string/>
-        </property>
-        <property name="checked">
-         <bool>true</bool>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="0">
-       <widget class="QLabel" name="label">
-        <property name="text">
-         <string>Routing provider</string>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="1">
-        <widget class="QComboBox" name="optionRoutingProvider">
-         <item>
-          <property name="text">
-           <string>Google</string>
-          </property>
-         </item>
-         <item>
-          <property name="text">
-           <string>MapBox</string>
-          </property>
-         </item>
-         <item>
-          <property name="text">
-           <string>GraphHopper</string>
-          </property>
-         </item>
-        </widget>
-      </item>
-      <item row="2" column="0">
-       <widget class="QLabel" name="label_2">
-        <property name="text">
-         <string>Routing mode</string>
-        </property>
-       </widget>
-      </item>
-       <item row="2" column="1">
-        <widget class="QComboBox" name="optionRoutingMode">
-         <item>
-          <property name="text">
-           <string>car</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>bicycle</string>
-         </property>
-         </item>
-        <item>
-         <property name="text">
-          <string>foot</string>
-         </property>
-         </item>
-        </widget>
-       </item>
-       <item row="3" column="0">
-        <widget class="QLabel" name="labelAvoidHighways">
-         <property name="text">
-          <string>Avoid highways</string>
-         </property>
-        </widget>
-       </item>
-       <item row="3" column="1">
-        <widget class="QCheckBox" name="optionAvoidHighways">
-         <property name="text">
-          <string/>
-         </property>
-        </widget>
-       </item>
-       <item row="4" column="0">
-        <widget class="QLabel" name="labelAvoidTolls">
-         <property name="text">
-          <string>Avoid tolls</string>
-         </property>
-        </widget>
-       </item>
-       <item row="4" column="1">
-        <widget class="QCheckBox" name="optionAvoidTolls">
-         <property name="text">
-          <string/>
-         </property>
-        </widget>
-       </item>
-      </layout>
-     </item>
-    <item row="7" column="0">
-     <widget class="Line" name="line_4">
-      <property name="orientation">
-       <enum>Qt::Horizontal</enum>
-      </property>
-     </widget>
-    </item>
-    <item row="10" column="0">
      <layout class="QHBoxLayout" name="horizontalLayout_4">
       <item>
        <widget class="QToolButton" name="buttonPointCreateStart">
@@ -462,79 +355,203 @@
       </item>
      </layout>
     </item>
-    <item row="5" column="0">
-     <widget class="Line" name="line_5">
-      <property name="orientation">
-       <enum>Qt::Horizontal</enum>
-      </property>
-     </widget>
-    </item>
-    <item row="13" column="0">
-     <widget class="Line" name="line_6">
-      <property name="orientation">
-       <enum>Qt::Horizontal</enum>
-      </property>
-     </widget>
-    </item>
-    <item row="6" column="0">
-     <layout class="QHBoxLayout" name="horizontalLayout">
+    <item row="10" column="0">
+     <layout class="QHBoxLayout" name="horizontalLayout_3">
       <item>
-       <widget class="QPushButton" name="buttonTrackCreate">
+       <widget class="QPushButton" name="buttonSegmentCreate">
         <property name="text">
-         <string>Create track</string>
-        </property>
-        <property name="checkable">
-         <bool>false</bool>
-        </property>
-        <property name="autoExclusive">
-         <bool>false</bool>
+         <string>Create segment</string>
         </property>
        </widget>
       </item>
       <item>
-       <widget class="QPushButton" name="buttonTrackRefresh">
+       <widget class="QPushButton" name="buttonSegmentRefresh">
         <property name="text">
-         <string>Refresh track</string>
-        </property>
-        <property name="checkable">
-         <bool>false</bool>
-        </property>
-        <property name="autoExclusive">
-         <bool>false</bool>
+         <string>Refresh segment</string>
         </property>
        </widget>
       </item>
       <item>
-       <widget class="QPushButton" name="buttonTrackReverse">
+       <widget class="QPushButton" name="buttonSegmentReverse">
         <property name="text">
-         <string>Reverse track</string>
+         <string>Reverse segment</string>
         </property>
        </widget>
       </item>
       <item>
-       <widget class="QPushButton" name="buttonTrackOptimize">
+       <widget class="QPushButton" name="buttonSegmentDelete">
         <property name="text">
-         <string>Optimize track</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QPushButton" name="buttonTrackDelete">
-        <property name="text">
-         <string>Delete track</string>
-        </property>
-        <property name="checkable">
-         <bool>false</bool>
-        </property>
-        <property name="autoExclusive">
-         <bool>false</bool>
+         <string>Delete segment</string>
         </property>
        </widget>
       </item>
      </layout>
     </item>
-    <item row="15" column="0">
-     <widget class="Line" name="line_7">
+    <item row="14" column="0">
+     <layout class="QFormLayout" name="formLayout">
+      <item row="0" column="0">
+       <widget class="QLabel" name="label_3">
+        <property name="text">
+         <string>Routing enabled</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="1">
+       <widget class="QCheckBox" name="optionRouting">
+        <property name="text">
+         <string/>
+        </property>
+        <property name="checked">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="0">
+       <widget class="QLabel" name="label">
+        <property name="text">
+         <string>Routing provider</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="1">
+       <widget class="QComboBox" name="optionRoutingProvider">
+        <item>
+         <property name="text">
+          <string>Google</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>MapBox</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>GraphHopper</string>
+         </property>
+        </item>
+       </widget>
+      </item>
+      <item row="2" column="0">
+       <widget class="QLabel" name="label_2">
+        <property name="text">
+         <string>Routing mode</string>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="1">
+       <widget class="QComboBox" name="optionRoutingMode">
+        <item>
+         <property name="text">
+          <string>car</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>bicycle</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>foot</string>
+         </property>
+        </item>
+       </widget>
+      </item>
+      <item row="3" column="0">
+       <widget class="QLabel" name="labelAvoidHighways">
+        <property name="text">
+         <string>Avoid highways</string>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="1">
+       <widget class="QCheckBox" name="optionAvoidHighways">
+        <property name="text">
+         <string/>
+        </property>
+       </widget>
+      </item>
+      <item row="4" column="0">
+       <widget class="QLabel" name="labelAvoidTolls">
+        <property name="text">
+         <string>Avoid tolls</string>
+        </property>
+       </widget>
+      </item>
+      <item row="4" column="1">
+       <widget class="QCheckBox" name="optionAvoidTolls">
+        <property name="text">
+         <string/>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </item>
+    <item row="3" column="0">
+     <widget class="Line" name="line_8">
+      <property name="orientation">
+       <enum>Qt::Horizontal</enum>
+      </property>
+     </widget>
+    </item>
+    <item row="16" column="0">
+     <layout class="QFormLayout" name="formLayout_2">
+      <item row="0" column="0">
+       <widget class="QLabel" name="label_4">
+        <property name="text">
+         <string>Points per segment</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="1">
+       <widget class="QSpinBox" name="spinBoxPointsPerSegment">
+        <property name="minimum">
+         <number>2</number>
+        </property>
+        <property name="maximum">
+         <number>100</number>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="0">
+       <widget class="QLabel" name="label_4">
+        <property name="text">
+         <string>Min point distance</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="1">
+       <widget class="QSpinBox" name="spinBoxMinPointDistance">
+        <property name="minimum">
+         <number>1</number>
+        </property>
+        <property name="maximum">
+         <number>1000</number>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="0">
+       <widget class="QLabel" name="label_5">
+        <property name="text">
+         <string>Min point angle</string>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="1">
+       <widget class="QSpinBox" name="spinBoxMinAngle">
+        <property name="minimum">
+         <number>1</number>
+        </property>
+        <property name="maximum">
+         <number>180</number>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </item>
+    <item row="1" column="0">
+     <widget class="Line" name="line_9">
       <property name="orientation">
        <enum>Qt::Horizontal</enum>
       </property>
