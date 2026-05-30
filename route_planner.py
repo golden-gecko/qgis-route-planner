@@ -1,12 +1,17 @@
-from qgis.core import QgsProject, QgsRasterLayer
-from qgis.gui import QgsMapToolPan
-from qgis.PyQt.QtCore import Qt
+import math
+
+from PyQt5.QtWebChannel import QWebChannel
+
+from qgis.core import QgsCoordinateReferenceSystem, QgsCoordinateTransform, QgsGeometry, QgsProject, QgsPointXY, QgsRasterLayer, QgsWkbTypes
+from qgis.gui import QgsMapToolPan, QgsRubberBand, QgsVertexMarker
+from qgis.PyQt.QtCore import Qt, QObject, pyqtSlot, pyqtSignal
 from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import QAction
 
+from .config import Config
 from .file import File
 from .iface import Iface
-from .map_tools import Edit, PointCreateEnd, PointCreateMiddle, PointCreateStart, PointDelete, PointMove, WaypointCreate, WaypointDelete, WaypointMove
+from .map_tools import Edit, PointCreateEnd, PointCreateMiddle, PointCreateStart, PointDelete, PointMove, StreetView, WaypointCreate, WaypointDelete, WaypointMove
 from .options import Options
 from .route_planner_dockwidget import RoutePlannerDockWidget
 from .segment import Segment
@@ -14,6 +19,13 @@ from .track import Track
 from .tree import Tree
 
 from .resources import *
+
+class Bridge(QObject):
+    posChanged = pyqtSignal(float, float, float, float)
+
+    @pyqtSlot(float, float, float, float)
+    def onPos(self, lat, lng, heading, pitch):
+        self.posChanged.emit(lat, lng, heading, pitch)
 
 
 class RoutePlanner:
@@ -28,9 +40,12 @@ class RoutePlanner:
         self.toolbar = self.iface.addToolBar('RoutePlanner')
         self.toolbar.setObjectName('RoutePlanner')
         self.dockwidget = None
+        self.bridge = Bridge()
+        self.bridge.posChanged.connect(self._on_streetview_pos)
 
         # create tools
         self.mapToolPan = QgsMapToolPan(self.iface.mapCanvas())
+        self.mapToolStreetView = StreetView(self.iface, self.iface.mapCanvas(), self.show_street_view)
         self.mapToolEdit = Edit(self.iface, self.iface.mapCanvas())
 
         self.mapToolWaypointCreate = WaypointCreate(self.iface, self.iface.mapCanvas())
@@ -42,6 +57,10 @@ class RoutePlanner:
         self.mapToolPointCreateEnd = PointCreateEnd(self.iface, self.iface.mapCanvas())
         self.mapToolPointMove = PointMove(self.iface, self.iface.mapCanvas())
         self.mapToolPointDelete = PointDelete(self.iface, self.iface.mapCanvas())
+
+        self.streetViewHeadingBand = QgsRubberBand(self.iface.mapCanvas(), QgsWkbTypes.LineGeometry)
+        self.streetViewHeadingBand.setColor(Qt.red)
+        self.streetViewHeadingBand.setWidth(2)
 
     def add_action(self, icon_path: str, text: str, callback, parent = None):
         print('RoutePlanner.add_action()')
@@ -63,23 +82,44 @@ class RoutePlanner:
         if action is not None:
             self.actions.append(action)
 
+    def destroy_heading_band(self):
+        print('RoutePlanner.destroy_heading_band()')
+
+        if self.streetViewHeadingBand is not None:
+            self.iface.mapCanvas().scene().removeItem(self.streetViewHeadingBand)
+            self.streetViewHeadingBand = None
+
+    """ All code must be in try-except to be able to reload the plugin without restarting QGIS. """
     def onClosePlugin(self):
         print('RoutePlanner.onClosePlugin()')
 
-        return
-        self.dockwidget.closingPlugin.disconnect(self.onClosePlugin)
-        self.dockwidget = None
+        try:
+            self.destroy_heading_band()
+        except Exception as e:
+            print(e)
 
+    """ All code must be in try-except to be able to reload the plugin without restarting QGIS. """
     def unload(self):
         print('RoutePlanner.unload()')
 
-        for action in self.actions:
-            self.iface.removePluginMenu('&RoutePlanner', action)
-            self.iface.removeToolBarIcon(action)
+        try:
+            for action in self.actions:
+                self.iface.removePluginMenu('&RoutePlanner', action)
+                self.iface.removeToolBarIcon(action)
+        except Exception as e:
+            print(e)
 
-        if self.dockwidget is not None:
-            self.iface.removeDockWidget(self.dockwidget)
-            self.dockwidget.deleteLater()
+        try:
+            self.destroy_heading_band()
+        except Exception as e:
+            print(e)
+
+        try:
+            if self.dockwidget is not None:
+                self.iface.removeDockWidget(self.dockwidget)
+                self.dockwidget.deleteLater()
+        except Exception as e:
+            print(e)
 
     def run(self):
         print('RoutePlanner.run()')
@@ -91,7 +131,7 @@ class RoutePlanner:
 
             # main modes
             self.dockwidget.buttonLoad.clicked.connect(lambda: Tree.create_tree_structure())
-            self.dockwidget.buttonSelect.clicked.connect(lambda: self.iface.mapCanvas().setMapTool(self.mapToolPan))
+            self.dockwidget.buttonSelect.clicked.connect(lambda: self.iface.mapCanvas().setMapTool(self.mapToolStreetView))
             self.dockwidget.buttonEdit.clicked.connect(lambda: self.iface.mapCanvas().setMapTool(self.mapToolEdit))
 
             # setup file buttons
@@ -146,3 +186,89 @@ class RoutePlanner:
         # show widget
         self.iface.addDockWidget(Qt.LeftDockWidgetArea, self.dockwidget)
         self.dockwidget.show()
+
+    def show_street_view(self, point):
+        if self.dockwidget is None:
+            return
+
+        if self.dockwidget.streetViewBrowser is None:
+            return
+
+        page = f"""
+            <!doctype html>
+            <html>
+            <head>
+                <meta charset="utf-8">
+                <style>html,body,#pano{{width:100%;height:100%;margin:0}}</style>
+            </head>
+            <body>
+                <div id="pano"></div>
+                <script src="qrc:///qtwebchannel/qwebchannel.js"></script>
+                <script>
+                    let panorama;
+                    function initialize() {{
+                        const pos = {{
+                            lat: {point.y()},
+                            lng: {point.x()}
+                        }};
+    
+                        panorama = new google.maps.StreetViewPanorama(
+                            document.getElementById('pano'), {{
+                                position: pos,
+                                pov: {{
+                                    heading:0,
+                                    pitch:0
+                                }},
+                                addressControl: false,
+                                linksControl: false
+                            }}
+                        );
+                    
+                        new QWebChannel(qt.webChannelTransport, function(channel) {{
+                            window.bridge = channel.objects.bridge;
+                            
+                            function send() {{
+                                const p = panorama.getPosition();
+                                const pov = panorama.getPov();
+                                bridge.onPos(p.lat(), p.lng(), pov.heading || 0, pov.pitch || 0);
+                            }}
+                            
+                            panorama.addListener('position_changed', send);
+                            panorama.addListener('pov_changed', send);
+                            
+                            send();
+                        }});
+                    }}
+                </script>
+                <script src="https://maps.googleapis.com/maps/api/js?key={Config.Google.Key}&callback=initialize&v=weekly" defer></script>
+            </body>
+            </html>
+        """
+
+        self.dockwidget.streetViewBrowser.setHtml(page)
+
+        ch = QWebChannel(self.dockwidget.streetViewBrowser.page())
+        ch.registerObject('bridge', self.bridge)
+
+        self.dockwidget.streetViewBrowser.page().setWebChannel(ch)
+
+    def _on_streetview_pos(self, lat, lng, heading, pitch):
+        pt_wgs84 = QgsPointXY(lng, lat)
+
+        r = 6378137.0 # earth radius in meters
+        d = 100.0     # arrow length in meters
+
+        brng = math.radians(heading)
+        lat1 = math.radians(lat)
+        lon1 = math.radians(lng)
+        lat2 = math.asin(math.sin(lat1) * math.cos(d / r) + math.cos(lat1) * math.sin(d / r) * math.cos(brng))
+        lon2 = lon1 + math.atan2(math.sin(brng) * math.sin(d / r) * math.cos(lat1), math.cos(d / r) - math.sin(lat1) * math.sin(lat2))
+        dest_wgs84 = QgsPointXY(math.degrees(lon2), math.degrees(lat2))
+
+        src_crs = QgsCoordinateReferenceSystem('EPSG:4326')
+        dest_crs = QgsProject.instance().crs()
+        xform = QgsCoordinateTransform(src_crs, dest_crs, QgsProject.instance())
+        pt = xform.transform(pt_wgs84)
+        dest_pt = xform.transform(dest_wgs84)
+
+        self.streetViewHeadingBand.setToGeometry(QgsGeometry.fromPolylineXY([pt, dest_pt]), None)
