@@ -13,10 +13,13 @@ class Layer:
     @staticmethod
     @log_call
     def get_or_create_waypoints(segment: Optional[QgsLayerTreeGroup]) -> Optional[QgsVectorLayer]:
+        if segment is None:
+            return None
+
         points = Tree.find_layer(segment, 'Points')
 
-        if points:
-            return points.layer()
+        if points is not None:
+            return points
 
         layer = QgsVectorLayer('Point', 'Points', 'memory')
         layer.startEditing()
@@ -47,8 +50,8 @@ class Layer:
 
         points = Tree.find_layer(segment, 'Points')
 
-        if points:
-            return points.layer()
+        if points is not None:
+            return points
 
         layer = QgsVectorLayer('Point', 'Points', 'memory')
         layer.startEditing()
@@ -77,10 +80,10 @@ class Layer:
         if segment is None:
             return None
 
-        points = Tree.find_layer(segment, 'Paths')
+        paths = Tree.find_layer(segment, 'Paths')
 
-        if points:
-            return points.layer()
+        if paths is not None:
+            return paths
 
         layer = QgsVectorLayer('LineString', 'Paths', 'memory')
         layer.startEditing()

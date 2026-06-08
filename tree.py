@@ -150,13 +150,32 @@ class Tree:
 
     @staticmethod
     @log_call
+    def find_layer_by_path(path: str) -> Optional[QgsVectorLayer]:
+        root = Tree.get_root()
+
+        if root is None:
+            return None
+
+        parts = path.split('.')
+        parent = root
+
+        for part in parts[:-1]:
+            parent = Tree.find_group(parent, part)
+
+            if parent is None:
+                return None
+
+        return Tree.find_layer(parent, parts[-1])
+
+    @staticmethod
+    @log_call
     def find_layer(parent: Optional[QgsLayerTreeGroup], name: str) -> Optional[QgsVectorLayer]:
         if parent is None:
             return None
 
         for child in parent.children():
             if child.name() == name:
-                return child
+                return child.layer()
 
         return None
 
