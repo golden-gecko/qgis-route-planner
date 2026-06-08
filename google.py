@@ -97,3 +97,84 @@ class Google:
         print(f'Google::get_direction_as_points({a}, {b}) - Got {len(points)} points')
 
         return points
+
+    @staticmethod
+    @log_call
+    def get_nearby_panoramas(lat: float, lng: float, radius: int = 100, max_results: int = 10) -> list:
+        """Search nearby Street View panoramas by sampling points around the center.
+        Uses the Street View Image Metadata endpoint to discover pano ids.
+        Returns a list of dicts: {pano_id, lat, lng, date, raw}.
+        """
+        try:
+            import requests
+            import math
+        except Exception:
+            raise
+
+        results = {}
+
+        def dest_point(lat0, lng0, distance_m, bearing_deg):
+            R = 6378137.0
+            brng = math.radians(bearing_deg)
+            lat1 = math.radians(lat0)
+            lon1 = math.radians(lng0)
+            lat2 = math.asin(math.sin(lat1) * math.cos(distance_m / R) + math.cos(lat1) * math.sin(distance_m / R) * math.cos(brng))
+            lon2 = lon1 + math.atan2(math.sin(brng) * math.sin(distance_m / R) * math.cos(lat1), math.cos(distance_m / R) - math.sin(lat1) * math.sin(lat2))
+            return math.degrees(lat2), math.degrees(lon2)
+
+        # sampling distances and bearings (center + rings)
+        distances = [0, radius / 2, radius]
+        bearings = list(range(0, 360, 45))
+
+        for d in distances:
+            for b in bearings:
+                if d == 0 and b != 0:
+                    continue
+
+                sample_lat, sample_lng = dest_point(lat, lng, d, b)
+
+                try:
+                    resp = requests.get(
+                        'https://maps.googleapis.com/maps/api/streetview/metadata',
+                        params={
+                            'location': f'{sample_lat},{sample_lng}',
+                            'radius': radius,
+                            'key': Config.Google.Key,
+                        },
+                        timeout=10,
+                    )
+                    data = resp.json()
+                except Exception as e:
+                    # skipping failed request
+                    continue
+
+                # metadata endpoint returns status 'OK' when panorama found
+                status = data.get('status')
+                if status != 'OK':
+                    continue
+
+                pano_id = data.get('pano_id') or data.get('panoId') or data.get('pano')
+                loc = data.get('location') or {}
+                lat_p = loc.get('lat')
+                lng_p = loc.get('lng')
+
+                if not pano_id:
+                    # fallback: use location as identifier
+                    pano_id = f"{lat_p}:{lng_p}"
+
+                if pano_id not in results:
+                    results[pano_id] = {
+                        'pano_id': pano_id,
+                        'lat': lat_p,
+                        'lng': lng_p,
+                        'date': data.get('date'),
+                        'raw': data,
+                    }
+
+                if len(results) >= max_results:
+                    break
+
+            if len(results) >= max_results:
+                break
+
+        return list(results.values())

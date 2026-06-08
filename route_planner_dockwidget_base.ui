@@ -126,6 +126,13 @@
        </widget>
       </item>
       <item>
+       <widget class="QPushButton" name="buttonPanoramas">
+        <property name="text">
+         <string>Load panoramas</string>
+        </property>
+       </widget>
+      </item>
+      <item>
        <widget class="QPushButton" name="buttonSelect">
         <property name="text">
          <string>Select</string>

@@ -2,14 +2,15 @@ import math
 
 from PyQt5.QtWebChannel import QWebChannel
 
-from qgis.core import QgsCoordinateReferenceSystem, QgsCoordinateTransform, QgsGeometry, QgsProject, QgsPointXY, QgsRasterLayer, QgsWkbTypes
+from qgis.core import QgsCoordinateReferenceSystem, QgsCoordinateTransform, QgsGeometry, QgsProject, QgsPointXY, QgsRasterLayer, QgsVectorFileWriter, QgsVectorLayer, QgsWkbTypes, QgsField, QgsFeature
 from qgis.gui import QgsMapToolPan, QgsRubberBand, QgsVertexMarker
-from qgis.PyQt.QtCore import Qt, QObject, pyqtSlot, pyqtSignal
+from qgis.PyQt.QtCore import Qt, QObject, pyqtSlot, pyqtSignal, QVariant
 from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import QAction
 
 from .config import Config
 from .file import File
+from .google import Google
 from .iface import Iface
 from .map_tools import Edit, PointCreateEnd, PointCreateMiddle, PointCreateStart, PointDelete, PointMove, StreetView, WaypointCreate, WaypointDelete, WaypointMove
 from .options import Options
@@ -17,6 +18,7 @@ from .route_planner_dockwidget import RoutePlannerDockWidget
 from .segment import Segment
 from .track import Track
 from .tree import Tree
+from .utils import Utils
 
 from .resources import *
 
@@ -62,6 +64,9 @@ class RoutePlanner:
         self.streetViewHeadingBand.setColor(Qt.red)
         self.streetViewHeadingBand.setWidth(2)
 
+        # connect to map canvas movement to get center coordinates (map moved)
+        self.iface.mapCanvas().extentsChanged.connect(self._on_map_moved)
+
     def add_action(self, icon_path: str, text: str, callback, parent = None):
         print('RoutePlanner.add_action()')
 
@@ -94,6 +99,11 @@ class RoutePlanner:
         print('RoutePlanner.onClosePlugin()')
 
         try:
+            # disconnect map moved handler if connected
+            try:
+                self.iface.mapCanvas().extentsChanged.disconnect(self._on_map_moved)
+            except Exception:
+                pass
             self.destroy_heading_band()
         except Exception as e:
             print(e)
@@ -110,6 +120,11 @@ class RoutePlanner:
             print(e)
 
         try:
+            # disconnect map moved handler if connected
+            try:
+                self.iface.mapCanvas().extentsChanged.disconnect(self._on_map_moved)
+            except Exception:
+                pass
             self.destroy_heading_band()
         except Exception as e:
             print(e)
@@ -121,6 +136,101 @@ class RoutePlanner:
         except Exception as e:
             print(e)
 
+    def load_panoramas(self):
+        print('RoutePlanner.load_panoramas()')
+
+        layer = Tree.find_layer_by_path(Config.Panoramas.Path)
+
+        if layer is None:
+            layer = QgsVectorLayer("Point?crs=EPSG:4326", "Panoramas", "memory")
+            Utils.add_layer(Tree.get_root(), layer)
+
+        pr = layer.dataProvider()
+
+        # ensure fields 'pano_id' and 'date' exist
+        added_fields = []
+        if layer.fields().indexFromName('pano_id') == -1:
+            added_fields.append(QgsField('pano_id', QVariant.String))
+        if layer.fields().indexFromName('date') == -1:
+            added_fields.append(QgsField('date', QVariant.String))
+        if added_fields:
+            pr.addAttributes(added_fields)
+            layer.updateFields()
+
+        # collect existing pano ids to avoid duplicates
+        idx_pano = layer.fields().indexFromName('pano_id')
+        existing_ids = set()
+        if idx_pano != -1:
+            for feat in layer.getFeatures():
+                val = feat.attribute(idx_pano)
+                if val is not None:
+                    existing_ids.add(str(val))
+
+        canvas = self.iface.mapCanvas()
+
+        try:
+            center = canvas.extent().center()
+
+            # determine source CRS (canvas map CRS) and transform to WGS84 (EPSG:4326)
+            try:
+                src_crs = canvas.mapSettings().destinationCrs()
+            except Exception:
+                src_crs = QgsProject.instance().crs()
+
+            dest_crs = QgsCoordinateReferenceSystem('EPSG:4326')
+            xform = QgsCoordinateTransform(src_crs, dest_crs, QgsProject.instance())
+            lonlat = xform.transform(center)
+            lon = lonlat.x()
+            lat = lonlat.y()
+
+            # fetch nearby panoramas via Google API
+            try:
+                panoramas = Google.get_nearby_panoramas(lat, lon, radius=200, max_results=10)
+                print(f'Found {len(panoramas)} panoramas near center:')
+
+                new_feats = []
+                for p in panoramas:
+                    pano_id = p.get('pano_id') or f"{p.get('lat')}:{p.get('lng')}"
+                    if pano_id in existing_ids:
+                        print(f'  skipping existing pano {pano_id}')
+                        continue
+
+                    plat = p.get('lat')
+                    plng = p.get('lng')
+                    if plat is None or plng is None:
+                        continue
+
+                    f = QgsFeature()
+                    f.setGeometry(QgsGeometry.fromPointXY(QgsPointXY(plng, plat)))
+
+                    # build attributes matching layer fields
+                    attrs = [None] * layer.fields().count()
+                    idx_date = layer.fields().indexFromName('date')
+                    if idx_pano != -1:
+                        attrs[idx_pano] = str(pano_id)
+                    if idx_date != -1:
+                        attrs[idx_date] = str(p.get('date') or '')
+
+                    f.setAttributes(attrs)
+                    new_feats.append(f)
+                    print(f"  added pano {pano_id} at {plat},{plng}")
+
+                if new_feats:
+                    pr.addFeatures(new_feats)
+
+                    layer.commitChanges()
+                    layer.updateExtents()
+                    layer.triggerRepaint()
+
+            except Exception as e:
+                print('Error fetching panoramas:', e)
+
+        except Exception as e:
+            print('Error in load_panoramas:', e)
+
+        self.iface.mapCanvas().refresh()
+
+
     def run(self):
         print('RoutePlanner.run()')
 
@@ -131,6 +241,7 @@ class RoutePlanner:
 
             # main modes
             self.dockwidget.buttonLoad.clicked.connect(lambda: Tree.create_tree_structure())
+            self.dockwidget.buttonPanoramas.clicked.connect(lambda: self.load_panoramas())
             self.dockwidget.buttonSelect.clicked.connect(lambda: self.iface.mapCanvas().setMapTool(self.mapToolStreetView))
             self.dockwidget.buttonEdit.clicked.connect(lambda: self.iface.mapCanvas().setMapTool(self.mapToolEdit))
 
@@ -272,3 +383,22 @@ class RoutePlanner:
         dest_pt = xform.transform(dest_wgs84)
 
         self.streetViewHeadingBand.setToGeometry(QgsGeometry.fromPolylineXY([pt, dest_pt]), None)
+
+    def _on_map_moved(self):
+        canvas = self.iface.mapCanvas()
+        center = canvas.extent().center()
+
+        # determine source CRS (canvas map CRS) and transform to WGS84 (EPSG:4326)
+        try:
+            src_crs = canvas.mapSettings().destinationCrs()
+        except Exception:
+            src_crs = QgsProject.instance().crs()
+
+        dest_crs = QgsCoordinateReferenceSystem('EPSG:4326')
+        xform = QgsCoordinateTransform(src_crs, dest_crs, QgsProject.instance())
+        lonlat = xform.transform(center)
+        lon = lonlat.x()
+        lat = lonlat.y()
+
+        # execute desired code here — example: print center coordinates
+        print(f'Map moved. Center (lat, lon): {lat}, {lon}')

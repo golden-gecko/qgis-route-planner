@@ -16,14 +16,9 @@ class Path:
         if paths is None:
             return
 
-        layer = paths.layer()
-
-        if layer is None:
-            return
-
-        feature = QgsFeature(layer.fields())
+        feature = QgsFeature(paths.fields())
         feature.setGeometry(QgsGeometry.fromPolyline([QgsPoint(lon, lat) for lon, lat in points]))
 
-        layer.startEditing()
-        layer.addFeature(feature)
-        layer.commitChanges()
+        paths.startEditing()
+        paths.addFeature(feature)
+        paths.commitChanges()
