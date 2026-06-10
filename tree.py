@@ -4,7 +4,7 @@ import re
 
 from typing import Optional
 
-from qgis.core import QgsLayerTreeGroup, QgsLineSymbol, QgsMarkerSymbol, QgsProject, QgsRasterLayer, QgsVectorLayer
+from qgis.core import QgsFillSymbol, QgsLayerTreeGroup, QgsLineSymbol, QgsMarkerSymbol, QgsProject, QgsRasterLayer, QgsSingleSymbolRenderer, QgsVectorLayer
 from qgis.PyQt.QtCore import Qt
 from qgis.PyQt.QtGui import QColor
 
@@ -249,24 +249,18 @@ class Tree:
             return
 
         if 'style' in item:
-            symbol = layer.renderer().symbol()
+            if 'type' in item['style']:
+                if item['style']['type'] == 'line':
+                    layer.setRenderer(QgsSingleSymbolRenderer(QgsLineSymbol.createSimple(item['style'])))
+                elif item['style']['type'] == 'point':
+                    layer.setRenderer(QgsSingleSymbolRenderer(QgsMarkerSymbol.createSimple(item['style'])))
+            else:
+                if 'color' in item['style']:
+                    symbol = layer.renderer().symbol()
+                    symbol.setColor(QColor(item['style']['color']))
 
-            if 'color' in item['style']:
-                symbol = layer.renderer().symbol()
-                symbol.setColor(QColor(item['style']['color']))
-
-            if 'opacity' in item['style']:
-                layer.setOpacity(item['style']['opacity'])
-
-            if isinstance(symbol, QgsMarkerSymbol):
-                if 'size' in item['style']:
-                    symbol.setSize(item['style']['size'])
-            elif isinstance(symbol, QgsLineSymbol):
-                line = symbol.symbolLayer(0)
-                line.setPenStyle(Qt.DashLine)
-
-                if 'size' in item['style']:
-                    symbol.setWidth(item['style']['size'])
+                if 'opacity' in item['style']:
+                    layer.setOpacity(item['style']['opacity'])
 
         Utils.add_layer(parent, layer)
 
