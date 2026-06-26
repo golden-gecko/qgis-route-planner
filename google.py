@@ -1,5 +1,7 @@
 import datetime
 import googlemaps
+import math
+import requests
 
 from .config import Config
 from .log import log_call
@@ -101,16 +103,6 @@ class Google:
     @staticmethod
     @log_call
     def get_nearby_panoramas(lat: float, lng: float, radius: int = 100, max_results: int = 10) -> list:
-        """Search nearby Street View panoramas by sampling points around the center.
-        Uses the Street View Image Metadata endpoint to discover pano ids.
-        Returns a list of dicts: {pano_id, lat, lng, date, raw}.
-        """
-        try:
-            import requests
-            import math
-        except Exception:
-            raise
-
         results = {}
 
         def dest_point(lat0, lng0, distance_m, bearing_deg):
@@ -133,20 +125,16 @@ class Google:
 
                 sample_lat, sample_lng = dest_point(lat, lng, d, b)
 
-                try:
-                    resp = requests.get(
-                        'https://maps.googleapis.com/maps/api/streetview/metadata',
-                        params={
-                            'location': f'{sample_lat},{sample_lng}',
-                            'radius': radius,
-                            'key': Config.Google.Key,
-                        },
-                        timeout=10,
-                    )
-                    data = resp.json()
-                except Exception as e:
-                    # skipping failed request
-                    continue
+                resp = requests.get(
+                    'https://maps.googleapis.com/maps/api/streetview/metadata',
+                    params={
+                        'location': f'{sample_lat},{sample_lng}',
+                        'radius': radius,
+                        'key': Config.Google.Key,
+                    },
+                    timeout=10,
+                )
+                data = resp.json()
 
                 # metadata endpoint returns status 'OK' when panorama found
                 status = data.get('status')
