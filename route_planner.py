@@ -116,33 +116,37 @@ class RoutePlanner:
     def unload(self):
         print('RoutePlanner.unload()')
 
-        try:
-            for action in self.actions:
+        for action in self.actions:
+            try:
                 self.iface.removePluginMenu('&RoutePlanner', action)
                 self.iface.removeToolBarIcon(action)
+            except Exception as e:
+                print(e)
+
+        try:
+            self.iface.mapCanvas().extentsChanged.disconnect(self._on_map_moved)
         except Exception as e:
             print(e)
 
         try:
-            self.iface.mapCanvas().extentsChanged.disconnect(self._on_map_moved)
             self.destroy_heading_band()
         except Exception as e:
             print(e)
 
-        try:
-            if self.dockwidget is not None:
+        if self.dockwidget is not None:
+            try:
                 self.iface.removeDockWidget(self.dockwidget)
                 self.dockwidget.deleteLater()
-        except Exception as e:
-            print(e)
+            except Exception as e:
+                print(e)
 
-        try:
-            if self.bottom_dockwidget is not None:
+        if self.bottom_dockwidget is not None:
+            try:
                 self.iface.removeDockWidget(self.bottom_dockwidget)
                 self.bottom_dockwidget.deleteLater()
                 self.bottom_dockwidget = None
-        except Exception as e:
-            print(e)
+            except Exception as e:
+                print(e)
 
     def load_panoramas(self):
         print('RoutePlanner.load_panoramas()')
