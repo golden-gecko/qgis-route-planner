@@ -2,11 +2,7 @@ import os
 
 from qgis.PyQt import QtWidgets, uic
 from qgis.PyQt.QtCore import pyqtSignal
-
-try:
-    from qgis.PyQt.QtWebEngineWidgets import QWebEngineView
-except ImportError:
-    QWebEngineView = None
+from qgis.PyQt.QtWebEngineWidgets import QWebEngineView
 
 
 FORM_CLASS, _ = uic.loadUiType(os.path.join(os.path.dirname(str(__file__)), 'route_planner_dockwidget_base.ui'))

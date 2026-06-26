@@ -1,4 +1,5 @@
 import math
+import requests
 
 from PyQt5.QtWebChannel import QWebChannel
 
@@ -15,7 +16,6 @@ from .iface import Iface
 from .map_tools import Edit, PointCreateEnd, PointCreateMiddle, PointCreateStart, PointDelete, PointMove, StreetView, WaypointCreate, WaypointDelete, WaypointMove
 from .options import Options
 from .route_planner_dockwidget import RoutePlannerDockWidget
-from .bottom_dockwidget import BottomDockWidget
 from .segment import Segment
 from .track import Track
 from .tree import Tree
@@ -96,35 +96,23 @@ class RoutePlanner:
             self.iface.mapCanvas().scene().removeItem(self.streetViewHeadingBand)
             self.streetViewHeadingBand = None
 
-    """ All code must be in try-except to be able to reload the plugin without restarting QGIS. """
     def onClosePlugin(self):
         print('RoutePlanner.onClosePlugin()')
 
         try:
-            # disconnect map moved handler if connected
-            try:
-                self.iface.mapCanvas().extentsChanged.disconnect(self._on_map_moved)
-            except Exception:
-                pass
+            self.iface.mapCanvas().extentsChanged.disconnect(self._on_map_moved)
             self.destroy_heading_band()
         except Exception as e:
             print(e)
 
         try:
             if self.bottom_dockwidget is not None:
-                try:
-                    self.iface.removeDockWidget(self.bottom_dockwidget)
-                except Exception:
-                    pass
-                try:
-                    self.bottom_dockwidget.deleteLater()
-                except Exception:
-                    pass
+                self.iface.removeDockWidget(self.bottom_dockwidget)
+                self.bottom_dockwidget.deleteLater()
                 self.bottom_dockwidget = None
         except Exception as e:
             print(e)
 
-    """ All code must be in try-except to be able to reload the plugin without restarting QGIS. """
     def unload(self):
         print('RoutePlanner.unload()')
 
@@ -136,11 +124,7 @@ class RoutePlanner:
             print(e)
 
         try:
-            # disconnect map moved handler if connected
-            try:
-                self.iface.mapCanvas().extentsChanged.disconnect(self._on_map_moved)
-            except Exception:
-                pass
+            self.iface.mapCanvas().extentsChanged.disconnect(self._on_map_moved)
             self.destroy_heading_band()
         except Exception as e:
             print(e)
@@ -154,14 +138,8 @@ class RoutePlanner:
 
         try:
             if self.bottom_dockwidget is not None:
-                try:
-                    self.iface.removeDockWidget(self.bottom_dockwidget)
-                except Exception:
-                    pass
-                try:
-                    self.bottom_dockwidget.deleteLater()
-                except Exception:
-                    pass
+                self.iface.removeDockWidget(self.bottom_dockwidget)
+                self.bottom_dockwidget.deleteLater()
                 self.bottom_dockwidget = None
         except Exception as e:
             print(e)
@@ -198,87 +176,62 @@ class RoutePlanner:
 
         canvas = self.iface.mapCanvas()
 
-        try:
-            center = canvas.extent().center()
+        center = canvas.extent().center()
 
-            # determine source CRS (canvas map CRS) and transform to WGS84 (EPSG:4326)
-            try:
-                src_crs = canvas.mapSettings().destinationCrs()
-            except Exception:
-                src_crs = QgsProject.instance().crs()
+        # determine source CRS (canvas map CRS) and transform to WGS84 (EPSG:4326)
+        src_crs = canvas.mapSettings().destinationCrs()
 
-            dest_crs = QgsCoordinateReferenceSystem('EPSG:4326')
-            xform = QgsCoordinateTransform(src_crs, dest_crs, QgsProject.instance())
-            lonlat = xform.transform(center)
-            lon = lonlat.x()
-            lat = lonlat.y()
+        dest_crs = QgsCoordinateReferenceSystem('EPSG:4326')
+        xform = QgsCoordinateTransform(src_crs, dest_crs, QgsProject.instance())
+        lonlat = xform.transform(center)
+        lon = lonlat.x()
+        lat = lonlat.y()
 
-            # fetch nearby panoramas via Google API
-            try:
-                panoramas = Google.get_nearby_panoramas(lat, lon, radius=200, max_results=10)
-                print(f'Found {len(panoramas)} panoramas near center:')
+        # fetch nearby panoramas via Google API
+        panoramas = Google.get_nearby_panoramas(lat, lon, radius=200, max_results=10)
+        print(f'Found {len(panoramas)} panoramas near center:')
 
-                new_feats = []
-                for p in panoramas:
-                    pano_id = p.get('pano_id') or f"{p.get('lat')}:{p.get('lng')}"
-                    if pano_id in existing_ids:
-                        print(f'  skipping existing pano {pano_id}')
-                        continue
+        new_feats = []
+        for p in panoramas:
+            pano_id = p.get('pano_id') or f"{p.get('lat')}:{p.get('lng')}"
+            if pano_id in existing_ids:
+                print(f'  skipping existing pano {pano_id}')
+                continue
 
-                    plat = p.get('lat')
-                    plng = p.get('lng')
-                    if plat is None or plng is None:
-                        continue
+            plat = p.get('lat')
+            plng = p.get('lng')
+            if plat is None or plng is None:
+                continue
 
-                    f = QgsFeature()
-                    f.setGeometry(QgsGeometry.fromPointXY(QgsPointXY(plng, plat)))
+            f = QgsFeature()
+            f.setGeometry(QgsGeometry.fromPointXY(QgsPointXY(plng, plat)))
 
-                    # build attributes matching layer fields
-                    attrs = [None] * layer.fields().count()
-                    idx_date = layer.fields().indexFromName('date')
-                    if idx_pano != -1:
-                        attrs[idx_pano] = str(pano_id)
-                    if idx_date != -1:
-                        attrs[idx_date] = str(p.get('date') or '')
+            # build attributes matching layer fields
+            attrs = [None] * layer.fields().count()
+            idx_date = layer.fields().indexFromName('date')
+            if idx_pano != -1:
+                attrs[idx_pano] = str(pano_id)
+            if idx_date != -1:
+                attrs[idx_date] = str(p.get('date') or '')
 
-                    f.setAttributes(attrs)
-                    new_feats.append(f)
-                    print(f"  added pano {pano_id} at {plat},{plng}")
+            f.setAttributes(attrs)
+            new_feats.append(f)
+            print(f"  added pano {pano_id} at {plat},{plng}")
 
-                if new_feats:
-                    pr.addFeatures(new_feats)
+        if new_feats:
+            pr.addFeatures(new_feats)
 
-                    layer.commitChanges()
-                    layer.updateExtents()
-                    layer.triggerRepaint()
-
-            except Exception as e:
-                print('Error fetching panoramas:', e)
-
-        except Exception as e:
-            print('Error in load_panoramas:', e)
+            layer.commitChanges()
+            layer.updateExtents()
+            layer.triggerRepaint()
 
         self.iface.mapCanvas().refresh()
 
     def fetch_and_show_streetview_photos(self, radius: int = 200, max_results: int = 6):
-        """Fetch nearby Street View panoramas and show thumbnails in the bottom dock widget.
-
-        Uses Google.get_nearby_panoramas to find pano ids, then downloads small
-        Street View static images and displays them in the bottom panel.
-        """
-        try:
-            import requests
-        except Exception:
-            print('requests library not available')
-            return
-
         canvas = self.iface.mapCanvas()
         center = canvas.extent().center()
 
-        try:
-            src_crs = canvas.mapSettings().destinationCrs()
-        except Exception:
-            src_crs = QgsProject.instance().crs()
+        src_crs = canvas.mapSettings().destinationCrs()
 
         dest_crs = QgsCoordinateReferenceSystem('EPSG:4320')
         # NOTE: use EPSG:4326 (WGS84) — correct transform
@@ -288,11 +241,7 @@ class RoutePlanner:
         lon = lonlat.x()
         lat = lonlat.y()
 
-        panoramas = []
-        try:
-            panoramas = Google.get_nearby_panoramas(lat, lon, radius=radius, max_results=max_results)
-        except Exception as e:
-            print('Failed to get nearby panoramas:', e)
+        panoramas = Google.get_nearby_panoramas(lat, lon, radius=radius, max_results=max_results)
 
         pixmaps = []
         for p in panoramas:
@@ -306,26 +255,24 @@ class RoutePlanner:
                 'fov': '90',
                 'pitch': '0',
             }
+
             try:
                 resp = requests.get('https://maps.googleapis.com/maps/api/streetview', params=params, timeout=10)
-                if resp.status_code == 200:
-                    pm = QPixmap()
-                    if pm.loadFromData(resp.content):
-                        pixmaps.append(pm)
-                        continue
-                print('Failed to fetch image for pano', pano_id, 'status', resp.status_code)
             except Exception as e:
-                print('Error fetching static image for pano', pano_id, e)
+                print('Failed to fetch image: ', e)
+
+            if resp.status_code == 200:
+                pm = QPixmap()
+                if pm.loadFromData(resp.content):
+                    pixmaps.append(pm)
+                    continue
 
             pixmaps.append(QPixmap())
 
         # hand pixmaps to bottom widget
-        try:
-            if self.bottom_dockwidget is not None:
-                self.bottom_dockwidget.display_thumbnails(pixmaps)
-                self.bottom_dockwidget.append_text(f'Loaded {len(pixmaps)} Street View thumbnails')
-        except Exception as e:
-            print('Error updating bottom dock with thumbnails:', e)
+        if self.bottom_dockwidget is not None:
+            self.bottom_dockwidget.display_thumbnails(pixmaps)
+            self.bottom_dockwidget.append_text(f'Loaded {len(pixmaps)} Street View thumbnails')
 
 
     def run(self):
@@ -337,42 +284,11 @@ class RoutePlanner:
             self.dockwidget.closingPlugin.connect(self.onClosePlugin)
 
             # main modes
-            self.dockwidget.buttonLoad.clicked.connect(lambda: Tree.create_tree_structure())
+            self.dockwidget.buttonTree.clicked.connect(lambda: Tree.create_tree_structure())
+            self.dockwidget.buttonStreetView.clicked.connect(lambda: self.iface.mapCanvas().setMapTool(self.mapToolStreetView))
             self.dockwidget.buttonPanoramas.clicked.connect(lambda: self.load_panoramas())
-            self.dockwidget.buttonSelect.clicked.connect(lambda: self.iface.mapCanvas().setMapTool(self.mapToolStreetView))
+            self.dockwidget.buttonImages.clicked.connect(lambda: self.fetch_and_show_streetview_photos(radius=200, max_results=6))
             self.dockwidget.buttonEdit.clicked.connect(lambda: self.iface.mapCanvas().setMapTool(self.mapToolEdit))
-
-            # add "Load images" button next to "Load panoramas" (loads Street View thumbnails)
-            try:
-                self.dockwidget.buttonLoadImages = QPushButton('Load images', self.dockwidget)
-                self.dockwidget.buttonLoadImages.setObjectName('buttonLoadImages')
-                self.dockwidget.buttonLoadImages.clicked.connect(lambda: self.fetch_and_show_streetview_photos(radius=200, max_results=6))
-
-                # try to insert next to buttonPanoramas in the grid layout
-                try:
-                    if hasattr(self.dockwidget, 'gridLayout'):
-                        idx = self.dockwidget.gridLayout.indexOf(self.dockwidget.buttonPanoramas)
-                        if idx >= 0:
-                            row, col, rs, cs = self.dockwidget.gridLayout.getItemPosition(idx)
-                            # insert in next column
-                            self.dockwidget.gridLayout.addWidget(self.dockwidget.buttonLoadImages, row, col + 1, rs, cs)
-                        else:
-                            parent = self.dockwidget.buttonPanoramas.parent()
-                            if parent is not None and parent.layout() is not None:
-                                parent.layout().addWidget(self.dockwidget.buttonLoadImages)
-                    else:
-                        parent = self.dockwidget.buttonPanoramas.parent()
-                        if parent is not None and parent.layout() is not None:
-                            parent.layout().addWidget(self.dockwidget.buttonLoadImages)
-                except Exception:
-                    # fallback: attempt to add to the dockwidget's top-level layout
-                    try:
-                        if self.dockwidget.layout() is not None:
-                            self.dockwidget.layout().addWidget(self.dockwidget.buttonLoadImages)
-                    except Exception:
-                        pass
-            except Exception as e:
-                print('Failed to create Load images button:', e)
 
             # setup file buttons
             self.dockwidget.buttonFileNew.clicked.connect(lambda: Segment.create(Track.create(File.new())))
@@ -427,20 +343,15 @@ class RoutePlanner:
         self.iface.addDockWidget(Qt.LeftDockWidgetArea, self.dockwidget)
         self.dockwidget.show()
 
+        """
         # create bottom dock widget (status / info) and place it at the bottom
         if self.bottom_dockwidget is None:
-            try:
-                self.bottom_dockwidget = BottomDockWidget()
-                self.iface.addDockWidget(Qt.BottomDockWidgetArea, self.bottom_dockwidget)
-                self.bottom_dockwidget.show()
-                # initial message
-                try:
-                    self.bottom_dockwidget.append_text('RoutePlanner started')
-                except Exception:
-                    pass
-
-            except Exception as e:
-                print('Failed to create bottom dock widget:', e)
+            self.bottom_dockwidget = BottomDockWidget()
+            self.iface.addDockWidget(Qt.BottomDockWidgetArea, self.bottom_dockwidget)
+            self.bottom_dockwidget.show()
+            # initial message
+            self.bottom_dockwidget.append_text('RoutePlanner started')
+        """
 
     def show_street_view(self, point):
         if self.dockwidget is None:
@@ -533,10 +444,7 @@ class RoutePlanner:
         center = canvas.extent().center()
 
         # determine source CRS (canvas map CRS) and transform to WGS84 (EPSG:4326)
-        try:
-            src_crs = canvas.mapSettings().destinationCrs()
-        except Exception:
-            src_crs = QgsProject.instance().crs()
+        src_crs = canvas.mapSettings().destinationCrs()
 
         dest_crs = QgsCoordinateReferenceSystem('EPSG:4326')
         xform = QgsCoordinateTransform(src_crs, dest_crs, QgsProject.instance())
