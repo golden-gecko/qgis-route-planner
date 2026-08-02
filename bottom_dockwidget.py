@@ -1,7 +1,7 @@
 from qgis.PyQt import QtWidgets
 from qgis.PyQt.QtCore import pyqtSignal, Qt
 from qgis.PyQt.QtWidgets import QLabel, QTextEdit, QVBoxLayout, QWidget, QScrollArea, QHBoxLayout
-from qgis.PyQt.QtGui import QPixmap
+from qgis.PyQt.QtGui import QPixmap, QTextCursor
 
 
 class BottomDockWidget(QtWidgets.QDockWidget):
@@ -47,7 +47,7 @@ class BottomDockWidget(QtWidgets.QDockWidget):
         """Append a line of text to the text area."""
         if not line.endswith('\n'):
             line = line + '\n'
-        self.text.moveCursor(self.text.textCursor().End)
+        self.text.moveCursor(QTextCursor.End)
         self.text.insertPlainText(line)
         # keep scrollbar at bottom
         self.text.verticalScrollBar().setValue(self.text.verticalScrollBar().maximum())
@@ -77,7 +77,7 @@ class BottomDockWidget(QtWidgets.QDockWidget):
                 lbl = QLabel('No image')
             else:
                 lbl = QLabel()
-                scaled = pm.scaledToHeight(thumb_h, Qt.SmoothTransformation)
+                scaled = pm.scaledToHeight(thumb_h, Qt.TransformationMode.SmoothTransformation)
                 lbl.setPixmap(scaled)
             lbl.setFixedHeight(thumb_h)
             lbl.setContentsMargins(0, 0, 0, 0)
