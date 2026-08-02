@@ -1,12 +1,12 @@
 import math
 import requests
 
-from PyQt5.QtWebChannel import QWebChannel
+from qgis.PyQt.QtWebChannel import QWebChannel
 
 from qgis.core import QgsCoordinateReferenceSystem, QgsCoordinateTransform, QgsGeometry, QgsProject, QgsPointXY, QgsRasterLayer, QgsVectorFileWriter, QgsVectorLayer, QgsWkbTypes, QgsField, QgsFeature
 from qgis.gui import QgsMapToolPan, QgsRubberBand, QgsVertexMarker
 from qgis.PyQt.QtCore import Qt, QObject, pyqtSlot, pyqtSignal, QVariant
-from qgis.PyQt.QtGui import QIcon, QPixmap
+from qgis.PyQt.QtGui import QIcon, QPixmap, QColor
 from qgis.PyQt.QtWidgets import QAction, QPushButton
 
 from .config import Config
@@ -63,7 +63,7 @@ class RoutePlanner:
         self.mapToolPointDelete = PointDelete(self.iface, self.iface.mapCanvas())
 
         self.streetViewHeadingBand = QgsRubberBand(self.iface.mapCanvas(), QgsWkbTypes.LineGeometry)
-        self.streetViewHeadingBand.setColor(Qt.red)
+        self.streetViewHeadingBand.setColor(QColor('red'))
         self.streetViewHeadingBand.setWidth(2)
 
         # connect to map canvas movement to get center coordinates (map moved)
@@ -344,7 +344,7 @@ class RoutePlanner:
             self.dockwidget.spinBoxMinAngle.valueChanged.connect(lambda: Options.set_control_point_min_angle(self.dockwidget.spinBoxMinAngle.value()))
 
         # show widget
-        self.iface.addDockWidget(Qt.LeftDockWidgetArea, self.dockwidget)
+        self.iface.addDockWidget(Qt.DockWidgetArea.LeftDockWidgetArea, self.dockwidget)
         self.dockwidget.show()
 
         """

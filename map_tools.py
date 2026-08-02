@@ -21,7 +21,7 @@ class MapTool(QgsMapTool):
         self.iface = iface
         self.canvas = canvas
 
-        self.setCursor(Qt.CrossCursor)
+        self.setCursor(Qt.CursorShape.CrossCursor)
 
 
 class StreetView(MapTool):
@@ -32,7 +32,7 @@ class StreetView(MapTool):
 
     @log_call
     def canvasReleaseEvent(self, event):
-        if event.button() != Qt.LeftButton:
+        if event.button() != Qt.MouseButton.LeftButton:
             return
 
         point = self.toMapCoordinates(event.pos())
@@ -59,7 +59,7 @@ class Edit(MapTool):
 
     @log_call
     def canvasPressEvent(self, event):
-        if event.button() != Qt.LeftButton:
+        if event.button() != Qt.MouseButton.LeftButton:
             return
 
         self.feature = None
@@ -123,16 +123,16 @@ class Edit(MapTool):
 
         if self.feature is not None and self.feature_position is not None:
             if self.feature_type == 'point':
-                if event.button() == Qt.LeftButton:
+                if event.button() == Qt.MouseButton.LeftButton:
                     Point.move(points, self.feature, point)
                     Segment.refresh_point_move(segment, self.feature_position)
-                elif event.button() == Qt.RightButton:
+                elif event.button() == Qt.MouseButton.RightButton:
                     position = Point.delete(points, point)
 
                     if position is not None:
                         Segment.refresh_point_delete(segment, position)
             elif self.feature_type == 'path':
-                if event.button() == Qt.LeftButton:
+                if event.button() == Qt.MouseButton.LeftButton:
                     Point.create_middle(points, point, self.feature_position + 1)
                     Segment.refresh_point(segment, self.feature_position + 1)
 
