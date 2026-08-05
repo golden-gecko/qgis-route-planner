@@ -1,4 +1,5 @@
 import math
+import os
 import requests
 
 from qgis.PyQt.QtWebChannel import QWebChannel
@@ -72,12 +73,20 @@ class RoutePlanner:
     def add_action(self, icon_path: str, text: str, callback, parent = None):
         print('RoutePlanner.add_action()')
 
-        action = QAction(QIcon(icon_path), text, parent)
+        path = os.path.join(os.path.dirname(__file__), os.path.basename(icon_path))
+
+        if os.path.exists(path):
+            icon = QIcon(path)
+        else:
+            icon = QIcon()
+
+        action = QAction(icon, text, parent)
         action.triggered.connect(callback)
         action.setEnabled(True)
 
         self.toolbar.addAction(action)
         self.iface.addPluginToMenu(self.menu, action)
+        self.toolbar.repaint()
 
         return action
 
@@ -85,6 +94,9 @@ class RoutePlanner:
         print('RoutePlanner.initGui()')
 
         action = self.add_action(':/plugins/route_planner/icon.png', text='Show', callback=self.run, parent=self.iface.mainWindow())
+
+        if self.toolbar is not None:
+            self.toolbar.show()
 
         if action is not None:
             self.actions.append(action)
@@ -120,6 +132,7 @@ class RoutePlanner:
             try:
                 self.iface.removePluginMenu('&RoutePlanner', action)
                 self.iface.removeToolBarIcon(action)
+                action.deleteLater()
             except Exception as e:
                 print(e)
 
@@ -137,6 +150,7 @@ class RoutePlanner:
             try:
                 self.iface.removeDockWidget(self.dockwidget)
                 self.dockwidget.deleteLater()
+                self.dockwidget = None
             except Exception as e:
                 print(e)
 
@@ -145,6 +159,14 @@ class RoutePlanner:
                 self.iface.removeDockWidget(self.bottom_dockwidget)
                 self.bottom_dockwidget.deleteLater()
                 self.bottom_dockwidget = None
+            except Exception as e:
+                print(e)
+
+        if self.toolbar is not None:
+            try:
+                self.iface.mainWindow().removeToolBar(self.toolbar)
+                self.toolbar.deleteLayer()
+                self.toolbar = None
             except Exception as e:
                 print(e)
 
