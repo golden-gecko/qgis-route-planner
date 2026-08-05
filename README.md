@@ -1,4 +1,4 @@
-# qgis-route-planner
+# QGIS Route Planner
 
 A lightweight QGIS plugin for planning and managing routes inside QGIS.
 
