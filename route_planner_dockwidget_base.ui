@@ -125,13 +125,6 @@
        </widget>
       </item>
       <item>
-       <widget class="QPushButton" name="buttonImages">
-        <property name="text">
-         <string>Images</string>
-        </property>
-       </widget>
-      </item>
-      <item>
        <widget class="QPushButton" name="buttonEdit">
         <property name="text">
          <string>Edit</string>
