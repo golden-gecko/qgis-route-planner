@@ -236,48 +236,6 @@ class RoutePlanner:
 
         self.iface.mapCanvas().refresh()
 
-    def fetch_and_show_streetview_photos(self, radius: int = 200, max_results: int = 6):
-        canvas = self.iface.mapCanvas()
-        center = canvas.extent().center()
-
-        src_crs = canvas.mapSettings().destinationCrs()
-
-        dest_crs = QgsCoordinateReferenceSystem('EPSG:4320')
-        # NOTE: use EPSG:4326 (WGS84) — correct transform
-        dest_crs = QgsCoordinateReferenceSystem('EPSG:4326')
-        xform = QgsCoordinateTransform(src_crs, dest_crs, QgsProject.instance())
-        lonlat = xform.transform(center)
-        lon = lonlat.x()
-        lat = lonlat.y()
-
-        panoramas = Google.get_nearby_panoramas(lat, lon, radius=radius, max_results=max_results)
-
-        pixmaps = []
-        for p in panoramas:
-            pano_id = p.get('pano_id')
-            # build Street View Static API URL
-            size = '400x120'
-            params = {
-                'size': size,
-                'pano': pano_id,
-                'key': Config.Google.Key,
-                'fov': '90',
-                'pitch': '0',
-            }
-
-            try:
-                resp = requests.get('https://maps.googleapis.com/maps/api/streetview', params=params, timeout=10)
-            except Exception as e:
-                print('Failed to fetch image: ', e)
-
-            if resp.status_code == 200:
-                pm = QPixmap()
-                if pm.loadFromData(resp.content):
-                    pixmaps.append(pm)
-                    continue
-
-            pixmaps.append(QPixmap())
-
     def run(self):
         print('RoutePlanner.run()')
 
@@ -290,7 +248,6 @@ class RoutePlanner:
             self.dockwidget.buttonTree.clicked.connect(lambda: Tree.create_tree_structure())
             self.dockwidget.buttonStreetView.clicked.connect(lambda: self.iface.mapCanvas().setMapTool(self.mapToolStreetView))
             self.dockwidget.buttonPanoramas.clicked.connect(lambda: self.load_panoramas())
-            self.dockwidget.buttonImages.clicked.connect(lambda: self.fetch_and_show_streetview_photos(radius=200, max_results=6))
             self.dockwidget.buttonEdit.clicked.connect(lambda: self.iface.mapCanvas().setMapTool(self.mapToolEdit))
 
             # setup file buttons
