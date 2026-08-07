@@ -1,3 +1,6 @@
+import urllib.parse
+
+
 class Config:
     class Google:
         Key = 'INSERT_KEY_HERE'
@@ -18,15 +21,52 @@ class Config:
         Items = [
             {
                 'type': 'group',
-                'name': 'Places',
+                'name': 'Tracks',
                 'items': [
                     {
-                        'type': 'vector',
-                        'uri': r'\path\to\file.gpx|layername=waypoints',
-                        'style': {
-                            'color': '#54b04a',
-                            'size': 3
-                        }
+                        'type': 'editable'
+                    }
+                ]
+            },
+            {
+                'type': 'group',
+                'name': 'Maps',
+                'items': [
+                    {
+                        'type': 'group',
+                        'name': 'Google StreetView',
+                        'items': [
+                            {
+                                'type': 'raster',
+                                'name': 'Streets',
+                                'uri': f'type=xyz&url={urllib.parse.quote('https://mts2.google.com/mapslt?lyrs=svv&x={x}&y={y}&z={z}&w=256&h=256&hl=en&style=40,18', safe=':/{}?=%')}',
+                            }
+                        ]
+                    },
+                    {
+                        'type': 'raster',
+                        'name': 'Bing Satellite',
+                        'uri': f'type=xyz&url={urllib.parse.quote('http://ecn.t3.tiles.virtualearth.net/tiles/a{q}.jpeg?g=0&dir=dir_n', safe=':/{}?=&')}',
+                    },
+                    {
+                        'type': 'raster',
+                        'name': 'Google Hybrid',
+                        'uri': f'type=xyz&url={urllib.parse.quote('https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', safe=':/{}?=%')}',
+                    },
+                    {
+                        'type': 'raster',
+                        'name': 'Google Satellite',
+                        'uri': f'type=xyz&url={urllib.parse.quote('https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', safe=':/{}?=%')}',
+                    },
+                    {
+                        'type': 'raster',
+                        'name': 'Google Terrain',
+                        'uri': f'type=xyz&url={urllib.parse.quote('https://mt1.google.com/vt/lyrs=p&x={x}&y={y}&z={z}', safe=':/{}?=%')}',
+                    },
+                    {
+                        'type': 'raster',
+                        'name': 'OpenStreetMap',
+                        'uri': f'type=xyz&url={urllib.parse.quote("https://tile.openstreetmap.org/{z}/{x}/{y}.png", safe=":/{}?=%")}',
                     }
                 ]
             }
