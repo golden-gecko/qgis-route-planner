@@ -92,7 +92,7 @@ class RoutePlanner:
     def initGui(self):
         print('RoutePlanner.initGui()')
 
-        action = self.add_action(':/plugins/route_planner/icon.png', text='Show', callback=self.run, parent=self.iface.mainWindow())
+        action = self.add_action(':/plugins/route_planner/icon.png', text='Route Planner', callback=self.run, parent=self.iface.mainWindow())
 
         if self.toolbar is not None:
             self.toolbar.show()
