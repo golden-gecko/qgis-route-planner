@@ -44,7 +44,6 @@ class RoutePlanner:
         self.toolbar = self.iface.addToolBar('RoutePlanner')
         self.toolbar.setObjectName('RoutePlanner')
         self.dockwidget = None
-        self.bottom_dockwidget = None
         self.bridge = Bridge()
         self.bridge.posChanged.connect(self._on_streetview_pos)
 
@@ -117,14 +116,6 @@ class RoutePlanner:
         except Exception as e:
             print(e)
 
-        try:
-            if self.bottom_dockwidget is not None:
-                self.iface.removeDockWidget(self.bottom_dockwidget)
-                self.bottom_dockwidget.deleteLater()
-                self.bottom_dockwidget = None
-        except Exception as e:
-            print(e)
-
     def unload(self):
         print('RoutePlanner.unload()')
 
@@ -151,14 +142,6 @@ class RoutePlanner:
                 self.iface.removeDockWidget(self.dockwidget)
                 self.dockwidget.deleteLater()
                 self.dockwidget = None
-            except Exception as e:
-                print(e)
-
-        if self.bottom_dockwidget is not None:
-            try:
-                self.iface.removeDockWidget(self.bottom_dockwidget)
-                self.bottom_dockwidget.deleteLater()
-                self.bottom_dockwidget = None
             except Exception as e:
                 print(e)
 
@@ -295,12 +278,6 @@ class RoutePlanner:
 
             pixmaps.append(QPixmap())
 
-        # hand pixmaps to bottom widget
-        if self.bottom_dockwidget is not None:
-            self.bottom_dockwidget.display_thumbnails(pixmaps)
-            self.bottom_dockwidget.append_text(f'Loaded {len(pixmaps)} Street View thumbnails')
-
-
     def run(self):
         print('RoutePlanner.run()')
 
@@ -368,16 +345,6 @@ class RoutePlanner:
         # show widget
         self.iface.addDockWidget(Qt.DockWidgetArea.LeftDockWidgetArea, self.dockwidget)
         self.dockwidget.show()
-
-        """
-        # create bottom dock widget (status / info) and place it at the bottom
-        if self.bottom_dockwidget is None:
-            self.bottom_dockwidget = BottomDockWidget()
-            self.iface.addDockWidget(Qt.BottomDockWidgetArea, self.bottom_dockwidget)
-            self.bottom_dockwidget.show()
-            # initial message
-            self.bottom_dockwidget.append_text('RoutePlanner started')
-        """
 
     def show_street_view(self, point):
         if self.dockwidget is None:
