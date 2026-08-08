@@ -22,7 +22,6 @@ from .track import Track
 from .tree import Tree
 from .utils import Utils
 
-from . import resources_rc
 
 
 class Bridge(QObject):
