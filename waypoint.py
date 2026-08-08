@@ -1,4 +1,4 @@
-import xml.etree.ElementTree as ET
+import gpxpy
 
 from typing import Optional
 
@@ -54,7 +54,8 @@ class Waypoint:
 
     @staticmethod
     @log_call
-    def from_xml(waypoints: Optional[QgsLayerTreeGroup], wpt: ET.Element):
+    def from_gpx(waypoints: Optional[QgsLayerTreeGroup], wpt: gpxpy.gpx.GPXWaypoint):
+        """Import from a gpxpy waypoint object."""
         if waypoints is None:
             return
 
@@ -63,24 +64,19 @@ class Waypoint:
         if points is None:
             return
 
-        wpt_name = wpt.find('name')
+        name = getattr(wpt, 'name', None)
+        lat = getattr(wpt, 'latitude', None)
+        lon = getattr(wpt, 'longitude', None)
 
-        if wpt_name is None:
-            name = None
-        else:
-            name = wpt_name.text
-
-        lon = wpt.get('lon')
-        lat = wpt.get('lat')
-
-        if lon is None or lat is None:
+        if lat is None or lon is None:
             return
 
         Waypoint.create(points, QgsPointXY(float(lon), float(lat)), name)
 
     @staticmethod
     @log_call
-    def to_xml(waypoints: Optional[QgsLayerTreeGroup]) -> list[ET.Element]:
+    def to_gpx_waypoints(waypoints: Optional[QgsLayerTreeGroup]) -> list[gpxpy.gpx.GPXWaypoint]:
+        """Return a list of gpxpy GPXWaypoint objects for the given waypoints group."""
         if not waypoints:
             return []
 
@@ -93,13 +89,8 @@ class Waypoint:
 
         for feature in points.getFeatures():
             vertex = feature.geometry().asPoint()
-
-            name = ET.Element('name')
-            name.text = feature.attribute('name')
-
-            wpt = ET.Element('wpt', lat=str(vertex.y()), lon=str(vertex.x()))
-            wpt.append(name)
-
+            name = feature.attribute('name')
+            wpt = gpxpy.gpx.GPXWaypoint(latitude=vertex.y(), longitude=vertex.x(), name=name)
             wpts.append(wpt)
 
         return wpts

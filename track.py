@@ -1,4 +1,4 @@
-import xml.etree.ElementTree as ET
+import gpxpy
 
 from typing import Optional
 
@@ -100,46 +100,47 @@ class Track:
 
     @staticmethod
     @log_call
-    def from_xml(file: Optional[QgsLayerTreeGroup], trk: ET.Element):
-        trk_name = trk.find('name')
-
-        if trk_name is not None:
-            name = trk_name.text
-        else:
-            name = None
+    def from_gpx(file: Optional[QgsLayerTreeGroup], gpx_track: gpxpy.gpx.GPXTrack):
+        """Import a gpxpy GPXTrack into the project as a Track group."""
+        name = getattr(gpx_track, 'name', None)
 
         track = Track.create(file, name)
 
         if track is None:
             return
 
-        for trkseg in trk.iter('trkseg'):
-            Segment.from_xml(track, trkseg)
+        for seg in gpx_track.segments:
+            results = []
+            for pt in seg.points:
+                lat = getattr(pt, 'latitude', None)
+                lon = getattr(pt, 'longitude', None)
+                if lat is None or lon is None:
+                    continue
+                results.append((float(lon), float(lat)))
+
+            if results:
+                Segment.from_points(track, results)
 
     @staticmethod
     @log_call
-    def to_xml(track: Optional[QgsLayerTreeGroup]) -> Optional[ET.Element]:
+    def to_gpx_track(track: Optional[QgsLayerTreeGroup]) -> gpxpy.gpx.GPXTrack:
         if track is None:
             return None
 
-        name = ET.Element('name')
-        name.text = track.name()
-
-        trk = ET.Element('trk')
-        trk.append(name)
+        gpx_track = gpxpy.gpx.GPXTrack(name=track.name())
 
         for segment in track.children():
             if segment.customProperty('type') != 'segment':
                 continue
 
-            trkseg = Segment.to_xml(segment)
+            gpx_segment = Segment.to_gpx_segment(segment)
 
-            if not trkseg:
+            if not gpx_segment:
                 continue
 
-            trk.append(trkseg)
+            gpx_track.segments.append(gpx_segment)
 
-        return trk
+        return gpx_track
 
     @staticmethod
     @log_call
