@@ -58,6 +58,10 @@ class MapBox:
             f'?{urllib.parse.urlencode(params)}'
         )
 
+        parsed = urllib.parse.urlparse(url)
+        if parsed.scheme.lower() not in ('http', 'https'):
+            raise ValueError(f'Unsupported URL scheme: {parsed.scheme}')
+
         with urllib.request.urlopen(url, timeout=30) as response:
             return json.loads(response.read().decode('utf-8'))
 
