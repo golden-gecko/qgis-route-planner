@@ -8,12 +8,13 @@ A lightweight QGIS plugin for planning and managing routes inside QGIS.
 - GraphHopper — Routing and optimization via HTTP API.
 - Mapbox Directions API — Commercial directions API (requires access token).
 
-## Supported tile providers
+## Supported tile and image providers
 
 - Bing
 - Google Maps
 - Mapbox
 - OpenStreetMap
+- Google Street View
 
 ## Installation
 
@@ -24,3 +25,45 @@ A lightweight QGIS plugin for planning and managing routes inside QGIS.
 - Then, enable the plugin in QGIS via `Plugins > Manage and Install Plugins...`.
 - Click on the `Route Planner` icon in the toolbar to open the plugin.
 - Click on `Tree` button to load configuration. The plugin will create `RoutePlanner` folder in layer tree.
+
+## Usage
+
+### Create or load GPX
+
+Click `New file` or `Open file` to create or load a GPX file. The file will be created as group in the layer tree. Each
+GPX track and segment has its own group in the layer tree.  Each segment is represented by two layers. One with control
+points and second with path. The control points layer is editable, while the path layer is read-only.
+
+#### Edit route
+
+There two ways to edit the route:
+
+- Click on `Edit` button to enable `Edit Mode`. When editing is enabled, the following actions are available:
+  - Click and drag control point to a new position. 
+  - Click on path between two control points to create a new control point at the selected position.
+- Managing each point individually:
+  - `Create point (start)` — Left click anywhere on the map creates a new control point at the start of the route.
+  - `Create point (middle)` — Left click on path between two points creates a new control point at the selected position.
+  - `Create point (end)` — Left anywhere on the map creates a new control point at the end of the route.
+  - `Move point` — Left click and drag a control point to move it to a new position.
+  - `Delete point` — Left click on a control point to delete it.
+
+### Edit options
+
+There are several options available for controling how route is generated:
+
+- `Routing enabled` — Select to use routing API for path-finding. Otherwise, the plugin will create straight line
+between control points.
+- `Routing provider` — Select routing API to use for path-finding.
+- `Routing mode` — Select routing profile to use for path-finding (car, bicycle or walk).
+- `Avoid highways` — Select to avoid highways when routing.
+- `Avoid tolls` — Select to avoid toll roads when routing.
+
+### Save route
+
+To save the created GPX file, click `Save` button in the plugin dialog. The plugin will save the GPX file to the
+selected location.
+
+## Limitations
+
+All layers created by this plugin are temporary layers. They will be removed when the project is closed. 
