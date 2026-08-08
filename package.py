@@ -22,6 +22,7 @@ ROOT = Path(__file__).resolve().parent
 
 def make_zip(output_path: Path):
     excludes = {'.gitignore', 'confg.py', 'config.py', Path(__file__).name}
+    skip_dirs = {'.git', '.idea', '.venv', '__pycache__'}
 
     output_path = Path(output_path).resolve()
     if output_path.exists():
@@ -29,30 +30,51 @@ def make_zip(output_path: Path):
 
     with zipfile.ZipFile(str(output_path), 'w', compression=zipfile.ZIP_DEFLATED) as zf:
         for dirpath, dirnames, filenames in os.walk(ROOT):
-            # Skip .git directory entirely
-            if '.git' in dirnames:
-                dirnames.remove('.git')
+            for d in list(dirnames):
+                if d in skip_dirs:
+                    dirnames.remove(d)
 
             dirpath = Path(dirpath)
             for fname in filenames:
                 if fname in excludes:
                     continue
 
+                # skip zip files
+                if fname.lower().endswith('.zip'):
+                    continue
+
                 full = dirpath / fname
-                # Do not include the output zip if it is created inside the repo
-                try:
-                    if full.resolve() == output_path.resolve():
-                        continue
-                except Exception:
-                    pass
+                if full.resolve() == output_path.resolve():
+                    continue
 
                 rel = full.relative_to(ROOT)
-                # Use posix-style path inside the ZIP
-                zf.write(str(full), arcname=rel.as_posix())
+                # Place all files under top-level folder 'route_planner' in the ZIP
+                arcname = Path('route_planner') / rel
+                zf.write(str(full), arcname=arcname.as_posix())
 
     print(f'Created ZIP: {output_path}')
 
 
+def read_version_from_metadata(metadata_path: Path) -> str:
+    text = metadata_path.read_text(encoding='utf-8')
+
+    for line in text.splitlines():
+        line = line.strip()
+
+        if line.startswith('version='):
+            return line.split('=', 1)[1].strip()
+
+    return ''
+
 if __name__ == '__main__':
-    out = Path(sys.argv[1]) if len(sys.argv) > 1 else ROOT / 'route_planner_plugin_v1.0.zip'
+    metadata_file = ROOT / 'metadata.txt'
+    version = read_version_from_metadata(metadata_file)
+
+    if not version:
+        print('Error: Could not read version from metadata.txt. Aborting.')
+        sys.exit(1)
+
+    safe_version = ''.join(c for c in version if c.isalnum() or c in ('.', '-', '_'))
+    out = ROOT / f'route_planner_v{safe_version}.zip'
+
     make_zip(out)
