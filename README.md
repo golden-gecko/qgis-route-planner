@@ -64,6 +64,11 @@ between control points.
 To save the created GPX file, click `Save` button in the plugin dialog. The plugin will save the GPX file to the
 selected location.
 
+### Street View
+
+Click on `Street View` button and then left click on the map, to open Street View preview in the plugin dialog.
+
 ## Limitations
 
-All layers created by this plugin are temporary layers. They will be removed when the project is closed. 
+All layers created by this plugin are temporary layers. They will be removed when the project is closed, so remember to
+save your GPX file before closing the project.
