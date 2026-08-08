@@ -1,10 +1,10 @@
 import re
 import os
-import xml.etree.ElementTree as ET
+import gpxpy
 
 from typing import Optional
 
-from qgis.core import QgsLayerTree, QgsLayerTreeGroup
+from qgis.core import QgsLayerTree, QgsLayerTreeGroup, QgsPointXY
 
 from .color import Color
 from .dialog import Dialog
@@ -89,54 +89,55 @@ class File:
         if not waypoints:
             return
 
-        ns_gpx = 'https://www.topografix.com/GPX/1/1'
-        ns_osmand = 'https://osmand.net/docs/technical/osmand-file-formats/osmand-gpx'
+        # Build GPX using gpxpy
+        gpx = gpxpy.gpx.GPX()
 
-        ET.register_namespace('', ns_gpx)
-        ET.register_namespace('osmand', ns_osmand)
-
-        gpx = ET.Element(f'{{{ns_gpx}}}gpx', version='1.1')
-
-        wpts = Waypoint.to_xml(waypoints)
-
-        for wpt in wpts:
-            gpx.append(wpt)
+        # waypoints
+        points_layer = Layer.get_or_create_waypoints(waypoints)
+        if points_layer is not None:
+            for feature in points_layer.getFeatures():
+                geom = feature.geometry().asPoint()
+                name = feature.attribute('name')
+                wpt = gpxpy.gpx.GPXWaypoint(latitude=geom.y(), longitude=geom.x(), name=name)
+                gpx.waypoints.append(wpt)
 
         tracks = Tree.find_group(file, 'Tracks')
 
         if not tracks:
+            # write gpx even if there are no tracks
+            with open(file_name, 'w', encoding='utf-8') as f:
+                f.write(gpx.to_xml())
             return
 
         for track in tracks.children():
             if track.customProperty('type') != 'track':
                 continue
 
-            trk = Track.to_xml(track)
+            gpx_track = gpxpy.gpx.GPXTrack(name=track.name())
 
-            if not trk:
-                continue
+            for segment in track.children():
+                if segment.customProperty('type') != 'segment':
+                    continue
 
-            gpx.append(trk)
+                gpx_segment = gpxpy.gpx.GPXTrackSegment()
 
-        if extension_osmand:
-            """
-            color = ET.Element(f'{{{ns_osmand}}}color')
-            color.text = '#33FF33'
+                paths = Layer.get_or_create_paths(segment)
+                if paths is None:
+                    continue
 
-            width = ET.Element(f'{{{ns_osmand}}}width')
-            width.text = 'bold'
+                for feature in paths.getFeatures():
+                    for part in feature.geometry().parts():
+                        for vertex in part.vertices():
+                            pt = gpxpy.gpx.GPXTrackPoint(latitude=vertex.y(), longitude=vertex.x())
+                            gpx_segment.points.append(pt)
 
-            extensions = ET.Element('extensions')
-            extensions.append(color)
-            extensions.append(width)
+                gpx_track.segments.append(gpx_segment)
 
-            gpx.append(extensions)
-            """
+            gpx.tracks.append(gpx_track)
 
-        ET.indent(gpx, space='  ', level=0)
-
-        tree = ET.ElementTree(gpx)
-        tree.write(file_name, encoding='utf-8', xml_declaration=True)
+        # serialize GPX to file
+        with open(file_name, 'w', encoding='utf-8') as f:
+            f.write(gpx.to_xml())
 
     @staticmethod
     @log_call
@@ -216,12 +217,11 @@ class File:
 
     @staticmethod
     def load_xml(file_name: str):
-        # load XML
-        with open(file_name) as f:
+        # load file contents and parse GPX with gpxpy
+        with open(file_name, 'r', encoding='utf-8') as f:
             xml_string = f.read()
 
-        xml_string = re.sub(r'\sxmlns="[^"]+"', '', xml_string, count=1)
-        xml_doc = ET.fromstring(xml_string)
+        gpx = gpxpy.parse(xml_string)
 
         # create file
         file = File.new(os.path.basename(file_name))
@@ -231,17 +231,40 @@ class File:
 
         file.setCustomProperty('fileName', file_name)
 
-        waypoints = Tree.find_group(file, 'Waypoints')
+        waypoints_group = Tree.find_group(file, 'Waypoints')
 
-        if not waypoints:
+        if not waypoints_group:
             return
 
-        for wpt in xml_doc.iter('wpt'):
-            Waypoint.from_xml(waypoints, wpt)
+        points = Layer.get_or_create_waypoints(waypoints_group)
 
-        # load tracks
-        for trk in xml_doc.iter('trk'):
-            Track.from_xml(file, trk)
+        # import waypoints
+        for wpt in gpx.waypoints:
+            name = getattr(wpt, 'name', None)
+            lat = getattr(wpt, 'latitude', None)
+            lon = getattr(wpt, 'longitude', None)
+            if lat is None or lon is None:
+                continue
+            Waypoint.create(points, QgsPointXY(lon, lat), name)
+
+        # import tracks using Segment.from_points
+        for gpx_track in gpx.tracks:
+            # create a track group
+            track_group = Track.create(file, getattr(gpx_track, 'name', None))
+            if track_group is None:
+                continue
+
+            for seg in gpx_track.segments:
+                results = []
+                for pt in seg.points:
+                    lat = getattr(pt, 'latitude', None)
+                    lon = getattr(pt, 'longitude', None)
+                    if lat is None or lon is None:
+                        continue
+                    results.append((float(lon), float(lat)))
+
+                if results:
+                    Segment.from_points(track_group, results)
 
         File.refresh_distance(file)
 

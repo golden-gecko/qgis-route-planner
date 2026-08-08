@@ -1,4 +1,4 @@
-import xml.etree.ElementTree as ET
+import gpxpy
 
 from typing import Optional
 
@@ -399,7 +399,7 @@ class Segment:
 
     @staticmethod
     @log_call
-    def from_xml(track: Optional[QgsLayerTreeGroup], trkseg: ET.Element) -> None:
+    def from_gpx_segment(track: Optional[QgsLayerTreeGroup], trkseg: gpxpy.gpx.GPXTrackSegment) -> None:
         if track is None:
             return
 
@@ -420,9 +420,9 @@ class Segment:
 
         results = []
 
-        for trkpt in trkseg.iter('trkpt'):
-            lon = trkpt.get('lon')
-            lat = trkpt.get('lat')
+        for pt in trkseg.points:
+            lon = getattr(pt, 'longitude', None)
+            lat = getattr(pt, 'latitude', None)
 
             if lon is None or lat is None:
                 continue
@@ -430,6 +430,37 @@ class Segment:
             results.append((float(lon), float(lat)))
 
         if len(results) < 2:
+            return
+
+        # Delegate to the point-based importer
+        Segment.from_points(track, results)
+
+    @staticmethod
+    @log_call
+    def from_points(track: Optional[QgsLayerTreeGroup], results: list[tuple[float, float]]) -> None:
+        """Import a segment from a list of (lon, lat) tuples.
+
+        This shares the logic previously present in from_xml.
+        """
+        if track is None:
+            return
+
+        if not results or len(results) < 2:
+            return
+
+        segment = Segment.create(track)
+
+        if segment is None:
+            return
+
+        points = Layer.get_or_create_points(segment)
+
+        if points is None:
+            return
+
+        paths = Layer.get_or_create_paths(segment)
+
+        if paths is None:
             return
 
         points.startEditing()
@@ -485,7 +516,7 @@ class Segment:
 
     @staticmethod
     @log_call
-    def to_xml(segment: Optional[QgsLayerTreeGroup]) -> Optional[ET.Element]:
+    def to_gpx_segment(segment: Optional[QgsLayerTreeGroup]) -> Optional[gpxpy.gpx.GPXTrackSegment]:
         if segment is None:
             return None
 
@@ -494,14 +525,15 @@ class Segment:
         if not paths:
             return None
 
-        trkseg = ET.Element('trkseg')
+        gpx_segment = gpxpy.gpx.GPXTrackSegment()
 
         for feature in paths.getFeatures():
             for part in feature.geometry().parts():
                 for vertex in part.vertices():
-                    ET.SubElement(trkseg, 'trkpt', lat=str(vertex.y()), lon=str(vertex.x()))
+                    pt = gpxpy.gpx.GPXTrackPoint(latitude=vertex.y(), longitude=vertex.x())
+                    gpx_segment.points.append(pt)
 
-        return trkseg
+        return gpx_segment
 
     @staticmethod
     @log_call
