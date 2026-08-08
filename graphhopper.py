@@ -1,6 +1,6 @@
 import json
 import urllib.parse
-import urllib.request
+import requests
 
 from .config import Config
 from .log import log_call
@@ -63,8 +63,9 @@ class GraphHopper:
         if parsed.scheme.lower() not in ('http', 'https'):
             raise ValueError(f'Unsupported URL scheme: {parsed.scheme}')
 
-        with urllib.request.urlopen(url, timeout=30) as response:
-            return json.loads(response.read().decode('utf-8'))
+        resp = requests.get(url, timeout=30)
+        resp.raise_for_status()
+        return resp.json()
 
     @staticmethod
     @log_call
