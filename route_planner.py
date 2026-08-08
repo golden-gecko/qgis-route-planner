@@ -63,7 +63,7 @@ class RoutePlanner:
         self.mapToolPointMove = PointMove(self.iface, self.iface.mapCanvas())
         self.mapToolPointDelete = PointDelete(self.iface, self.iface.mapCanvas())
 
-        self.streetViewHeadingBand = QgsRubberBand(self.iface.mapCanvas(), QgsWkbTypes.LineGeometry)
+        self.streetViewHeadingBand = QgsRubberBand(self.iface.mapCanvas(), QgsWkbTypes.GeometryType.LineGeometry)
         self.streetViewHeadingBand.setColor(QColor('red'))
         self.streetViewHeadingBand.setWidth(2)
 
