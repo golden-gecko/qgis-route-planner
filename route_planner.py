@@ -22,7 +22,8 @@ from .track import Track
 from .tree import Tree
 from .utils import Utils
 
-from .resources import *
+from . import resources_rc
+
 
 class Bridge(QObject):
     posChanged = pyqtSignal(float, float, float, float)

@@ -207,7 +207,7 @@ class Tree:
                         'name': path_item.stem,
                     }
 
-                    if Config.Tree.RefreshDirectory == False and Tree.find_group(parent, new_item['name']) is not None:
+                    if Config.Tree.RefreshDirectory is False and Tree.find_group(parent, new_item['name']) is not None:
                         continue
 
                     group = Tree.process_group(parent, new_item)
