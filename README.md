@@ -2,6 +2,8 @@
 
 A lightweight QGIS plugin for planning and managing routes inside QGIS.
 
+![Description](docs/screen01.png)
+
 ## Supported path-finding APIs
 
 - Google Directions API — Commercial routing service (API key required).
