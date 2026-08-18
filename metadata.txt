@@ -1,0 +1,19 @@
+[general]
+name=Route Planner
+qgisMinimumVersion=4.0
+qgisMaximumVersion=4.99
+description=A lightweight QGIS plugin for planning and managing routes inside QGIS.
+version=1.0
+author=Wojciech Holisz
+email=routeplanner@holisz.pl
+about=Provide a brief description of the plugin and its purpose.
+tracker=https://github.com/golden-gecko/qgis-route-planner/issues
+repository=https://github.com/golden-gecko/qgis-route-planner
+hasProcessingProvider=no
+tags=python
+homepage=https://github.com/golden-gecko/qgis-route-planner
+category=Plugins
+icon=icon.png
+experimental=False
+deprecated=False
+server=False
