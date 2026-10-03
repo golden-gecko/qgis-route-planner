@@ -118,6 +118,19 @@
        </widget>
       </item>
       <item>
+       <widget class="QPushButton" name="buttonOpenInBrowser">
+        <property name="text">
+         <string>Open in browser</string>
+        </property>
+        <property name="checkable">
+         <bool>true</bool>
+        </property>
+        <property name="autoExclusive">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+      <item>
        <widget class="QPushButton" name="buttonPanoramas">
         <property name="text">
          <string>Panoramas</string>
