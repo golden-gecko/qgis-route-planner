@@ -6,15 +6,15 @@ from qgis.PyQt.QtWebChannel import QWebChannel
 
 from qgis.core import QgsCoordinateReferenceSystem, QgsCoordinateTransform, QgsGeometry, QgsProject, QgsPointXY, QgsRasterLayer, QgsVectorFileWriter, QgsVectorLayer, QgsWkbTypes, QgsField, QgsFeature
 from qgis.gui import QgsMapToolPan, QgsRubberBand, QgsVertexMarker
-from qgis.PyQt.QtCore import Qt, QObject, pyqtSlot, pyqtSignal, QVariant
-from qgis.PyQt.QtGui import QIcon, QPixmap, QColor
+from qgis.PyQt.QtCore import Qt, QObject, pyqtSlot, pyqtSignal, QVariant, QUrl, QUrlQuery
+from qgis.PyQt.QtGui import QIcon, QPixmap, QColor, QDesktopServices
 from qgis.PyQt.QtWidgets import QAction, QPushButton
 
 from .config import Config
 from .file import File
 from .google import Google
 from .iface import Iface
-from .map_tools import Edit, PointCreateEnd, PointCreateMiddle, PointCreateStart, PointDelete, PointMove, StreetView, WaypointCreate, WaypointDelete, WaypointMove
+from .map_tools import Edit, OpenInBrowser, PointCreateEnd, PointCreateMiddle, PointCreateStart, PointDelete, PointMove, StreetView, WaypointCreate, WaypointDelete, WaypointMove
 from .options import Options
 from .route_planner_dockwidget import RoutePlannerDockWidget
 from .segment import Segment
@@ -50,6 +50,7 @@ class RoutePlanner:
         # create tools
         self.mapToolPan = QgsMapToolPan(self.iface.mapCanvas())
         self.mapToolStreetView = StreetView(self.iface, self.iface.mapCanvas(), self.show_street_view)
+        self.mapToolOpenInBrowser = OpenInBrowser(self.iface, self.iface.mapCanvas(), self._open_in_browser)
         self.mapToolEdit = Edit(self.iface, self.iface.mapCanvas())
 
         self.mapToolWaypointCreate = WaypointCreate(self.iface, self.iface.mapCanvas())
@@ -236,6 +237,17 @@ class RoutePlanner:
 
         self.iface.mapCanvas().refresh()
 
+    def _open_in_browser(self, point):
+        query = QUrlQuery()
+        query.addQueryItem('api', '1')
+        query.addQueryItem('query', f'{point.y()},{point.x()}')
+
+        url = QUrl('https://www.google.com/maps/search/')
+        url.setQuery(query)
+
+        if not QDesktopServices.openUrl(url):
+            self.iface.messageBar().pushWarning('Route Planner', 'Unable to open Google Maps in the browser.')
+
     def run(self):
         print('RoutePlanner.run()')
 
@@ -247,6 +259,7 @@ class RoutePlanner:
             # main modes
             self.dockwidget.buttonTree.clicked.connect(lambda: Tree.create_tree_structure())
             self.dockwidget.buttonStreetView.clicked.connect(lambda: self.iface.mapCanvas().setMapTool(self.mapToolStreetView))
+            self.dockwidget.buttonOpenInBrowser.clicked.connect(lambda: self.iface.mapCanvas().setMapTool(self.mapToolOpenInBrowser))
             self.dockwidget.buttonPanoramas.clicked.connect(lambda: self.load_panoramas())
             self.dockwidget.buttonEdit.clicked.connect(lambda: self.iface.mapCanvas().setMapTool(self.mapToolEdit))
 
@@ -404,4 +417,3 @@ class RoutePlanner:
 
         # execute desired code here — example: print center coordinates
         print(f'Map moved. Center (lat, lon): {lat}, {lon}')
-

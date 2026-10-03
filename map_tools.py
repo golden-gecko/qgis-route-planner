@@ -45,6 +45,27 @@ class StreetView(MapTool):
         self.callback(transform.transform(point))
 
 
+class OpenInBrowser(MapTool):
+    def __init__(self, iface, canvas: QgsMapCanvas, callback):
+        MapTool.__init__(self, iface, canvas)
+
+        self.callback = callback
+
+    @log_call
+    def canvasReleaseEvent(self, event):
+        if event.button() != Qt.MouseButton.LeftButton:
+            return
+
+        point = self.toMapCoordinates(event.pos())
+        transform = QgsCoordinateTransform(
+            self.canvas.mapSettings().destinationCrs(),
+            QgsCoordinateReferenceSystem('EPSG:4326'),
+            QgsProject.instance()
+        )
+
+        self.callback(transform.transform(point))
+
+
 class Edit(MapTool):
     def __init__(self, iface, canvas: QgsMapCanvas):
         MapTool.__init__(self, iface, canvas)
